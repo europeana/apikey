@@ -1,0 +1,15 @@
+---
+applications:
+  - name: apikey-service
+    path: target/apikey-service-0.1.SNAPSHOT.jar
+    memory: 512M
+    env:
+      JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom
+      SPRING_PROFILES_ACTIVE: cloud
+    services:
+      - postgres
+
+buildpack: https://github.com/cloudfoundry/java-buildpack.git
+
+env:
+    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
