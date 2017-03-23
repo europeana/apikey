@@ -11,4 +11,8 @@ DEMO time! Local only for now, CF will follow shortly.
 mvn spring-boot:run
 ----
 
-5: enjoy http://localhost:8080/apikeys !
+5: enjoy http://localhost:8080/apikey !
+
+N.B. If you want to use the postgresql from the api docker then you have to change the server.port configuration in the
+src/main/resources/application.yml file
+
