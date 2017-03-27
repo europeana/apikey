@@ -13,4 +13,4 @@ applications:
 buildpack: https://github.com/cloudfoundry/java-buildpack.git
 
 env:
-    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
+    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: true}'
