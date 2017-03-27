@@ -6,8 +6,9 @@ applications:
     env:
       JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom
       SPRING_PROFILES_ACTIVE: cloud
+      postgres: apikey-pgsql
     services:
-      - postgres
+      - apikey-pgsql
 
 buildpack: https://github.com/cloudfoundry/java-buildpack.git
 
