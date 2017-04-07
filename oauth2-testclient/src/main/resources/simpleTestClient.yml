@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  context-path: /client
+
+security:
+  oauth2:
+    client:
+      clientId: test
+      clientSecret: test
+      access-token-uri: http://localhost:8888/oauth/token
+      user-authorization-uri: http://localhost:8888/oauth/authorize
+    resource:
+      user-info-uri: http://localhost:8080/me
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

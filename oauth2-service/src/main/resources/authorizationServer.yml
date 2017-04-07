@@ -1,0 +1,15 @@
+server:
+  port: 8888
+
+security:
+  oauth2:
+    client:
+      clientId: test
+      clientSecret: test
+      scope: read,write
+      auto-approve-scopes: '.*'
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

@@ -5,18 +5,44 @@
 
     <groupId>eu.europeana.apikey</groupId>
     <artifactId>apikey-service</artifactId>
-    <version>0.1.SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Apikey Service</name>
     <description>Centralised Api Key service built on Spring Boot</description>
 
     <parent>
+        <artifactId>authentication</artifactId>
         <groupId>eu.europeana</groupId>
-        <artifactId>europeana-apikey</artifactId>
-        <version>0.1.SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 
     <properties>
