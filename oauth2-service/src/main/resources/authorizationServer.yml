@@ -1,13 +1,23 @@
 server:
   port: 8888
+  # set the server's cookie name, to avoid a clash with cookies from clients (if they are running on the same machine)
+  session:
+    cookie:
+      name: oauth-server
 
 security:
+  # specify test users accounts
+  user:
+     name: user
+     password: test
+     role: USER
+  # specify test clients
   oauth2:
     client:
-      clientId: test
-      clientSecret: test
+      clientId: simpleTestClient
+      clientSecret: simpleSecret
       scope: read,write
-      # enable auto-approve to skip the expliciet approval step
+      # to skip the explicit approval step enable auto-approve
       # auto-approve-scopes: '.*'
 
 logging:
