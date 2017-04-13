@@ -1,7 +1,7 @@
 ---
 applications:
   - name: apikey-service
-    path: target/apikey-service-0.1.SNAPSHOT.jar
+    path: target/apikey-service-0.1-SNAPSHOT.jar
     memory: 512M
     env:
       JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom
