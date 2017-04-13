@@ -1,11 +1,11 @@
-package univ;
+package eu.europeana.apikey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.stereotype.Component;
-import univ.repos.ApiKeyRepo;
+import eu.europeana.apikey.repos.ApiKeyRepo;
 
 @SpringBootApplication
 public class Application {

@@ -1,4 +1,4 @@
-package univ.util;
+package eu.europeana.apikey.util;
 
 import java.io.IOException;
 import java.io.InputStream;

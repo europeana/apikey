@@ -1,4 +1,4 @@
-package univ.domain;
+package eu.europeana.apikey.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static eu.europeana.apikey.util.Tools.nvl;
+
 
 @Entity
 @Table(name = "apikey")
@@ -21,9 +23,9 @@ public class ApiKey {
 	@JsonProperty("apikey")
 	private String apiKey;
 
+	@NotNull
 	@Size(min = 1, max = 30)
 	@Column(name = "privatekey")
-	@NotNull
 	@JsonProperty("privatekey")
 	private String privateKey;
 
@@ -42,7 +44,6 @@ public class ApiKey {
 	@JsonProperty("website")
 	private String website;
 
-	@NotNull
 	@Column(name = "activationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("activationdate")
@@ -83,6 +84,20 @@ public class ApiKey {
 	@Column(name = "level")
 	@JsonProperty("level")
 	private String level;
+
+	@Column(name = "deprecationdate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@JsonProperty("deprecationdate")
+	private Date deprecationDate;
+
+	@Column(name = "lastaccessdate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@JsonProperty("lastaccessdate")
+	private Date lastaccessDate;
+
+	@Column(name = "usage")
+	@JsonProperty("usage")
+	private Long usage;
 
 	public ApiKey() {
 
@@ -200,22 +215,51 @@ public class ApiKey {
 		this.level = level;
 	}
 
+	public Date getDeprecationDate() {
+		return deprecationDate;
+	}
+
+	public void setDeprecationDate(Date deprecationDate) {
+		this.deprecationDate = deprecationDate;
+	}
+
+	public Date getLastaccessDate() {
+		return lastaccessDate;
+	}
+
+	public void setLastaccessDate(Date lastaccesDate) {
+		this.lastaccessDate = lastaccessDate;
+	}
+
+	public Long getUsage() {
+		return usage;
+	}
+
+	public void setUsage(Long usage) {
+		this.usage = usage;
+	}
+
+
 	@Override
 	public String toString() {
 		return "ApiKey {" +
 				" apiKey = " + apiKey +
-				", privateKey = " + privateKey +
-				", registrationDate = " + registrationDate.toString() +
-				", usageLimit = " + usageLimit.toString() +
-				", website = " + website +
-				", activationDate = " + activationDate.toString() +
-				", appName = " + appName +
-				", company = " + company +
-				", description = " + description +
-				", email = " + email +
-				", firstName = " + firstName +
-				", lastName = " + lastName +
-				", level = " + level +
+				", privateKey = " + nvl(privateKey) +
+				", firstName = " + nvl(firstName) +
+				", lastName = " + nvl(lastName) +
+				", email = " + nvl(email) +
+				", level = " + nvl(level) +
+				", usage = " + nvl(usage) +
+				", usageLimit = " + nvl(usageLimit) +
+				", appName = " + nvl(appName) +
+				", website = " + nvl(website) +
+				", company = " + nvl(company) +
+				", description = " + nvl(description) +
+				", activationDate = " + nvl(activationDate) +
+				", registrationDate = " + nvl(registrationDate) +
+				", lastaccessDate = " + nvl(lastaccessDate) +
+				", deprecationDate = " + nvl(deprecationDate) +
 				" }";
 	}
+
 }

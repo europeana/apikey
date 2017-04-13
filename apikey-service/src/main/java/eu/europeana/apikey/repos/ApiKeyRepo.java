@@ -1,7 +1,7 @@
-package univ.repos;
+package eu.europeana.apikey.repos;
 
+import eu.europeana.apikey.domain.ApiKey;
 import org.springframework.data.jpa.repository.JpaRepository;
-import univ.domain.ApiKey;
 
 import java.util.Optional;
 
