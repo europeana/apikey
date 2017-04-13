@@ -39,7 +39,7 @@ public class ApiKey {
 	@JsonProperty("usagelimit")
 	private Long usageLimit;
 
-	@Size(min = 6, max = 100)
+	@Size(max = 100)
 	@Column(name = "website")
 	@JsonProperty("website")
 	private String website;
@@ -49,39 +49,39 @@ public class ApiKey {
 	@JsonProperty("activationdate")
 	private Date activationDate;
 
-	@Size(min = 1, max = 255)
+	@Size(max = 255)
 	@Column(name = "appname")
 	@JsonProperty("appname")
 	private String appName;
 
-	@Size(min = 1, max = 100)
+	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
 	private String company;
 
-	@Size(min = 1, max = 255)
+	@Size(max = 255)
 	@Column(name = "description")
 	@JsonProperty("description")
 	private String description;
 
 	@NotNull
-	@Size(min = 1, max = 100)
+	@Size(max = 100)
 	@Column(name = "email")
 	@JsonProperty("email")
 	private String email;
 
-	@Size(min = 1, max = 50)
+	@Size(max = 50)
 	@Column(name = "firstname")
 	@JsonProperty("firstname")
 	private String firstName;
 
-	@Size(min = 1, max = 50)
+	@Size(max = 50)
 	@Column(name = "lastname")
 	@JsonProperty("lastname")
 	private String lastName;
 
 	@NotNull
-	@Size(min = 1, max =8)
+	@Size(max = 8)
 	@Column(name = "level")
 	@JsonProperty("level")
 	private String level;
