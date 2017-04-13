@@ -70,7 +70,7 @@ public class ApiKey {
 	@JsonProperty("email")
 	private String email;
 
-	@Size(min = 1, max = 30)
+	@Size(min = 1, max = 50)
 	@Column(name = "firstname")
 	@JsonProperty("firstname")
 	private String firstName;
@@ -80,7 +80,8 @@ public class ApiKey {
 	@JsonProperty("lastname")
 	private String lastName;
 
-	@Size(min = 1, max = 30)
+	@NotNull
+	@Size(min = 1, max =8)
 	@Column(name = "level")
 	@JsonProperty("level")
 	private String level;
@@ -95,6 +96,7 @@ public class ApiKey {
 	@JsonProperty("lastaccessdate")
 	private Date lastaccessDate;
 
+	@NotNull
 	@Column(name = "usage")
 	@JsonProperty("usage")
 	private Long usage;
