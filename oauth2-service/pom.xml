@@ -12,19 +12,46 @@
 
     <artifactId>oauth2-service</artifactId>
 
+    <properties>
+        <version.springSecurity>4.2.2.RELEASE</version.springSecurity>
+        <version.springSecurityOauth>2.1.0.RELEASE</version.springSecurityOauth>
+    </properties>
+
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth2</artifactId>
+            <version>${version.springSecurityOauth}</version>
+        </dependency>
+        <!-- needed for JwtTokenStore -->
+        <!--<dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-jwt</artifactId>
+            <version>1.0.7.RELEASE</version>
+        </dependency> -->
+
+        <!-- Dependencies only required for testing -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>4.3.7.RELEASE</version>
+            <test>true</test>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <version>${version.springSecurity}</version>
+            <test>true</test>
         </dependency>
     </dependencies>
 
