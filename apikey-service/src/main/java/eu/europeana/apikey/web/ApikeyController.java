@@ -1,3 +1,25 @@
+/*
+ * Copyright 2007-2017 The Europeana Foundation
+ *
+ *  Licenced under the EUPL, Version 1.1 (the "Licence") and subsequent versions as approved
+ *  by the European Commission;
+ *  You may not use this work except in compliance with the Licence.
+ *
+ *  You may obtain a copy of the Licence at:
+ *  http://joinup.ec.europa.eu/software/page/eupl
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under
+ *  the Licence is distributed on an "AS IS" basis, without warranties or conditions of
+ *  any kind, either express or implied.
+ *  See the Licence for the specific language governing permissions and limitations under
+ *  the Licence.
+ */
+
+
+/**
+ * Created by luthien on 18/04/2017.
+ */
+
 package eu.europeana.apikey.web;
 
 import org.joda.time.Duration;
@@ -94,9 +116,8 @@ public class ApikeyController {
         }
 
         // set activationdate = sysdate if null
-        if (null != apikey.getActivationDate()){
+        if (null == apikey.getActivationDate()){
             apikey.setActivationDate(now);
-            this.apiKeyRepo.save(apikey);
         }
 
         // set lastaccessDate = sysdate
@@ -108,9 +129,11 @@ public class ApikeyController {
         headers.add("X-RateLimit-Reset", String.valueOf(new Duration(nowDtUtc, nowDtUtc.plusDays(1).withTimeAtStartOfDay()).toStandardSeconds().getSeconds()));
 
         if (remaining <= 0l){
+            // no way, José!
             headers.add("X-RateLimit-Remaining", String.valueOf(0));
             return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
         } else {
+            // welcome, gringo!
             headers.add("X-RateLimit-Remaining", String.valueOf(remaining - 1));
             apikey.setUsage(usage + 1);
             this.apiKeyRepo.save(apikey);

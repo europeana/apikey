@@ -15,15 +15,16 @@
  *  the Licence.
  */
 
+
+/**
+ * Created by luthien on 18/04/2017.
+ */
+
 package eu.europeana.apikey.util;
 
 import org.springframework.util.StringUtils;
-
 import java.util.Date;
 
-/**
- * Created by luthien on 12/04/2017.
- */
 public class Tools {
 
     public static String nvl(String input){

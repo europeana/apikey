@@ -15,11 +15,12 @@
  *  the Licence.
  */
 
+/**
+ * Created by luthien on 18/04/2017.
+ */
+
 package eu.europeana.apikey.util;
 
-/**
- * Created by luthien on 11/04/2017.
- */
 public enum ApiName {
 
     SEARCH("search", ""),
