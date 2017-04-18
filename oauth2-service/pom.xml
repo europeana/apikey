@@ -41,18 +41,18 @@
         </dependency> -->
 
         <!-- Dependencies only required for testing -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>4.3.7.RELEASE</version>
-            <test>true</test>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <version>${version.springSecurity}</version>
-            <test>true</test>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.springframework</groupId>-->
+            <!--<artifactId>spring-test</artifactId>-->
+            <!--<version>4.3.7.RELEASE</version>-->
+            <!--<test>true</test>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.springframework.security</groupId>-->
+            <!--<artifactId>spring-security-test</artifactId>-->
+            <!--<version>${version.springSecurity}</version>-->
+            <!--<test>true</test>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
