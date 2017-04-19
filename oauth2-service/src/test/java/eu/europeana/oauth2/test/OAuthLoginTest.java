@@ -210,15 +210,6 @@ public class OAuthLoginTest {
         String codeAndState = nextUrl.split("\\?")[1];
         LOG.info("Code and state = "+codeAndState);
 
-        // step 5b. optional, check if we can retrieve the request resource (in JSON)
-//        result = this.mockServer.perform(get(nextUrl)
-//                    .accept(MediaType.APPLICATION_JSON)
-//                    .session(session))
-//                .andDo(print())
-//                .andExpect(status().isOk())
-//                .andReturn();
-//        session = (MockHttpSession) result.getRequest().getSession();
-
         // step 6. Request a token
         //TODO figure out why we have to use authentication via header and supplying clientId and secret as parameter doesn't work
         byte[] encodedClientCredentials = Base64.encodeBase64("unit_test:test".getBytes());
@@ -236,6 +227,20 @@ public class OAuthLoginTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token").exists())
                 .andExpect(jsonPath("$.refresh_token").exists())
+                .andReturn();
+        session = (MockHttpSession) result.getRequest().getSession();
+        JSONObject jsonResponse = new JSONObject (result.getResponse().getContentAsString());
+        String accessToken = jsonResponse.get("access_token").toString();
+        LOG.info("OAuth2 access token = "+accessToken);
+
+        // step 7. check if we can access the requested resource with our token
+        // Note that we do not reuse the session here!
+        result = this.mockServer.perform(get(nextUrl)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .param("access_token", accessToken)
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
                 .andReturn();
         session = (MockHttpSession) result.getRequest().getSession();
 
