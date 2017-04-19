@@ -51,8 +51,8 @@ public class OAuthLoginTest {
 
     private static final String OAUTH_LOGIN_REQUEST = "/oauth/authorize?" +
             "client_id=unit_test&redirect_uri="+PROTECTED_RESOURCE+"&response_type=code&state=mjHhKz&scope=read";
-    private static final String OAUTH_TOKEN_REQUEST = "/oauth/token?grant_type=authorization_code";
-    private static final String OAUTH_TOKEN_REFRESH_REQUEST = "oauth/token?grant_type=refresh_token";
+    private static final String OAUTH_ACCESS_TOKEN_REQUEST = "/oauth/token?grant_type=authorization_code";
+    private static final String OAUTH_REFRESH_TOKEN_REQUEST = "/oauth/token?grant_type=refresh_token";
 
     @Autowired
     private WebApplicationContext context;
@@ -211,15 +211,10 @@ public class OAuthLoginTest {
         LOG.info("Code and state = "+codeAndState);
 
         // step 6. Request a token
-        //TODO figure out why we have to use authentication via header and supplying clientId and secret as parameter doesn't work
         byte[] encodedClientCredentials = Base64.encodeBase64("unit_test:test".getBytes());
-        result = this.mockServer.perform(post(OAUTH_TOKEN_REQUEST+"&"+codeAndState)
+        result = this.mockServer.perform(post(OAUTH_ACCESS_TOKEN_REQUEST+"&"+codeAndState)
                     .accept(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Basic "+new String(encodedClientCredentials))
-//                    .param("client_id", "unit_test")
-//                    .param("client_secret", "test")
-//                    .param("username", "unit_tester")
-//                    .param("password", "test")
                     .param("redirect_uri", PROTECTED_RESOURCE)
                     .param("scope", "read")
                     .session(session))
@@ -228,22 +223,31 @@ public class OAuthLoginTest {
                 .andExpect(jsonPath("$.access_token").exists())
                 .andExpect(jsonPath("$.refresh_token").exists())
                 .andReturn();
-        session = (MockHttpSession) result.getRequest().getSession();
         JSONObject jsonResponse = new JSONObject (result.getResponse().getContentAsString());
         String accessToken = jsonResponse.get("access_token").toString();
+        String refreshToken = jsonResponse.get("refresh_token").toString();
         LOG.info("OAuth2 access token = "+accessToken);
+        LOG.info("OAuth2 refresh token = "+refreshToken);
 
         // step 7. check if we can access the requested resource with our token
-        // Note that we do not reuse the session here!
+        // Note that this should work even if we do not reuse the session here!
         result = this.mockServer.perform(get(nextUrl)
                     .accept(MediaType.APPLICATION_JSON)
-                    .param("access_token", accessToken)
-                )
+                    .param("access_token", accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
-        session = (MockHttpSession) result.getRequest().getSession();
 
+        // step 8. Refresh a token
+        result = this.mockServer.perform(post(OAUTH_REFRESH_TOKEN_REQUEST)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Basic "+new String(encodedClientCredentials))
+                        .param("refresh_token", refreshToken))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.access_token").exists())
+                    .andExpect(jsonPath("$.refresh_token").exists())
+                    .andReturn();
     }
 
 
