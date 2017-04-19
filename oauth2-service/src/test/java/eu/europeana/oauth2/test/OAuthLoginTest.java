@@ -1,7 +1,9 @@
 package eu.europeana.oauth2.test;
 
 import eu.europeana.oauth2.AuthorizationServer;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,15 +16,22 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
+import java.io.Serializable;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.*;
@@ -38,10 +47,12 @@ public class OAuthLoginTest {
 
     private static final Logger LOG = Logger.getLogger(OAuthLoginTest.class);
 
-    private static final String OAUTH_LOGIN_REQUEST = "/oauth/authorize?" +
-            "client_id=unit_test&redirect_uri=http://localhost/me&response_type=code&state=mjHhKz&scope=read";
-    private static final String OAUTH_TOKEN = "/oauth/token?grant_type=authorization_code";
+    private static final String PROTECTED_RESOURCE = "http://localhost/me";
 
+    private static final String OAUTH_LOGIN_REQUEST = "/oauth/authorize?" +
+            "client_id=unit_test&redirect_uri="+PROTECTED_RESOURCE+"&response_type=code&state=mjHhKz&scope=read";
+    private static final String OAUTH_TOKEN_REQUEST = "/oauth/token?grant_type=authorization_code";
+    private static final String OAUTH_TOKEN_REFRESH_REQUEST = "oauth/token?grant_type=refresh_token";
 
     @Autowired
     private WebApplicationContext context;
@@ -195,7 +206,9 @@ public class OAuthLoginTest {
         session = (MockHttpSession) result.getRequest().getSession();
         nextUrl = result.getResponse().getRedirectedUrl();
         //we should now have access to the requested resource
-        Assert.assertTrue(nextUrl.startsWith("http://localhost/me"));
+        Assert.assertTrue(nextUrl.startsWith(PROTECTED_RESOURCE+"?"));
+        String codeAndState = nextUrl.split("\\?")[1];
+        LOG.info("Code and state = "+codeAndState);
 
         // step 5b. optional, check if we can retrieve the request resource (in JSON)
         result = this.mockServer.perform(get(nextUrl)
@@ -207,17 +220,25 @@ public class OAuthLoginTest {
         session = (MockHttpSession) result.getRequest().getSession();
 
         // step 6. Request a token
-        //TODO get request token to work (fails at the moment)
-        result = this.mockServer.perform(post(OAUTH_TOKEN)
+        //TODO figure out why we have to use authentication via header and supplying clientId and secret as parameter doesn't work
+        byte[] encodedClientCredentials = Base64.encodeBase64("unit_test:test".getBytes());
+        result = this.mockServer.perform(post(OAUTH_TOKEN_REQUEST+"&"+codeAndState)
                     .accept(MediaType.APPLICATION_JSON)
-                    .param("client_id", "unit_test")
-                    .param("client_secret", "test")
-                    .param("username", "unit_tester")
-                    .param("password", "test")
+                    .header("Authorization", "Basic "+new String(encodedClientCredentials))
+//                    .param("client_id", "unit_test")
+//                    .param("client_secret", "test")
+//                    .param("username", "unit_tester")
+//                    .param("password", "test")
+                    .param("redirect_uri", PROTECTED_RESOURCE)
+                    .param("scope", "read")
                     .session(session))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token").exists())
+                .andExpect(jsonPath("$.refresh_token").exists())
                 .andReturn();
+        session = (MockHttpSession) result.getRequest().getSession();
+
     }
 
 
