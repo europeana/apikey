@@ -141,6 +141,43 @@ public class ApikeyController {
         }
     }
 
+    // created to facilitate Rene's testing
+    @RequestMapping(path = "/{id}/set", method = RequestMethod.PUT)
+    public ResponseEntity<ApiKey> validate(
+            @PathVariable("id") String id,
+            @RequestParam(value = "limit", required = false) Long limit,
+            @RequestParam(value = "reset", required = false) Boolean reset,
+            @RequestParam(value = "deprecated", required = false) Boolean deprecated) {
+
+        Date lastWeek = new DateTime(DateTimeZone.UTC).minusDays(7).toDate();
+
+        ApiKey apikey = this.apiKeyRepo.findOne(id);
+        if (null == apikey){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        // if reset == true: reset usage to zero
+        if (null != reset && reset.booleanValue() == true){
+            apikey.setUsage(0l);
+        }
+        // if limit is set: reset usageLimit to limit
+        if (null != limit){
+            apikey.setUsageLimit(limit);
+        }
+        // if deprecate == true: set dateDeprecated to last week; if false, set null
+        if (null != deprecated && deprecated.booleanValue() == true){
+            apikey.setDeprecationDate(lastWeek);
+        } else if (null != deprecated && deprecated.booleanValue() == false) {
+            apikey.setDeprecationDate(null);
+        }
+
+        if (null == reset && null == deprecated && null == limit){
+            return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT); // HTTP 418
+        } else {
+            this.apiKeyRepo.save(apikey);
+            return new ResponseEntity<>(HttpStatus.ACCEPTED); // HTTP 202
+        }
+    }
+
 
 //    @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
 //    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
