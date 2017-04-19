@@ -211,13 +211,13 @@ public class OAuthLoginTest {
         LOG.info("Code and state = "+codeAndState);
 
         // step 5b. optional, check if we can retrieve the request resource (in JSON)
-        result = this.mockServer.perform(get(nextUrl)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .session(session))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn();
-        session = (MockHttpSession) result.getRequest().getSession();
+//        result = this.mockServer.perform(get(nextUrl)
+//                    .accept(MediaType.APPLICATION_JSON)
+//                    .session(session))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andReturn();
+//        session = (MockHttpSession) result.getRequest().getSession();
 
         // step 6. Request a token
         //TODO figure out why we have to use authentication via header and supplying clientId and secret as parameter doesn't work
