@@ -20,7 +20,6 @@
     <modules>
         <module>apikey-service</module>
         <module>oauth2-service</module>
-        <module>oauth2-testclient</module>
     </modules>
 
     <dependencies>
