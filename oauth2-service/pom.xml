@@ -34,11 +34,12 @@
             <version>${version.springSecurityOauth}</version>
         </dependency>
         <!-- needed for JwtTokenStore -->
-        <!--<dependency>
-            <groupId>org.springframework.security.oauth</groupId>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-jwt</artifactId>
             <version>1.0.7.RELEASE</version>
-        </dependency> -->
+        </dependency>
+
 
         <!-- Dependencies only required for testing -->
         <dependency>

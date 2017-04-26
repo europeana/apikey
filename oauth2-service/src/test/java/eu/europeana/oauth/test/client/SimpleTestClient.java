@@ -1,4 +1,4 @@
-package eu.europeana.oauth2;
+package eu.europeana.oauth.test.client;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
