@@ -39,7 +39,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 
@@ -96,14 +95,14 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
             @Override
             public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
                 ApiKey apikey = apiKeyRepo.findOne(id);
-                if(apikey != null && apikey.getLevel().equalsIgnoreCase("ADMIN")) {
-                    return new User(apikey.getApiKey(), apikey.getPrivateKey(), true, true, true, true,
-                            AuthorityUtils.createAuthorityList("USER"));
-                } else if (apikey != null ){
-                    throw new AccessDeniedException("Apikey " + id + " is not authorised to access this endpoint");
+                // && apikey.getLevel().equalsIgnoreCase("ADMIN")
+                if(apikey != null) {
+                    return new User(apikey.getApiKey(), apikey.getPrivateKey(),
+                            true, true, true, true,
+                            AuthorityUtils.createAuthorityList(
+                                    apikey.getLevel().equalsIgnoreCase("ADMIN") ? "ROLE_ADMIN" : "USER"));
                 } else    {
-                    throw new UsernameNotFoundException("could not find apikey '"
-                            + id + "'");
+                    throw new UsernameNotFoundException("could not find apikey '"  + id + "'");
                 }
             }
         };
@@ -116,9 +115,9 @@ class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().fullyAuthenticated().and().
-                httpBasic().and().
-                csrf().disable();
+        http.authorizeRequests().anyRequest().access("hasRole('ROLE_ADMIN')")
+                .and().httpBasic()
+                .and().csrf().disable();
     }
 
 }
