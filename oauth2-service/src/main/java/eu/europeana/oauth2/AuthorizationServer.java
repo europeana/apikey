@@ -1,5 +1,6 @@
 package eu.europeana.oauth2;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -7,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -41,21 +43,37 @@ public class AuthorizationServer extends WebSecurityConfigurerAdapter {
         new SpringApplicationBuilder(AuthorizationServer.class).properties("spring.config.name=authorizationServer").run(args);
     }
 
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        super.configure(http);
+        //http.csrf().disable();
+    }
+
     @Configuration
     @EnableAuthorizationServer
     protected static class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
+        @Value("${security.oauth2.privateKey}")
+        private String privateKey;
+
+        @Value("${security.oauth2.publicKey}")
+        private String publicKey;
+
         /**
-         * A JSON Web Tokens (JWT) contains all user information encrypted in the token
+         * A JSON Web Tokens (JWT) contains all user information encrypted in the token.
          * @return a new default JWT access token converter
          */
         @Bean
         public JwtAccessTokenConverter jwtAccessTokenConverter() {
+            JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+            converter.setSigningKey(privateKey);
+            converter.setVerifierKey(publicKey);
             return new JwtAccessTokenConverter();
         }
 
         /**
-         * Enable the JWT tokens
+         * Defines the security constraints on the token endpoints /oauth/token_key and /oauth/check_token and enables
+         * the JWT tokens
          * @param endpoints
          * @throws Exception
          */
@@ -70,12 +88,12 @@ public class AuthorizationServer extends WebSecurityConfigurerAdapter {
                     .withClient("simpleTestClient")
                     .secret("simpleSecret")
                     .authorizedGrantTypes("authorization_code","client_credentials", "password", "refresh_token")
-                    .authorities("ROLE_CLIENT")
+                    .authorities("ROLE_TRUSTED_CLIENT")
                     .scopes("read", "write")
                     .and()
                     .withClient("unit_test")
                     .secret("test")
-                    .authorizedGrantTypes("authorization_code","client_credentials", "password", "refresh_token")
+                    .authorizedGrantTypes("authorization_code", "refresh_token")
                     .authorities("ROLE_CLIENT")
                     .scopes("read", "write");
         }

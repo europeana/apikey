@@ -5,22 +5,88 @@ server:
     cookie:
       name: oauth-server
 
+# default datasource used for development and testing
+spring:
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:test;MODE=PostgreSQL
+    #schema: classpath:/schema.sql
+
 security:
-  # specify test users accounts
+  # dev/test users account
   user:
      name: user
      password: test
      role: USER
-  # specify test clients
+  # dev/test clients
   oauth2:
     client:
       clientId: simpleTestClient
       clientSecret: simpleSecret
-      scope: read,write
+      authorized-grant-types: authorization_code,client_credentials,password,refresh_token
+      scope: read,write,openid
       # to skip the explicit approval step enable auto-approve
       # auto-approve-scopes: '.*'
+
+    # Public and private keys defined here are only used for testing purposes! Production private-key has to remain a secret
+    # To generate a new key use:
+    # openssl genrsa -out jwt.pem 2048
+    # openssl rsa -in jwt.pem
+    privateKey: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEAsVordTPHFQ21tOPHYgKTs0QXwN7pPvbK0dftD21bKwuRZt5K
+      fjLYwleQ0SXD/NvRpWeB53THt9OJOdYMUxMaN2cC2BZaUeMKmH6afUk93A9ctU2l
+      iWfBcoPusWCd4vr/A6AEowuhGd7AxsJOXuqiR7gnibTK4vXLkfSnX4mGH+aahV0d
+      6UbKDG/qli2WT0axBEcRorUSCwFX77lmeToDQxTiira5XIZVAnQlh5OerNY1Ni1H
+      wb3is8/XTKaOQsGsDm2YIWZinTORxNBviuE9aGh0ae81ZWCMw+eaEJa1j89nYVWE
+      emWI0a5UTB8u1HQx2ZiPcEzPKKaCgEGW/EnCCQIDAQABAoIBAGj+2AGQAMmfDzcj
+      LrQAkI6tvl5J2c6T7ukiq07Z0AKA27kJ2xIxahBMJQkdEZWOUeRZjheIFIDo9DHQ
+      XgWEpp2sF4v0V85o2qoDMdUAWmYAlkMjz9+0FFuGbfaHG5H4RKdRwc0BIoQdUwWY
+      nSsmP6K0DHxDE2YgXD9xlvFBiq0xLHh2TGtC6/nSauiyZ2TG7BG3tb70BMZvelxE
+      PY5bzbSPkkjylzrg6vnJKfR6Svxie7iGKm/kHJ0CmHrdSTS4UrDhdAdMMOxktkVQ
+      cgAt6Hp21tcGM9Qt0vv0QONUnj9bj1kZKgyhWCyANniDz9l8JqpB6O297OTu6T8w
+      XRxolT0CgYEA6Odhru4QQc45cmqM+jA01pDnlyBTp6569YuM+sZd1MPjR4Y2jexl
+      lFpdCmqSumXILCNE61iUBAjDh/IuJz2jCIon+k/EF2V5Qkn5F1HcTIMGeLtQNryi
+      pmjJrkYRmstMLM9b+9bbIOrYvHiNgCfr8vNhv/kKXPA22sGktQKS3zMCgYEAwvCG
+      qTZnA3bhnpjYA3kSjBFJdSWyzg/8NvbYcp9rcHgL02bOg7Kiyf6wg3266LvAoeEg
+      LLTC1JXflbMLfKsZI8oGtEEMVJ9rYSfwFd/n5fylRMUvsudcMaeuBKfPgEKH+Yqg
+      rsHovYUPn6WhlNPDugYctrLoTHJ80upT7psRCdMCgYEAn4Wbyo0UZX4yqsOAO/y4
+      tB4cAc8KfVdssLIcpccojYp+KYcr5pl8Gdiq0W+dgD4mlNSzZ98LwpeeFYczRX1a
+      JYc7Sp9H2B6Qp26zRd2z3lQAIsFpd5RMc15ihRNJC5UjX63Hev72p90zBiQsBxNQ
+      8N7ynOKeznlZmQv5HGHe5zECgYB5l2mHNkW+5XIJaLCkSeqFr2qwRVloKpRY/FM5
+      +7IaLubBb8i0YMIlWFVlTxE8hY+76R4WhJFZ5DnXuBwcIOTHbAYOfNxiFCX4Ld8U
+      5dpRm+rCIHSGFMVuu3ZRtRI6oEUMI6niF1VCkTKTk85bdFMLPzC9zI4U0PyG2l6L
+      3/EavQKBgHUSSfgkJhENeXhAsunZv2Gyj+bm399Um5s4dhRMckpPxu4XlRcj+2sa
+      x7ftvJtX8g2voHAMWytxSJ6VgNuwkpzoU62ug7DlNM6jQglbdMlNcfsoGAbJ7Dd4
+      fNX0R/xNwd70Lk5Ps7CAaZXRuNmhCBhJFXcR2UznpLaB1bFKf8NI
+      -----END RSA PRIVATE KEY-----
+
+    # openssl rsa -in jwt.pem -pubout
+    publicKey: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsVordTPHFQ21tOPHYgKT
+      s0QXwN7pPvbK0dftD21bKwuRZt5KfjLYwleQ0SXD/NvRpWeB53THt9OJOdYMUxMa
+      N2cC2BZaUeMKmH6afUk93A9ctU2liWfBcoPusWCd4vr/A6AEowuhGd7AxsJOXuqi
+      R7gnibTK4vXLkfSnX4mGH+aahV0d6UbKDG/qli2WT0axBEcRorUSCwFX77lmeToD
+      QxTiira5XIZVAnQlh5OerNY1Ni1Hwb3is8/XTKaOQsGsDm2YIWZinTORxNBviuE9
+      aGh0ae81ZWCMw+eaEJa1j89nYVWEemWI0a5UTB8u1HQx2ZiPcEzPKKaCgEGW/EnC
+      CQIDAQAB
+      -----END PUBLIC KEY-----
 
 logging:
   level:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
+
+---
+
+# production datasource
+spring:
+  profiles: production
+  datasource:
+    url: jdbc:postgresql://localhost/test
+    username: root
+    password: changeme
+    driverClassName: org.postgresql.Driver
+    schema:
+

@@ -12,7 +12,7 @@ import java.security.Principal;
 
 /**
  * Very simple test client application that connects to our oauth2 server using Spring-Boot
- * Start this application and go to http://localhost:8080
+ * Start this application and go to http://localhost:8082
  * To avoid auto-login from previously stored cookies it's recommended to do this in a private tab in your browser.
  *
  * Created by Patrick Ehlert on 5-4-17.

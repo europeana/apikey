@@ -16,15 +16,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
-import java.io.Serializable;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +32,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 
 /**
  * Integration tests to check whether resources are secure and the OAuth2 login procedure works as expected
- * <p>
+ *
  * Created by patrick on 14-4-17.
  */
 @RunWith(SpringRunner.class)
@@ -228,6 +222,8 @@ public class OAuthLoginTest {
         String refreshToken = jsonResponse.get("refresh_token").toString();
         LOG.info("OAuth2 access token = "+accessToken);
         LOG.info("OAuth2 refresh token = "+refreshToken);
+
+        //TODO step 6b. optional, read data embedded in token
 
         // step 7. check if we can access the requested resource with our token
         // Note that this should work even if we do not reuse the session here!
