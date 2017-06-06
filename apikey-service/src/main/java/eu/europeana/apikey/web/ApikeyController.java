@@ -99,7 +99,7 @@ public class ApikeyController {
         }
 
         if (!StringUtils.isEmpty(method)) {
-            if (!method.equalsIgnoreCase(READ) || method.equalsIgnoreCase(WRITE)){
+            if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)){
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
@@ -107,7 +107,8 @@ public class ApikeyController {
         // retrieve apikey & check if available
         ApiKey apikey = this.apiKeyRepo.findOne(id);
         if (null == apikey){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            headers.add("Apikey-not-found", "");
+            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
@@ -129,11 +130,11 @@ public class ApikeyController {
         headers.add("X-RateLimit-Reset", String.valueOf(new Duration(nowDtUtc, nowDtUtc.plusDays(1).withTimeAtStartOfDay()).toStandardSeconds().getSeconds()));
 
         if (remaining <= 0l){
-            // no way, José!
+            // You shall not pass!
             headers.add("X-RateLimit-Remaining", String.valueOf(0));
             return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
         } else {
-            // welcome, gringo!
+            // Welcome, gringo!
             headers.add("X-RateLimit-Remaining", String.valueOf(remaining - 1));
             apikey.setUsage(usage + 1);
             this.apiKeyRepo.save(apikey);
