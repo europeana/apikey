@@ -22,12 +22,15 @@
 
 package eu.europeana.apikey.web;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import eu.europeana.apikey.domain.View;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
@@ -37,6 +40,7 @@ import eu.europeana.apikey.util.ApiName;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Date;
 
@@ -71,10 +75,17 @@ public class ApikeyController {
         return new ResponseEntity<>(page, HttpStatus.OK);
     }
 
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
+    @CrossOrigin(maxAge = 600)
+    @JsonView(View.Public.class)
+    @RequestMapping(path = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiKey> get(@PathVariable("id") String id) {
+        HttpHeaders headers = new HttpHeaders();
         ApiKey apikey = this.apiKeyRepo.findOne(id);
-        return new ResponseEntity<>(apikey, HttpStatus.OK);
+        if (null == apikey){
+            headers.add("Apikey-not-found", "apikey-not-found");
+            return new ResponseEntity<>(apikey, headers, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
 
     @RequestMapping(path = "/{id}/validate", method = RequestMethod.POST)
@@ -107,7 +118,7 @@ public class ApikeyController {
         // retrieve apikey & check if available
         ApiKey apikey = this.apiKeyRepo.findOne(id);
         if (null == apikey){
-            headers.add("Apikey-not-found", "");
+            headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 

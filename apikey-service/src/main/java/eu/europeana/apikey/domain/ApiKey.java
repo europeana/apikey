@@ -21,16 +21,17 @@
 
 package eu.europeana.apikey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import static eu.europeana.apikey.util.Tools.nvl;
 
@@ -63,6 +64,7 @@ public class ApiKey {
 	@Size(max = 100)
 	@Column(name = "website")
 	@JsonProperty("website")
+	@JsonView(View.Public.class)
 	private String website;
 
 	@Column(name = "activationdate")
@@ -73,11 +75,13 @@ public class ApiKey {
 	@Size(max = 255)
 	@Column(name = "appname")
 	@JsonProperty("appname")
+	@JsonView(View.Public.class)
 	private String appName;
 
 	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
+	@JsonView(View.Public.class)
 	private String company;
 
 	@Size(max = 255)
@@ -89,16 +93,19 @@ public class ApiKey {
 	@Size(max = 100)
 	@Column(name = "email")
 	@JsonProperty("email")
+	@JsonView(View.Public.class)
 	private String email;
 
 	@Size(max = 50)
 	@Column(name = "firstname")
 	@JsonProperty("firstname")
+	@JsonView(View.Public.class)
 	private String firstName;
 
 	@Size(max = 50)
 	@Column(name = "lastname")
 	@JsonProperty("lastname")
+	@JsonView(View.Public.class)
 	private String lastName;
 
 	@NotNull
