@@ -75,6 +75,43 @@ public class ApikeyController {
         return new ResponseEntity<>(page, HttpStatus.OK);
     }
 
+
+    /**
+     * Invalidate a given Apikey. This is done by setting the deprecationdate column to the current time; the data
+     * remain available in the database
+     *
+     * @param id the apikey to invalidate
+     * @return HTTP 204 upon successful execution
+     *         HTTP 401 in case of an invalid request
+     *         HTTP 403 if the request is unauthorised
+     *         HTTP 404 when the requested Apikey is not found in the database
+     *         Addionally, the following fields can be available in the response header:
+     *         -> "Apikey-not-found", containing the string "apikey-not-found" is added when the Apikey is not found
+     *         to help positively identifying this HTTP 404 from one returned by the webserver for other reasons
+     */
+    @CrossOrigin(maxAge = 600)
+    @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> delete(@PathVariable("id") String id) {
+        ApiKey apikey = this.apiKeyRepo.findOne(id);
+        HttpHeaders headers = new HttpHeaders();
+        if (null == apikey){
+            headers.add("Apikey-not-found", "apikey-not-found");
+            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+        }
+        apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
+        this.apiKeyRepo.save(apikey);
+        return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Retrieves the details associated with the registration of a given Apikey
+     *
+     * @param id the apikey to retrieve
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *         HTTP 200 upon successful execution
+     *         HTTP 404 when the requested Apikey is not found in the database
+     *         HTTP 406 if a MIME type other than application/JSON was requested
+     */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
     @RequestMapping(path = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -87,14 +124,30 @@ public class ApikeyController {
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
-
+    /**
+     * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the
+     * current date and +1 increments the usage count of this Apikey.
+     *
+     * @param id the apikey to validate
+     * @return HTTP 204 upon successful validation
+     *         HTTP 400 if a mandatory parameter is missing
+     *         HTTP 404 when the requested Apikey is not found in the database
+     *         HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
+     *         HTTP 429 if the assigned usagelimit has been reached
+     *         Addionally, the following fields are (optionally) available in the response header:
+     *         -> "X-RateLimit-Remaining" access usage number since the previous reset
+     *         -> "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
+     *         -> "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey is not found
+     *                                    to help positively identifying this HTTP 404 from one returned by the
+     *                                    webserver for other reasons
+     */
     @RequestMapping(path = "/{id}/validate", method = RequestMethod.POST)
     public ResponseEntity<ApiKey> validate(
             @PathVariable("id") String id,
             @RequestParam(value = "api", required = false) String api,
             @RequestParam(value = "method", required = false) String method) {
 
-        ApiName apiName;
+        ApiName apiName; //TODO usage not implemented yet
         HttpHeaders headers = new HttpHeaders();
         DateTime nowDtUtc = new DateTime(DateTimeZone.UTC);
         Date now = nowDtUtc.toDate();
@@ -189,12 +242,4 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.ACCEPTED); // HTTP 202
         }
     }
-
-
-//    @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
-//    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
-//        this.apiKeyRepo.delete(id);
-//        return new ResponseEntity<>(HttpStatus.ACCEPTED);
-//    }
-
 }
