@@ -144,7 +144,8 @@ public class ApiKey {
 		this.email = email;
 		this.level = level;
 		this.registrationDate = new Date();
-		this.usage = 10000l;
+		this.usageLimit = 10000L;
+		this.usage = 0L;
 	}
 
 	public String getApiKey() {
