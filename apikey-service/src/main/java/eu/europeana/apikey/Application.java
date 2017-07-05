@@ -23,13 +23,16 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.domain.ApiKey;
+import eu.europeana.apikey.mail.MailServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configurers.GlobalAuthenticationConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,8 +47,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 import eu.europeana.apikey.repos.ApiKeyRepo;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @SpringBootApplication
+@ComponentScan("eu.europeana.apikey")
 public class Application {
 
     public static void main(String[] args) {
@@ -131,4 +137,30 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().csrf().disable();
     }
 
+}
+
+@Configuration
+@EnableWebMvc
+class MailConfig extends WebMvcConfigurerAdapter {
+    @Bean
+    public SimpleMailMessage apikeyCreatedMail() {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setText("Dear %s %s,%n%nThank you for registering for the Europeana API.%n%n" +
+                "These are your Europeana API keys: %n%n==========%n" +
+                "API key      : %s %nPrivate key  : %s %n==========%n%n" +
+                "Please keep a safe record of these keys.%nThe API key is used in all API calls, including the core " +
+                "search and record methods. This key does not need to be kept confidential.%n" +
+                "The private key is used for specific methods that require additional user authentication. %n" +
+                "It must be kept confidential and must not be exposed in user interfaces or in markup%n%n." +
+                "Our technical documentation is available at http://labs.europeana.eu/api/ including an API console " +
+                "for testing the API, and community developed libraries for a variety of programming languages.%n%n" +
+                "Please join us in the Europeana API Forum - https://groups.google.com/forum/?pli=1#!forum/europeanaapi " +
+                "- to ask questions to us and other developers and to give us your feedback on our API. " +
+                "You can also contact us directly by mailing api@europeana.eu and we'd be especially grateful " +
+                "if you would let us know about your implementation so that we can feature it in our application " +
+                "gallery on Europeana Labs - http://labs.europeana.eu/apps%n%n" +
+                "Best regards,%nThe Europeana API Team%n%nMore about the Europeana API services - " +
+                "http://labs.europeana.eu/");
+        return message;
+    }
 }

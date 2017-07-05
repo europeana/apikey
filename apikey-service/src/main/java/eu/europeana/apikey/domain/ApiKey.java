@@ -23,6 +23,7 @@ package eu.europeana.apikey.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.springframework.context.annotation.Primary;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
@@ -64,7 +65,6 @@ public class ApiKey {
 	@Size(max = 100)
 	@Column(name = "website")
 	@JsonProperty("website")
-	@JsonView(View.Public.class)
 	private String website;
 
 	@Column(name = "activationdate")
@@ -76,37 +76,40 @@ public class ApiKey {
 	@Column(name = "appname")
 	@JsonProperty("appname")
 	@JsonView(View.Public.class)
-	private String appName;
+	protected String appName;
 
 	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
 	@JsonView(View.Public.class)
-	private String company;
+	protected String company;
 
 	@Size(max = 255)
 	@Column(name = "description")
 	@JsonProperty("description")
-	private String description;
+	@JsonView(View.Public.class)
+	protected String description;
 
 	@NotNull
 	@Size(max = 100)
 	@Column(name = "email")
 	@JsonProperty("email")
 	@JsonView(View.Public.class)
-	private String email;
+	protected String email;
 
+	@NotNull
 	@Size(max = 50)
 	@Column(name = "firstname")
 	@JsonProperty("firstname")
 	@JsonView(View.Public.class)
-	private String firstName;
+	protected String firstName;
 
+	@NotNull
 	@Size(max = 50)
 	@Column(name = "lastname")
 	@JsonProperty("lastname")
 	@JsonView(View.Public.class)
-	private String lastName;
+	protected String lastName;
 
 	@NotNull
 	@Size(max = 8)
@@ -133,12 +136,15 @@ public class ApiKey {
 
 	}
 
-	public ApiKey(String apiKey, String privateKey, String email, String level) {
+	public ApiKey(String apiKey, String privateKey, String firstName, String lastName, String email, String level) {
 		this.apiKey = apiKey;
 		this.privateKey = privateKey;
+		this.firstName = firstName;
+		this.lastName = lastName;
 		this.email = email;
 		this.level = level;
 		this.registrationDate = new Date();
+		this.usage = 10000l;
 	}
 
 	public String getApiKey() {
