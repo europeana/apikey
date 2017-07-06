@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +51,9 @@ import org.springframework.stereotype.Component;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SpringBootApplication
 @ComponentScan("eu.europeana.apikey")
@@ -139,9 +144,74 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
 }
 
+@Component
+@ConfigurationProperties("europeanamail")
+class EuropeanaMailProperties {
+    private String register_api_to;
+    private String register_api_from;
+    private String admin_to;
+    private String system_from;
+    private String register_to;
+    private String feedback_to;
+    private String exception_to;
+    private String feedback_from;
+
+    public String getRegister_api_to() {
+        return register_api_to;
+    }
+    public void setRegister_api_to(String register_api_to) {
+        this.register_api_to = register_api_to;
+    }
+    public String getRegister_api_from() {
+        return register_api_from;
+    }
+    public void setRegister_api_from(String register_api_from) {
+        this.register_api_from = register_api_from;
+    }
+    public String getAdmin_to() {
+        return admin_to;
+    }
+    public void setAdmin_to(String admin_to) {
+        this.admin_to = admin_to;
+    }
+    public String getSystem_from() {
+        return system_from;
+    }
+    public void setSystem_from(String system_from) {
+        this.system_from = system_from;
+    }
+    public String getRegister_to() {
+        return register_to;
+    }
+    public void setRegister_to(String register_to) {
+        this.register_to = register_to;
+    }
+    public String getFeedback_to() {
+        return feedback_to;
+    }
+    public void setFeedback_to(String feedback_to) {
+        this.feedback_to = feedback_to;
+    }
+    public String getException_to() {
+        return exception_to;
+    }
+    public void setException_to(String exception_to) {
+        this.exception_to = exception_to;
+    }
+    public String getFeedback_from() {
+        return feedback_from;
+    }
+    public void setFeedback_from(String feedback_from) {
+            this.feedback_from = feedback_from;
+        }
+
+}
+
 @Configuration
 @EnableWebMvc
 class MailConfig extends WebMvcConfigurerAdapter {
+    @Autowired
+    private EuropeanaMailProperties europeanaMailProperties;
     @Bean
     public SimpleMailMessage apikeyCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -161,6 +231,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "gallery on Europeana Labs - http://labs.europeana.eu/apps%n%n" +
                 "Best regards,%nThe Europeana API Team%n%nMore about the Europeana API services - " +
                 "http://labs.europeana.eu/");
+        message.setFrom(europeanaMailProperties.getSystem_from());
         return message;
     }
 }

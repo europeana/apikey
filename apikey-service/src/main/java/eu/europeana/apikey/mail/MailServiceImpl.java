@@ -39,12 +39,13 @@ public class MailServiceImpl implements MailService {
     @Autowired
     public JavaMailSender emailSender;
 
-    public void sendSimpleMessage(String to, String subject, String text) {
+    public void sendSimpleMessage(String from, String to, String subject, String messageBody) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(from);
             message.setTo(to);
             message.setSubject(subject);
-            message.setText(text);
+            message.setText(messageBody);
 
             emailSender.send(message);
         } catch (MailException exception) {
@@ -57,14 +58,14 @@ public class MailServiceImpl implements MailService {
                                                String subject,
                                                SimpleMailMessage template,
                                                String ...templateArgs) {
-        String text = String.format(template.getText(), (String[]) templateArgs);
-        sendSimpleMessage(to, subject, text);
+        String messageBody = String.format(template.getText(), (String[]) templateArgs);
+        sendSimpleMessage(template.getFrom(), to, subject, messageBody);
     }
 
     @Override
     public void sendMessageWithAttachment(String to,
                                           String subject,
-                                          String text,
+                                          String messageBody,
                                           String pathToAttachment) {
         try {
             MimeMessage message = emailSender.createMimeMessage();
@@ -73,7 +74,7 @@ public class MailServiceImpl implements MailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text);
+            helper.setText(messageBody);
 
             FileSystemResource file = new FileSystemResource(new File(pathToAttachment));
             helper.addAttachment("Invoice", file);
