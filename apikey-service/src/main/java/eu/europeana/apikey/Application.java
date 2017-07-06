@@ -221,7 +221,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "Please keep a safe record of these keys.%nThe API key is used in all API calls, including the core " +
                 "search and record methods. This key does not need to be kept confidential.%n" +
                 "The private key is used for specific methods that require additional user authentication. %n" +
-                "It must be kept confidential and must not be exposed in user interfaces or in markup%n%n." +
+                "It must be kept confidential and must not be exposed in user interfaces or in markup.%n%n" +
                 "Our technical documentation is available at http://labs.europeana.eu/api/ including an API console " +
                 "for testing the API, and community developed libraries for a variety of programming languages.%n%n" +
                 "Please join us in the Europeana API Forum - https://groups.google.com/forum/?pli=1#!forum/europeanaapi " +
