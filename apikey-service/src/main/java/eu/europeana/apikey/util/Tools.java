@@ -24,6 +24,7 @@ package eu.europeana.apikey.util;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.util.StringUtils;
+
 import java.util.Date;
 import java.util.Random;
 

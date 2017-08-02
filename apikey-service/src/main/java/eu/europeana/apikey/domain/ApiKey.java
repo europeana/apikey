@@ -21,6 +21,7 @@
 
 package eu.europeana.apikey.domain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.context.annotation.Primary;
@@ -36,7 +37,7 @@ import java.util.Date;
 
 import static eu.europeana.apikey.util.Tools.nvl;
 
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "apikey")
 public class ApiKey {

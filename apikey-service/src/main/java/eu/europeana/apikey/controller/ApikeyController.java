@@ -22,13 +22,11 @@
 
 package eu.europeana.apikey.controller;
 
-import eu.europeana.apikey.domain.ApiKeyCreate;
-import eu.europeana.apikey.domain.View;
-import eu.europeana.apikey.domain.Level;
+import eu.europeana.apikey.domain.*;
 import eu.europeana.apikey.mail.MailServiceImpl;
+import eu.europeana.apikey.domain.ApiKeyException;
 import eu.europeana.apikey.util.PassGenerator;
 import eu.europeana.apikey.util.Tools;
-import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import org.apache.commons.lang.math.RandomUtils;
@@ -44,6 +42,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
 
@@ -113,22 +112,26 @@ public class ApikeyController {
     @RequestMapping(method = RequestMethod.POST,
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiKey> save(@RequestBody ApiKeyCreate apiKeyCreate) {
+    public ResponseEntity<Object> save(@RequestBody ApiKeyCreate apiKeyCreate) {
         if (null == apiKeyCreate.getFirstName()){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(
+                    new ApiKeyException(400, "missing parameter", "required parameter 'firstName' not provided"), HttpStatus.BAD_REQUEST);
         }
         if (null == apiKeyCreate.getLastName()){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(
+                    new ApiKeyException(400, "missing parameter", "required parameter 'lastName' not provided"), HttpStatus.BAD_REQUEST);
         }
         if (null == apiKeyCreate.getEmail()){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(
+                    new ApiKeyException(400, "missing parameter", "required parameter 'email' not provided"), HttpStatus.BAD_REQUEST);
         }
         if (null == apiKeyCreate.getLevel() ||
              (!apiKeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) &&
               !apiKeyCreate.getLevel().equalsIgnoreCase(Level.CLIENT.getLevelName()) &&
               !apiKeyCreate.getLevel().equalsIgnoreCase("default"))
             ){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(
+                    new ApiKeyException(400, "missing or wrong parameter", "parameter 'level': [default|CLIENT|ADMIN]"), HttpStatus.BAD_REQUEST);
         }
 
         PassGenerator pg = new PassGenerator();
@@ -150,12 +153,12 @@ public class ApikeyController {
         if (null != apiKeyCreate.getDescription()) apikey.setDescription(apiKeyCreate.getDescription());
         this.apiKeyRepo.save(apikey);
 
-        emailService.sendSimpleMessageUsingTemplate(
-                apikey.getEmail(),
-                "Your Europeana API keys",
-                apikeyCreatedMail,
-                apikey.getFirstName(), apikey.getLastName(),
-                apikey.getApiKey(), apikey.getPrivateKey());
+//        emailService.sendSimpleMessageUsingTemplate(
+//                apikey.getEmail(),
+//                "Your Europeana API keys",
+//                apikeyCreatedMail,
+//                apikey.getFirstName(), apikey.getLastName(),
+//                apikey.getApiKey(), apikey.getPrivateKey());
         return new ResponseEntity<>(apikey, HttpStatus.CREATED);
     }
 
@@ -328,4 +331,18 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.ACCEPTED); // HTTP 202
         }
     }
+
+    @ResponseStatus(value=HttpStatus.CONFLICT,
+                    reason="Data integrity violation")  // 409
+    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
+    public void conflict(){
+        // rien du tout
+    }
+//    public ResponseEntity<Object> handleThis(@PathVariable("id") String id) {
+//        return new ResponseEntity<Object>(
+//                new ApiKeyException(406, "unacceptable request header", "header 'Accept' must be 'application/json"), HttpStatus.BAD_REQUEST);
+//
+//    }
+
+
 }
