@@ -17,6 +17,8 @@
 
 package eu.europeana.apikey.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyException;
 import org.springframework.http.HttpStatus;
@@ -25,8 +27,11 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * This class functions as a global catch to tame wild uncouth exceptions with and learn them some manners
@@ -39,22 +44,22 @@ public class ExceptionControllerAdvice {
     private static final String ERROR_406 = "unacceptable request header";
     private static final String MESSAGE_406 = "header 'Accept' must be 'application/json";
 
-//    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
-//    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-//    public ModelAndView handleMediaTypeNotAcceptable(HttpServletRequest req, HttpMediaTypeNotAcceptableException ex){
-//        ObjectMapper mapper = new ObjectMapper();
-//        ApiKeyException apiKeyException = new ApiKeyException(STATUS_406, ERROR_406, MESSAGE_406);
-//        Map<String, Object> model = new LinkedHashMap<>();
-//        try {
-//            String jsonInString = mapper.writeValueAsString(apiKeyException);
-//            model.put("json", jsonInString);
-//        } catch (JsonProcessingException e) {
-//            model.put("status", String.valueOf(STATUS_406));
-//            model.put("error", ERROR_406);
-//            model.put("message", MESSAGE_406);
-//        }
-//        return new ModelAndView("json", model);
-//    }
+    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public ModelAndView handleMediaTypeNotAcceptable(HttpServletRequest req, HttpMediaTypeNotAcceptableException ex){
+        ObjectMapper        mapper          = new ObjectMapper();
+        ApiKeyException     apiKeyException = new ApiKeyException(STATUS_406, ERROR_406, MESSAGE_406);
+        Map<String, Object> model           = new LinkedHashMap<>();
+        try {
+            String jsonInString = mapper.writeValueAsString(apiKeyException);
+            model.put("json", jsonInString);
+        } catch (JsonProcessingException e) {
+            model.put("status", String.valueOf(STATUS_406));
+            model.put("error", ERROR_406);
+            model.put("message", MESSAGE_406);
+        }
+        return new ModelAndView("json", model);
+    }
 
 //    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
 //    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
@@ -63,11 +68,11 @@ public class ExceptionControllerAdvice {
 //                new ApiKeyException(406, "unacceptable request header", "header 'Accept' must be 'application/json"), HttpStatus.BAD_REQUEST);
 //    }
 
-    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
-    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-    public ResponseEntity<ApiKey> handleMediaTypeNotAcceptable(HttpServletRequest req, HttpMediaTypeNotAcceptableException ex){
-        return new ResponseEntity<>(
-                new ApiKey("1", "baikalmeer", "6", "244", "wepst", "gnap"), HttpStatus.NOT_ACCEPTABLE);
-    }
+//    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
+//    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+//    public ResponseEntity<ApiKey> handleMediaTypeNotAcceptable(HttpServletRequest req, HttpMediaTypeNotAcceptableException ex){
+//        return new ResponseEntity<>(
+//                new ApiKey("1", "baikalmeer", "6", "244", "wepst", "gnap"), HttpStatus.NOT_ACCEPTABLE);
+//    }
 
 }
