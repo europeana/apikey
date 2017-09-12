@@ -45,7 +45,8 @@ public class OAuthLoginTest {
 
     private static final String OAUTH_LOGIN_REQUEST = "/oauth/authorize?" +
             "client_id=unit_test&redirect_uri="+PROTECTED_RESOURCE+"&response_type=code&state=mjHhKz&scope=read";
-    private static final String OAUTH_ACCESS_TOKEN_REQUEST = "/oauth/token?grant_type=authorization_code";
+    private static final String OAUTH_USER_LOGIN_TOKEN_REQUEST = "/oauth/token?grant_type=authorization_code";
+    private static final String OAUTH_TRUSTED_CLIENT_TOKEN_REQUEST = "/oauth/token?grant_type=client_credentials";
     private static final String OAUTH_REFRESH_TOKEN_REQUEST = "/oauth/token?grant_type=refresh_token";
 
     @Autowired
@@ -115,13 +116,13 @@ public class OAuthLoginTest {
     }
 
     /**
-     * This tests the entire OAuth2 authentication flow as we use it most commonly (clientApp requests resource, a login
-     * page is shown to the user, user logs in, approval page is shown and user accepts this).
+     * This tests the entire OAuth2 Authorization Grant flow as we use it most commonly (clientApp requests resource, a
+     * login page is shown to the user, user logs in, approval page is shown and user accepts this).
      *
      * @throws Exception
      */
     @Test
-    public void testUserLogin() throws Exception {
+    public void testAuthorizationGrant() throws Exception {
         // we store the session after each step and inject it when doing the next step (necessary for csrf-token validation)
         MockHttpSession session = null;
         String nextUrl = null;
@@ -206,7 +207,7 @@ public class OAuthLoginTest {
 
         // step 6. Request a token
         byte[] encodedClientCredentials = Base64.encodeBase64("unit_test:test".getBytes());
-        result = this.mockServer.perform(post(OAUTH_ACCESS_TOKEN_REQUEST+"&"+codeAndState)
+        result = this.mockServer.perform(post(OAUTH_USER_LOGIN_TOKEN_REQUEST +"&"+codeAndState)
                     .accept(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Basic "+new String(encodedClientCredentials))
                     .param("redirect_uri", PROTECTED_RESOURCE)
@@ -246,6 +247,18 @@ public class OAuthLoginTest {
                     .andReturn();
     }
 
+    //@Test
+    public void testTrustedClient() throws Exception {
+        // curl --user "simpleTestClient:simpleSecret" http://localhost:8888/oauth/token -d grant_type=client_credentials -d scope=read
+
+        byte[] encodedClientCredentials = Base64.encodeBase64("unit_test:test".getBytes());
+        MvcResult result = this.mockServer.perform(post(OAUTH_TRUSTED_CLIENT_TOKEN_REQUEST)
+                    .accept(MediaType.TEXT_HTML)
+                    .header("Authorization", "Basic "+new String(encodedClientCredentials)))
+                .andDo(print())
+                .andExpect(status().isFound())
+                .andReturn();
+    }
 
 
 }
