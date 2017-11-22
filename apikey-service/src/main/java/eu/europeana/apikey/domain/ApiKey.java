@@ -24,7 +24,6 @@ package eu.europeana.apikey.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.springframework.context.annotation.Primary;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
@@ -86,10 +85,10 @@ public class ApiKey {
 	protected String company;
 
 	@Size(max = 255)
-	@Column(name = "description")
-	@JsonProperty("description")
+	@Column(name = "sector")
+	@JsonProperty("sector")
 	@JsonView(View.Public.class)
-	protected String description;
+	protected String sector;
 
 	@NotNull
 	@Size(max = 100)
@@ -213,12 +212,12 @@ public class ApiKey {
 		this.company = company;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getSector() {
+		return sector;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setSector(String sector) {
+		this.sector = sector;
 	}
 
 	public String getEmail() {
@@ -292,7 +291,7 @@ public class ApiKey {
 				", appName = " + nvl(appName) +
 				", website = " + nvl(website) +
 				", company = " + nvl(company) +
-				", description = " + nvl(description) +
+				", sector = " + nvl(sector) +
 				", activationDate = " + nvl(activationDate) +
 				", registrationDate = " + nvl(registrationDate) +
 				", lastaccessDate = " + nvl(lastaccessDate) +

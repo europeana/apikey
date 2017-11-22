@@ -30,7 +30,7 @@ public class ApiKeyCreate {
 
     private String appName;
     private String company;
-    private String description;
+    private String sector;
     private String email;
     private String firstName;
     private String lastName;
@@ -45,8 +45,8 @@ public class ApiKeyCreate {
         return company;
     }
 
-    public String getDescription() {
-        return description;
+    public String getSector() {
+        return sector;
     }
 
     public String getEmail() {

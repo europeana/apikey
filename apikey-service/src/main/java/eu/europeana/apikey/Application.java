@@ -23,13 +23,12 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.domain.ApiKey;
-import eu.europeana.apikey.mail.MailServiceImpl;
+import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -46,14 +45,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
-import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @SpringBootApplication
 @ComponentScan("eu.europeana.apikey")
@@ -63,6 +57,13 @@ public class Application {
         SpringApplicationBuilder builder = new SpringApplicationBuilder();
         builder.sources(Application.class).run(args);
     }
+
+//    @Bean
+//    public ObjectMapper objectMapper() {
+//        return new ObjectMapper()
+//                .registerModule(new ProblemModule())
+//                .registerModule(new ConstraintViolationProblemModule());
+//    }
 
     @Component
     public static class SampleDataPopulator implements CommandLineRunner {
@@ -143,6 +144,22 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
 }
+
+//@Import(SecurityProblemSupport.class)
+//@Configuration
+//class SecurityConfiguration extends ResourceServerConfigurerAdapter {
+//
+//    @Autowired
+//    private SecurityProblemSupport problemSupport;
+//
+//    @Override
+//    public void configure(final HttpSecurity http) throws Exception {
+//        http.exceptionHandling()
+//                .authenticationEntryPoint(problemSupport)
+//                .accessDeniedHandler(problemSupport);
+//    }
+//
+//}
 
 @Component
 @ConfigurationProperties("europeanamail")

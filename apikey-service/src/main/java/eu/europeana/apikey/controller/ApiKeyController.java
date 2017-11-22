@@ -22,43 +22,52 @@
 
 package eu.europeana.apikey.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.domain.*;
 import eu.europeana.apikey.mail.MailServiceImpl;
-import eu.europeana.apikey.domain.ApiKeyException;
-import eu.europeana.apikey.util.PassGenerator;
-import eu.europeana.apikey.util.Tools;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import eu.europeana.apikey.util.ApiName;
+import eu.europeana.apikey.util.PassGenerator;
+import eu.europeana.apikey.util.Tools;
 import org.apache.commons.lang.math.RandomUtils;
-import com.fasterxml.jackson.annotation.JsonView;
-import org.joda.time.Duration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.web.HttpMediaTypeNotAcceptableException;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.zalando.problem.ProblemModule;
+import org.zalando.problem.validation.ConstraintViolationProblemModule;
 
 import javax.validation.Valid;
 import java.util.Date;
 
 @RestController
 @RequestMapping("/apikey")
-public class ApikeyController {
+public class ApiKeyController {
 
     private final ApiKeyRepo  apiKeyRepo;
     private static final String READ = "read";
     private static final String WRITE = "write";
 
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper()
+                .registerModule(new ProblemModule())
+                .registerModule(new ConstraintViolationProblemModule());
+    }
+
     @Autowired
-    public ApikeyController(ApiKeyRepo apiKeyRepo) {
+    public ApiKeyController(ApiKeyRepo apiKeyRepo) {
         this.apiKeyRepo = apiKeyRepo;
     }
 
@@ -91,7 +100,7 @@ public class ApikeyController {
      * The following fields are optional:
      * - company
      * - appName
-     * - description
+     * - sector
      *
      * The Apikey and Privatekey fields are generated: Apikey is a unique and random 'readable' lowercase string,
      * 8 to 12 characters long, e.g. 'rhossindri', 'viancones' or 'ebobrent'. Privatekey is a regular random string
@@ -150,7 +159,7 @@ public class ApikeyController {
                     Level.ADMIN.getLevelName() : Level.CLIENT.getLevelName());
         if (null != apiKeyCreate.getAppName()) apikey.setAppName(apiKeyCreate.getAppName());
         if (null != apiKeyCreate.getCompany()) apikey.setCompany(apiKeyCreate.getCompany());
-        if (null != apiKeyCreate.getDescription()) apikey.setDescription(apiKeyCreate.getDescription());
+        if (null != apiKeyCreate.getSector()) apikey.setSector(apiKeyCreate.getSector());
         this.apiKeyRepo.save(apikey);
 
 //        emailService.sendSimpleMessageUsingTemplate(
@@ -331,18 +340,6 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.ACCEPTED); // HTTP 202
         }
     }
-
-    @ResponseStatus(value=HttpStatus.CONFLICT,
-                    reason="Data integrity violation")  // 409
-    @ExceptionHandler(value = {HttpMediaTypeNotAcceptableException.class})
-    public void conflict(){
-        // rien du tout
-    }
-//    public ResponseEntity<Object> handleThis(@PathVariable("id") String id) {
-//        return new ResponseEntity<Object>(
-//                new ApiKeyException(406, "unacceptable request header", "header 'Accept' must be 'application/json"), HttpStatus.BAD_REQUEST);
-//
-//    }
 
 
 }

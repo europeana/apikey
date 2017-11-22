@@ -55,14 +55,25 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-        <version>1.5.4.RELEASE</version>
-    </dependency>
+            <version>1.5.4.RELEASE</version>
+        </dependency>
+
+        <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>problem-spring-web</artifactId>
+            <version>0.19.1</version>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth2</artifactId>
         </dependency>
     </dependencies>
 

@@ -49,6 +49,11 @@ public class ApiKeyException {
     @JsonProperty("additionalInfo")
     private String additionalInfo;
 
+
+    public ApiKeyException(Throwable ex) {
+        this.additionalInfo = ex.getMessage();
+    }
+
     public ApiKeyException(int status) {
         this.status = status;
     }
