@@ -190,10 +190,18 @@ public class ApiKeyController {
     public ResponseEntity<String> delete(@PathVariable("id") String id) {
         ApiKey apikey = this.apiKeyRepo.findOne(id);
         HttpHeaders headers = new HttpHeaders();
+
+        // check if apikey exists
         if (null == apikey){
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
+
+        // check if apikey is deprecated (deprecationDate != null & in the past)
+        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())){
+            return new ResponseEntity<>(HttpStatus.GONE);
+        }
+
         apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
         this.apiKeyRepo.save(apikey);
         return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
