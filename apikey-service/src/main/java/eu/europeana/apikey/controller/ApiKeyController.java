@@ -117,7 +117,7 @@ public class ApiKeyController {
      *         HTTP 406 if a response MIME type other than application/JSON was requested
      *         HTTP 415 if the submitted request does not contain a valid JSON body
      */
-    @JsonView(View.Public.class)
+//    @JsonView(View.Public.class) -- commented out for EA-725
     @RequestMapping(method = RequestMethod.POST,
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
