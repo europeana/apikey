@@ -26,8 +26,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  */
 
 @JsonInclude(NON_EMPTY)
-public class ApiKeyCreate {
+public class ApikeyCreate {
 
+    private String website;
     private String appName;
     private String company;
     private String sector;
@@ -36,6 +37,9 @@ public class ApiKeyCreate {
     private String lastName;
     private String level;
 
+    public String getWebsite() {
+        return website;
+    }
 
     public String getAppName() {
         return appName;

@@ -39,11 +39,12 @@ import static eu.europeana.apikey.util.Tools.nvl;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "apikey")
-public class ApiKey {
+public class Apikey {
 	@Id
 //	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "apikey")
 	@JsonProperty("apikey")
+	@JsonView(View.Public.class)
 	private String apiKey;
 
 	@NotNull
@@ -56,20 +57,24 @@ public class ApiKey {
 	@Column(name = "registrationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("registrationdate")
+	@JsonView(View.Public.class)
 	private Date registrationDate;
 
 	@Column(name = "usagelimit")
 	@JsonProperty("usagelimit")
+	@JsonView(View.Public.class)
 	private Long usageLimit;
 
 	@Size(max = 100)
 	@Column(name = "website")
 	@JsonProperty("website")
+	@JsonView(View.Public.class)
 	private String website;
 
 	@Column(name = "activationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("activationdate")
+	@JsonView(View.Public.class)
 	private Date activationDate;
 
 	@Size(max = 255)
@@ -120,23 +125,26 @@ public class ApiKey {
 	@Column(name = "deprecationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("deprecationdate")
+	@JsonView(View.Public.class)
 	private Date deprecationDate;
 
 	@Column(name = "lastaccessdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("lastaccessdate")
+	@JsonView(View.Public.class)
 	private Date lastaccessDate;
 
 	@NotNull
 	@Column(name = "usage")
 	@JsonProperty("usage")
+	@JsonView(View.Public.class)
 	private Long usage;
 
-	public ApiKey() {
+	public Apikey() {
 
 	}
 
-	public ApiKey(String apiKey, String privateKey, String firstName, String lastName, String email, String level) {
+	public Apikey(String apiKey, String privateKey, String firstName, String lastName, String email, String level) {
 		this.apiKey = apiKey;
 		this.privateKey = privateKey;
 		this.firstName = firstName;
@@ -279,7 +287,7 @@ public class ApiKey {
 
 	@Override
 	public String toString() {
-		return "ApiKey {" +
+		return "Apikey {" +
 				" apiKey = " + apiKey +
 				", privateKey = " + nvl(privateKey) +
 				", firstName = " + nvl(firstName) +

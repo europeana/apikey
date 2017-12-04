@@ -22,8 +22,8 @@
 
 package eu.europeana.apikey;
 
-import eu.europeana.apikey.domain.ApiKey;
-import eu.europeana.apikey.repos.ApiKeyRepo;
+import eu.europeana.apikey.domain.Apikey;
+import eu.europeana.apikey.repos.ApikeyRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -69,14 +69,14 @@ public class Application {
     public static class SampleDataPopulator implements CommandLineRunner {
 
         @Autowired
-        private ApiKeyRepo apiKeyRepo;
+        private ApikeyRepo apikeyRepo;
 
         @Override
         public void run(String... args) throws Exception {
         }
 
-//        private ApiKey saveIfNew(ApiKey apikey) {
-//            Optional<ApiKey> fromDb = this.courseRepo.findByCourseCode(apikey.getCourseCode());
+//        private Apikey saveIfNew(Apikey apikey) {
+//            Optional<Apikey> fromDb = this.courseRepo.findByCourseCode(apikey.getCourseCode());
 //
 //            if (!fromDb.isPresent()) {
 //                return this.courseRepo.save(apikey);
@@ -87,8 +87,8 @@ public class Application {
 //            return new Teacher(name, department);
 //        }
 
-//        private ApiKey sampleCourse(String courseCode, String courseName) {
-//            return new ApiKey(courseCode, courseName);
+//        private Apikey sampleCourse(String courseCode, String courseName) {
+//            return new Apikey(courseCode, courseName);
 //        }
     }
 }
@@ -96,7 +96,7 @@ public class Application {
 class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Autowired
-    ApiKeyRepo apiKeyRepo;
+    ApikeyRepo apikeyRepo;
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
@@ -109,7 +109,7 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
             @Override
             public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
-                ApiKey apikey = apiKeyRepo.findOne(id);
+                Apikey apikey = apikeyRepo.findOne(id);
                 // && apikey.getLevel().equalsIgnoreCase("ADMIN")
                 if(apikey != null) {
                     return new User(apikey.getApiKey(), apikey.getPrivateKey(),
