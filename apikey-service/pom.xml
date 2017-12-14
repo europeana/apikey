@@ -91,4 +91,11 @@
         </plugins>
     </build>
 
+    <scm>
+        <connection>scm:git:git@github.com:europeana/europeana-apikey.git</connection>
+        <developerConnection>scm:git:git@github.com:europeana/europeana-apikey.git</developerConnection>
+        <url>https://github.com/europeana/europeana-apikey</url>
+        <tag>HEAD</tag>
+    </scm>
+
 </project>
