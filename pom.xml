@@ -19,7 +19,6 @@
 
     <modules>
         <module>apikey-service</module>
-        <module>oauth2-service</module>
     </modules>
 
     <dependencies>
