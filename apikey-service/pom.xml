@@ -95,27 +95,7 @@
         <connection>scm:git:git@github.com:europeana/europeana-apikey.git</connection>
         <developerConnection>scm:git:git@github.com:europeana/europeana-apikey.git</developerConnection>
         <url>https://github.com/europeana/europeana-apikey</url>
-        <tag>apikey-0.1</tag>
+        <tag>HEAD</tag>
     </scm>
-
-    <!--<profiles>-->
-        <!--<profile>-->
-            <!--<id>release</id>-->
-            <!--<build>-->
-                <!--<plugins>-->
-                    <!--&lt;!&ndash; we need to deactivate the enforcer plugin for now, until we have a proper release of CRF &ndash;&gt;-->
-                    <!--<plugin>-->
-                        <!--<artifactId>maven-enforcer-plugin</artifactId>-->
-                        <!--<executions>-->
-                            <!--<execution>-->
-                                <!--<id>enforce-no-snapshots</id>-->
-                                <!--<phase>none</phase>-->
-                            <!--</execution>-->
-                        <!--</executions>-->
-                    <!--</plugin>-->
-                <!--</plugins>-->
-            <!--</build>-->
-        <!--</profile>-->
-    <!--</profiles>-->
 
 </project>
