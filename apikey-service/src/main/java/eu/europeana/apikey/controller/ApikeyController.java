@@ -48,7 +48,6 @@ import org.springframework.web.bind.annotation.*;
 import org.zalando.problem.ProblemModule;
 import org.zalando.problem.validation.ConstraintViolationProblemModule;
 
-import javax.validation.Valid;
 import java.util.Date;
 
 @RestController
@@ -78,11 +77,11 @@ public class ApikeyController {
     @Autowired
     public SimpleMailMessage apikeyCreatedMail;
 
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Apikey> zupdate(@RequestBody @Valid Apikey apikey) {
-        Apikey savedApikey = this.apikeyRepo.save(apikey);
-        return new ResponseEntity<>(savedApikey, HttpStatus.CREATED);
-    }
+//    @RequestMapping(method = RequestMethod.PUT)
+//    public ResponseEntity<Apikey> zupdate(@RequestBody @Valid Apikey apikey) {
+//        Apikey savedApikey = this.apikeyRepo.save(apikey);
+//        return new ResponseEntity<>(savedApikey, HttpStatus.CREATED);
+//    }
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Page<Apikey>> getPage(Pageable pageable) {
@@ -190,7 +189,7 @@ public class ApikeyController {
      *         HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
      *         HTTP 401 in case of an invalid request
      *         HTTP 403 if the request is unauthorised
-     *         HTTP 404 if the apike is not founs
+     *         HTTP 404 if the apike is not found
      *         HTTP 406 if a response MIME type other than application/JSON was requested
      *         HTTP 410 if the apikey is invalidated / deprecated
      *         HTTP 415 if the submitted request does not contain a valid JSON body
