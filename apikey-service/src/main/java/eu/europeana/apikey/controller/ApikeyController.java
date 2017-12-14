@@ -135,14 +135,14 @@ public class ApikeyController {
             return new ResponseEntity<>(
                     new ApikeyException(400, "missing parameter", "required parameter 'email' not provided"), HttpStatus.BAD_REQUEST);
         }
-        if (null == apikeyCreate.getLevel() ||
-             (!apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) &&
-              !apikeyCreate.getLevel().equalsIgnoreCase(Level.CLIENT.getLevelName()) &&
-              !apikeyCreate.getLevel().equalsIgnoreCase("default"))
-            ){
-            return new ResponseEntity<>(
-                    new ApikeyException(400, "missing or wrong parameter", "parameter 'level': [default|CLIENT|ADMIN]"), HttpStatus.BAD_REQUEST);
-        }
+//        if (null == apikeyCreate.getLevel() ||
+//             (!apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) &&
+//              !apikeyCreate.getLevel().equalsIgnoreCase(Level.CLIENT.getLevelName()) &&
+//              !apikeyCreate.getLevel().equalsIgnoreCase("default"))
+//            ){
+//            return new ResponseEntity<>(
+//                    new ApikeyException(400, "missing or wrong parameter", "parameter 'level': [default|CLIENT|ADMIN]"), HttpStatus.BAD_REQUEST);
+//        }
 
         PassGenerator pg = new PassGenerator();
         String newApiKey;
@@ -156,7 +156,8 @@ public class ApikeyController {
                 apikeyCreate.getFirstName(),
                 apikeyCreate.getLastName(),
                 apikeyCreate.getEmail(),
-                apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) ?
+                null != apikeyCreate.getLevel() &&
+                        apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) ?
                     Level.ADMIN.getLevelName() : Level.CLIENT.getLevelName());
         if (null != apikeyCreate.getWebsite()) apikey.setWebsite(apikeyCreate.getWebsite());
         if (null != apikeyCreate.getAppName()) apikey.setAppName(apikeyCreate.getAppName());
