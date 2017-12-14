@@ -12,7 +12,7 @@
     <description>Centralised Api Key service built on Spring Boot</description>
 
     <parent>
-        <artifactId>authentication</artifactId>
+        <artifactId>apikey</artifactId>
         <groupId>eu.europeana</groupId>
         <version>0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
