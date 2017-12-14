@@ -36,8 +36,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -83,11 +81,11 @@ public class ApikeyController {
 //        return new ResponseEntity<>(savedApikey, HttpStatus.CREATED);
 //    }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<Page<Apikey>> getPage(Pageable pageable) {
-        Page<Apikey> page = this.apikeyRepo.findAll(pageable);
-        return new ResponseEntity<>(page, HttpStatus.OK);
-    }
+//    @RequestMapping(method = RequestMethod.GET)
+//    public ResponseEntity<Page<Apikey>> getPage(Pageable pageable) {
+//        Page<Apikey> page = this.apikeyRepo.findAll(pageable);
+//        return new ResponseEntity<>(page, HttpStatus.OK);
+//    }
 
 
     /**
@@ -108,6 +106,8 @@ public class ApikeyController {
      *
      * Upon successful execution, the code will send an email message containing the Apikey and Privatekey to the
      * email address supplied in the request.
+     *
+     * @param apikeyCreate requestbody
      *
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *         HTTP 201 upon successful Apikey creation
@@ -175,7 +175,7 @@ public class ApikeyController {
     }
 
     /**
-     * Changes the registration details of an existing API key for the following public & non-generated values,
+     * Changes the registration details of an existing API key for the following public and non-generated values,
      * if they are supplied in the JSON request body:
      *
      * - firstName
