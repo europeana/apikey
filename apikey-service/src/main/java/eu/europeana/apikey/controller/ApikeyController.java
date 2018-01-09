@@ -107,7 +107,7 @@ public class ApikeyController {
      * Upon successful execution, the code will send an email message containing the Apikey and Privatekey to the
      * email address supplied in the request.
      *
-     * @param apikeyCreate requestbody
+     * @param apikeyCreate requestbody containing supplied values
      *
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *         HTTP 201 upon successful Apikey creation
@@ -185,6 +185,7 @@ public class ApikeyController {
      * - appName
      * - sector
      *
+     * @param apikeyUpdate RequestBody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *         HTTP 200 upon successful Apikey update
      *         HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
@@ -238,9 +239,9 @@ public class ApikeyController {
          *         HTTP 403 if the request is unauthorised
          *         HTTP 404 when the requested Apikey is not found in the database
          *         HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
-         *         Addionally, the following fields can be available in the response header:
-         *         -> "Apikey-not-found", containing the string "apikey-not-found" is added when the Apikey is not found
-         *         to help positively identifying this HTTP 404 from one returned by the webserver for other reasons
+         *         Addionally, the following fields can be available in the response header "Apikey-not-found",
+         *         containing the string "apikey-not-found" is added when the Apikey is not found
+         *         to help telling this HTTP 404 apart from one returned by the webserver for other reasons
          */
     @CrossOrigin(maxAge = 600)
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
@@ -289,7 +290,10 @@ public class ApikeyController {
      * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the
      * current date and +1 increments the usage count of this Apikey.
      *
-     * @param id the apikey to validate
+     * @param id     the apikey to validate
+     * @param api    API for which validate this apikey
+     * @param method method (read, write) for which validate this apikey
+     *
      * @return HTTP 204 upon successful validation
      *         HTTP 400 if a mandatory parameter is missing
      *         HTTP 401 in case of an invalid request
@@ -298,11 +302,11 @@ public class ApikeyController {
      *         HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
      *         HTTP 429 if the assigned usagelimit has been reached
      *         Addionally, the following fields are (optionally) available in the response header:
-     *         -> "X-RateLimit-Remaining" access usage number since the previous reset
-     *         -> "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
-     *         -> "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey is not found
-     *                                    to help positively identifying this HTTP 404 from one returned by the
-     *                                    webserver for other reasons
+     *         - "X-RateLimit-Remaining" access usage number since the previous reset
+     *         - "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
+     *         - "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey
+     *                                   is not found, to help telling this HTTP 404 apart from one returned
+     *                                   by the webserver for other reasons
      */
     @RequestMapping(path = "/{id}/validate", method = RequestMethod.POST)
     public ResponseEntity<Apikey> validate(

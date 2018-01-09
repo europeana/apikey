@@ -7,8 +7,8 @@ public class ClasspathResourceUtils {
 
     /**
      * Get a resource in classpath as a String
-     * @param path Well, it's the path.
-     * @return
+     * @param   path well, the path, obviously.
+     * @return  String containing resource
      *
      * based on http://stackoverflow.com/a/5445161/204788
      *
