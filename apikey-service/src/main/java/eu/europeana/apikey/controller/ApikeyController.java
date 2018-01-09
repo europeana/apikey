@@ -165,12 +165,12 @@ public class ApikeyController {
         if (null != apikeyCreate.getSector()) apikey.setSector(apikeyCreate.getSector());
         this.apikeyRepo.save(apikey);
 
-//        emailService.sendSimpleMessageUsingTemplate(
-//                apikey.getEmail(),
-//                "Your Europeana API keys",
-//                apikeyCreatedMail,
-//                apikey.getFirstName(), apikey.getLastName(),
-//                apikey.getApikey(), apikey.getPrivateKey());
+        emailService.sendSimpleMessageUsingTemplate(
+                apikey.getEmail(),
+                "Your Europeana API keys",
+                apikeyCreatedMail,
+                apikey.getFirstName(), apikey.getLastName(),
+                apikey.getApiKey(), apikey.getPrivateKey());
         return new ResponseEntity<>(apikey, HttpStatus.CREATED);
     }
 
