@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.*;
 import org.zalando.problem.ProblemModule;
 import org.zalando.problem.validation.ConstraintViolationProblemModule;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 @RestController
@@ -53,14 +54,13 @@ import java.util.Date;
 public class ApikeyController {
 
     private final ApikeyRepo apikeyRepo;
-    private static final String READ = "read";
+    private static final String READ  = "read";
     private static final String WRITE = "write";
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .registerModule(new ProblemModule())
-                .registerModule(new ConstraintViolationProblemModule());
+        return new ObjectMapper().registerModule(new ProblemModule())
+                                 .registerModule(new ConstraintViolationProblemModule());
     }
 
     @Autowired
@@ -94,6 +94,7 @@ public class ApikeyController {
      * - lastName
      * - email
      * - level (either 'default' or 'admin')
+     *
      * The following fields are optional:
      * - website
      * - company
@@ -107,15 +108,15 @@ public class ApikeyController {
      * Upon successful execution, the code will send an email message containing the Apikey and Privatekey to the
      * email address supplied in the request.
      *
-     * @param apikeyCreate requestbody containing supplied values
+     * @param   apikeyCreate requestbody containing supplied values
      *
-     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *         HTTP 201 upon successful Apikey creation
-     *         HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
-     *         HTTP 401 in case of an invalid request
-     *         HTTP 403 if the request is unauthorised
-     *         HTTP 406 if a response MIME type other than application/JSON was requested
-     *         HTTP 415 if the submitted request does not contain a valid JSON body
+     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *          HTTP 201 upon successful Apikey creation
+     *          HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 406 if a response MIME type other than application/JSON was requested
+     *          HTTP 415 if the submitted request does not contain a valid JSON body
      */
 //    @JsonView(View.Public.class) -- commented out for EA-725
     @CrossOrigin(maxAge = 600)
@@ -123,18 +124,11 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyCreate apikeyCreate) {
-        if (null == apikeyCreate.getFirstName()){
-            return new ResponseEntity<>(
-                    new ApikeyException(400, "missing parameter", "required parameter 'firstName' not provided"), HttpStatus.BAD_REQUEST);
+        String missing = mandatoryMissing(apikeyCreate);
+        if (!missing.equals("")){
+            return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
         }
-        if (null == apikeyCreate.getLastName()){
-            return new ResponseEntity<>(
-                    new ApikeyException(400, "missing parameter", "required parameter 'lastName' not provided"), HttpStatus.BAD_REQUEST);
-        }
-        if (null == apikeyCreate.getEmail()){
-            return new ResponseEntity<>(
-                    new ApikeyException(400, "missing parameter", "required parameter 'email' not provided"), HttpStatus.BAD_REQUEST);
-        }
+
 //        if (null == apikeyCreate.getLevel() ||
 //             (!apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) &&
 //              !apikeyCreate.getLevel().equalsIgnoreCase(Level.CLIENT.getLevelName()) &&
@@ -145,32 +139,40 @@ public class ApikeyController {
 //        }
 
         PassGenerator pg = new PassGenerator();
-        String newApiKey;
+        String        newApiKey;
         do {
             newApiKey = pg.generate(RandomUtils.nextInt(4) + 8);
         } while (null != this.apikeyRepo.findOne(newApiKey));
 
-        Apikey apikey = new Apikey(
-                newApiKey,
-                Tools.generatePassPhrase(10),
-                apikeyCreate.getFirstName(),
-                apikeyCreate.getLastName(),
-                apikeyCreate.getEmail(),
-                null != apikeyCreate.getLevel() &&
-                        apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) ?
-                    Level.ADMIN.getLevelName() : Level.CLIENT.getLevelName());
-        if (null != apikeyCreate.getWebsite()) apikey.setWebsite(apikeyCreate.getWebsite());
-        if (null != apikeyCreate.getAppName()) apikey.setAppName(apikeyCreate.getAppName());
-        if (null != apikeyCreate.getCompany()) apikey.setCompany(apikeyCreate.getCompany());
-        if (null != apikeyCreate.getSector()) apikey.setSector(apikeyCreate.getSector());
+        Apikey apikey = new Apikey(newApiKey,
+                                   Tools.generatePassPhrase(10),
+                                   apikeyCreate.getFirstName(),
+                                   apikeyCreate.getLastName(),
+                                   apikeyCreate.getEmail(),
+                                   null != apikeyCreate.getLevel() && apikeyCreate.getLevel()
+                                            .equalsIgnoreCase(Level.ADMIN.getLevelName()) ?
+                                            Level.ADMIN.getLevelName() : Level.CLIENT.getLevelName());
+        if (null != apikeyCreate.getWebsite()) {
+            apikey.setWebsite(apikeyCreate.getWebsite());
+        }
+        if (null != apikeyCreate.getAppName()) {
+            apikey.setAppName(apikeyCreate.getAppName());
+        }
+        if (null != apikeyCreate.getCompany()) {
+            apikey.setCompany(apikeyCreate.getCompany());
+        }
+        if (null != apikeyCreate.getSector()) {
+            apikey.setSector(apikeyCreate.getSector());
+        }
         this.apikeyRepo.save(apikey);
 
-        emailService.sendSimpleMessageUsingTemplate(
-                apikey.getEmail(),
-                "Your Europeana API keys",
-                apikeyCreatedMail,
-                apikey.getFirstName(), apikey.getLastName(),
-                apikey.getApiKey(), apikey.getPrivateKey());
+        emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
+                                                    "Your Europeana API keys",
+                                                    apikeyCreatedMail,
+                                                    apikey.getFirstName(),
+                                                    apikey.getLastName(),
+                                                    apikey.getApiKey(),
+                                                    apikey.getPrivateKey());
         return new ResponseEntity<>(apikey, HttpStatus.CREATED);
     }
 
@@ -185,78 +187,118 @@ public class ApikeyController {
      * - appName
      * - sector
      *
-     * @param apikeyUpdate RequestBody containing supplied values
-     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *         HTTP 200 upon successful Apikey update
-     *         HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
-     *         HTTP 401 in case of an invalid request
-     *         HTTP 403 if the request is unauthorised
-     *         HTTP 404 if the apike is not found
-     *         HTTP 406 if a response MIME type other than application/JSON was requested
-     *         HTTP 410 if the apikey is invalidated / deprecated
-     *         HTTP 415 if the submitted request does not contain a valid JSON body
+     * @param   apikeyUpdate RequestBody containing supplied values
+     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *          HTTP 200 upon successful Apikey update
+     *          HTTP 400 when a required parameter is missing
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 if the apikey is not found
+     *          HTTP 406 if a response MIME type other than application/JSON was requested
+     *          HTTP 410 if the apikey is invalidated / deprecated
+     *          HTTP 415 if the submitted request does not contain a valid JSON body
      */
     @CrossOrigin(maxAge = 600)
-    @RequestMapping(method = RequestMethod.PUT,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(method   = RequestMethod.PUT,
+                    produces = MediaType.APPLICATION_JSON_VALUE,
+                    consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@RequestBody ApikeyUpdate apikeyUpdate) {
+        String missing = mandatoryMissing(apikeyUpdate);
+        if (!missing.equals("")){
+            return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
+        }
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(apikeyUpdate.getApikey());
-        if (null == apikey){
+        if (null == apikey) {
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
-        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())){
+        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
-
-        if (null != apikeyUpdate.getFirstName()) apikey.setFirstName(apikeyUpdate.getFirstName());
-        if (null != apikeyUpdate.getLastName()) apikey.setLastName(apikeyUpdate.getLastName());
-        if (null != apikeyUpdate.getEmail()) apikey.setEmail(apikeyUpdate.getEmail());
-        if (null != apikeyUpdate.getWebsite()) apikey.setWebsite(apikeyUpdate.getWebsite());
-        if (null != apikeyUpdate.getAppName()) apikey.setAppName(apikeyUpdate.getAppName());
-        if (null != apikeyUpdate.getCompany()) apikey.setCompany(apikeyUpdate.getCompany());
-        if (null != apikeyUpdate.getSector()) apikey.setSector(apikeyUpdate.getSector());
-
+        apikey = copyUpdateValues(apikey, apikeyUpdate);
         this.apikeyRepo.save(apikey);
-
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
 
+    /**
+     * Re-enables a given invalid Apikey (of which the deprecationdate column has been set to a past time).
+     * NOTE that for now the code does not check if the key is really deprecated; it merely executes the update (if any)
+     * in such cases.
+     *
+     * @param   id the apikey to re-enable
+     * @param   apikeyUpdate RequestBody containing supplied values
+     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *          HTTP 200 upon successful Apikey update
+     *          HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 if the apikey is not found
+     *          HTTP 406 if a response MIME type other than application/JSON was requested
+     *          HTTP 415 if the submitted request does not contain a valid JSON body
+     */
+    @RequestMapping(path = "/{id}", method = RequestMethod.POST,
+                    produces = MediaType.APPLICATION_JSON_VALUE,
+                    consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> reenable(@PathVariable("id") String id,
+                                           @RequestBody(required = false) ApikeyUpdate apikeyUpdate ) {
+        HttpHeaders headers = new HttpHeaders();
 
-        /**
-         * Invalidate a given Apikey. This is done by setting the deprecationdate column to the current time; the data
-         * remain available in the database
-         *
-         * @param id the apikey to invalidate
-         * @return HTTP 204 upon successful execution
-         *         HTTP 401 in case of an invalid request
-         *         HTTP 403 if the request is unauthorised
-         *         HTTP 404 when the requested Apikey is not found in the database
-         *         HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
-         *         Addionally, the following fields can be available in the response header "Apikey-not-found",
-         *         containing the string "apikey-not-found" is added when the Apikey is not found
-         *         to help telling this HTTP 404 apart from one returned by the webserver for other reasons
-         */
+        // retrieve apikey & check if available
+        Apikey apikey = this.apikeyRepo.findOne(id);
+        if (null == apikey) {
+            headers.add("Apikey-not-found", "apikey-not-found");
+            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+        }
+        // remove deprecationdate: this enables the key again
+        apikey.setDeprecationDate(null);
+
+        // update values if supplied
+        if (null != apikeyUpdate) {
+            String missing = mandatoryMissing(apikeyUpdate);
+            if (!missing.equals("")){
+                return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
+            }
+            apikey = copyUpdateValues(apikey, apikeyUpdate);
+        }
+        this.apikeyRepo.save(apikey);
+        return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
+     }
+
+
+
+    /**
+     * Invalidate a given Apikey. This is done by setting the deprecationdate column to the current time; the data
+     * remain available in the database
+     *
+     * @param   id the apikey to invalidate
+     * @return  HTTP 204 upon successful execution
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 when the requested Apikey is not found in the database
+     *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
+     *
+     * Addionally, the field 'Apikey-not-found' containing the string "apikey-not-found" will be available in the
+     * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
+     */
     @CrossOrigin(maxAge = 600)
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<String> delete(@PathVariable("id") String id) {
-        Apikey apikey = this.apikeyRepo.findOne(id);
+        Apikey      apikey  = this.apikeyRepo.findOne(id);
         HttpHeaders headers = new HttpHeaders();
 
         // check if apikey exists
-        if (null == apikey){
+        if (null == apikey) {
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
-        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())){
+        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -268,56 +310,56 @@ public class ApikeyController {
     /**
      * Retrieves the details associated with the registration of a given Apikey
      *
-     * @param id the apikey to retrieve
-     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *         HTTP 200 upon successful execution
-     *         HTTP 404 when the requested Apikey is not found in the database
-     *         HTTP 406 if a MIME type other than application/JSON was requested
+     * @param   id the apikey to retrieve
+     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *          HTTP 200 upon successful execution
+     *          HTTP 404 when the requested Apikey is not found in the database
+     *          HTTP 406 if a MIME type other than application/JSON was requested
      */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
     @RequestMapping(path = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Apikey> get(@PathVariable("id") String id) {
         HttpHeaders headers = new HttpHeaders();
-        Apikey apikey = this.apikeyRepo.findOne(id);
-        if (null == apikey){
+        Apikey      apikey  = this.apikeyRepo.findOne(id);
+        if (null == apikey) {
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
+
     /**
      * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the
      * current date and +1 increments the usage count of this Apikey.
      *
-     * @param id     the apikey to validate
-     * @param api    API for which validate this apikey
-     * @param method method (read, write) for which validate this apikey
+     * @param   id     the apikey to validate
+     * @param   api    API for which validate this apikey
+     * @param   method method (read, write) for which validate this apikey
      *
-     * @return HTTP 204 upon successful validation
-     *         HTTP 400 if a mandatory parameter is missing
-     *         HTTP 401 in case of an invalid request
-     *         HTTP 403 if the request is unauthorised
-     *         HTTP 404 when the requested Apikey is not found in the database
-     *         HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
-     *         HTTP 429 if the assigned usagelimit has been reached
-     *         Addionally, the following fields are (optionally) available in the response header:
-     *         - "X-RateLimit-Remaining" access usage number since the previous reset
-     *         - "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
-     *         - "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey
-     *                                   is not found, to help telling this HTTP 404 apart from one returned
-     *                                   by the webserver for other reasons
+     * @return  HTTP 204 upon successful validation
+     *          HTTP 400 if a mandatory parameter is missing
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 when the requested Apikey is not found in the database
+     *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
+     *          HTTP 429 if the assigned usagelimit has been reached
+     *          Addionally, the following fields are (optionally) available in the response header:
+     *          - "X-RateLimit-Remaining" access usage number since the previous reset
+     *          - "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
+     *          - "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey
+     *                                    is not found, to help telling this HTTP 404 apart from one returned
+     *                                    by the webserver for other reasons
      */
     @RequestMapping(path = "/{id}/validate", method = RequestMethod.POST)
-    public ResponseEntity<Apikey> validate(
-            @PathVariable("id") String id,
-            @RequestParam(value = "api", required = false) String api,
-            @RequestParam(value = "method", required = false) String method) {
+    public ResponseEntity<Apikey> validate(@PathVariable("id") String id,
+                                           @RequestParam(value = "api", required = false) String api,
+                                           @RequestParam(value = "method", required = false) String method) {
 
-        ApiName apiName; //TODO usage not implemented yet
-        HttpHeaders headers = new HttpHeaders();
-        DateTime nowDtUtc = new DateTime(DateTimeZone.UTC);
-        Date now = nowDtUtc.toDate();
+        ApiName     apiName; //TODO usage not implemented yet
+        HttpHeaders headers  = new HttpHeaders();
+        DateTime    nowDtUtc = new DateTime(DateTimeZone.UTC);
+        Date        now      = nowDtUtc.toDate();
 
         if (!StringUtils.isEmpty(api)) {
             try {
@@ -330,25 +372,25 @@ public class ApikeyController {
         }
 
         if (!StringUtils.isEmpty(method)) {
-            if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)){
+            if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
 
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
-        if (null == apikey){
+        if (null == apikey) {
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
-        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())){
+        if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
         // set activationdate = sysdate if null
-        if (null == apikey.getActivationDate()){
+        if (null == apikey.getActivationDate()) {
             apikey.setActivationDate(now);
         }
 
@@ -356,11 +398,14 @@ public class ApikeyController {
         apikey.setLastaccessDate(now);
 
         // (mock-)check usage
-        long usage = apikey.getUsage();
+        long usage     = apikey.getUsage();
         long remaining = apikey.getUsageLimit() - usage;
-        headers.add("X-RateLimit-Reset", String.valueOf(new Duration(nowDtUtc, nowDtUtc.plusDays(1).withTimeAtStartOfDay()).toStandardSeconds().getSeconds()));
+        headers.add("X-RateLimit-Reset",
+                    String.valueOf(new Duration(nowDtUtc,
+                                                nowDtUtc.plusDays(1).withTimeAtStartOfDay()).toStandardSeconds()
+                                                                                            .getSeconds()));
 
-        if (remaining <= 0L){
+        if (remaining <= 0L) {
             // You shall not pass!
             headers.add("X-RateLimit-Remaining", String.valueOf(0));
             return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
@@ -375,39 +420,81 @@ public class ApikeyController {
 
     // created to facilitate Rene's testing
     @RequestMapping(path = "/{id}/set", method = RequestMethod.PUT)
-    public ResponseEntity<Apikey> validate(
-            @PathVariable("id") String id,
-            @RequestParam(value = "limit", required = false) Long limit,
-            @RequestParam(value = "reset", required = false) Boolean reset,
-            @RequestParam(value = "deprecated", required = false) Boolean deprecated) {
+    public ResponseEntity<Apikey> validate(@PathVariable("id") String id,
+                                           @RequestParam(value = "limit", required = false) Long limit,
+                                           @RequestParam(value = "reset", required = false) Boolean reset,
+                                           @RequestParam(value = "deprecated", required = false) Boolean deprecated) {
 
         Date lastWeek = new DateTime(DateTimeZone.UTC).minusDays(7).toDate();
 
         Apikey apikey = this.apikeyRepo.findOne(id);
-        if (null == apikey){
+        if (null == apikey) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         // if reset == true: reset usage to zero
-        if (null != reset && reset){
+        if (null != reset && reset) {
             apikey.setUsage(0L);
         }
         // if limit is set: reset usageLimit to limit
-        if (null != limit){
+        if (null != limit) {
             apikey.setUsageLimit(limit);
         }
         // if deprecate == true: set dateDeprecated to last week; if false, set null
-        if (null != deprecated && deprecated){
+        if (null != deprecated && deprecated) {
             apikey.setDeprecationDate(lastWeek);
         } else if (null != deprecated && !deprecated) {
             apikey.setDeprecationDate(null);
         }
 
-        if (null == reset && null == deprecated && null == limit){
+        if (null == reset && null == deprecated && null == limit) {
             return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT); // HTTP 418
         } else {
             this.apikeyRepo.save(apikey);
             return new ResponseEntity<>(HttpStatus.ACCEPTED); // HTTP 202
         }
+    }
+
+    private Apikey copyUpdateValues(Apikey apikey, ApikeyUpdate apikeyUpdate){
+        if (null != apikeyUpdate.getFirstName()) {
+            apikey.setFirstName(apikeyUpdate.getFirstName());
+        }
+        if (null != apikeyUpdate.getLastName()) {
+            apikey.setLastName(apikeyUpdate.getLastName());
+        }
+        if (null != apikeyUpdate.getEmail()) {
+            apikey.setEmail(apikeyUpdate.getEmail());
+        }
+        if (null != apikeyUpdate.getWebsite()) {
+            apikey.setWebsite(apikeyUpdate.getWebsite());
+        }
+        if (null != apikeyUpdate.getAppName()) {
+            apikey.setAppName(apikeyUpdate.getAppName());
+        }
+        if (null != apikeyUpdate.getCompany()) {
+            apikey.setCompany(apikeyUpdate.getCompany());
+        }
+        if (null != apikeyUpdate.getSector()) {
+            apikey.setSector(apikeyUpdate.getSector());
+        }
+        return apikey;
+    }
+
+    private String mandatoryMissing(ApikeyAction apikeyUpdate){
+        String retval = "required parameter";
+        ArrayList<String> missingList = new ArrayList<>();
+        if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
+        if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
+        if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
+        if (missingList.size() == 3) {
+            retval += "s " + missingList.get(0) + ", " + missingList.get(1) + " and " + missingList.get(2);
+        } else if (missingList.size() == 2) {
+            retval += "s " + missingList.get(0) + " and " + missingList.get(1);
+        } else if (missingList.size() == 1) {
+            retval += " " + missingList.get(0);
+        } else {
+            return "";
+        }
+        return retval + " not provided";
     }
 
 

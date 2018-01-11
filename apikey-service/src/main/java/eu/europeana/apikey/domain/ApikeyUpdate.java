@@ -26,7 +26,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  */
 
 @JsonInclude(NON_EMPTY)
-public class ApikeyUpdate {
+public class ApikeyUpdate implements ApikeyAction{
 
     private String apikey;
     private String website;
