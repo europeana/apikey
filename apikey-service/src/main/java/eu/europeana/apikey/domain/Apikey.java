@@ -45,23 +45,23 @@ public class Apikey {
 	@Column(name = "apikey")
 	@JsonProperty("apikey")
 	@JsonView(View.Public.class)
-	private String apiKey;
+	private String apikey;
 
 	@NotNull
 	@Size(min = 1, max = 30)
 	@Column(name = "privatekey")
 	@JsonProperty("privatekey")
-	private String privateKey;
+	private String privatekey;
 
 	@NotNull
 	@Column(name = "registrationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-	@JsonProperty("registrationdate")
+	@JsonProperty("registrationDate")
 	@JsonView(View.Public.class)
 	private Date registrationDate;
 
 	@Column(name = "usagelimit")
-	@JsonProperty("usagelimit")
+	@JsonProperty("usageLimit")
 	@JsonView(View.Public.class)
 	private Long usageLimit;
 
@@ -73,13 +73,13 @@ public class Apikey {
 
 	@Column(name = "activationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-	@JsonProperty("activationdate")
+	@JsonProperty("activationDate")
 	@JsonView(View.Public.class)
 	private Date activationDate;
 
 	@Size(max = 255)
 	@Column(name = "appname")
-	@JsonProperty("appname")
+	@JsonProperty("appName")
 	@JsonView(View.Public.class)
 	protected String appName;
 
@@ -105,14 +105,14 @@ public class Apikey {
 	@NotNull
 	@Size(max = 50)
 	@Column(name = "firstname")
-	@JsonProperty("firstname")
+	@JsonProperty("firstName")
 	@JsonView(View.Public.class)
 	protected String firstName;
 
 	@NotNull
 	@Size(max = 50)
 	@Column(name = "lastname")
-	@JsonProperty("lastname")
+	@JsonProperty("lastName")
 	@JsonView(View.Public.class)
 	protected String lastName;
 
@@ -124,15 +124,15 @@ public class Apikey {
 
 	@Column(name = "deprecationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-	@JsonProperty("deprecationdate")
+	@JsonProperty("deprecationDate")
 	@JsonView(View.Public.class)
 	private Date deprecationDate;
 
 	@Column(name = "lastaccessdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-	@JsonProperty("lastaccessdate")
+	@JsonProperty("lastAccessDate")
 	@JsonView(View.Public.class)
-	private Date lastaccessDate;
+	private Date lastAccessDate;
 
 	@NotNull
 	@Column(name = "usage")
@@ -144,9 +144,9 @@ public class Apikey {
 
 	}
 
-	public Apikey(String apiKey, String privateKey, String firstName, String lastName, String email, String level) {
-		this.apiKey = apiKey;
-		this.privateKey = privateKey;
+	public Apikey(String apikey, String privatekey, String firstName, String lastName, String email, String level) {
+		this.apikey = apikey;
+		this.privatekey = privatekey;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
@@ -156,20 +156,20 @@ public class Apikey {
 		this.usage = 0L;
 	}
 
-	public String getApiKey() {
-		return apiKey;
+	public String getApikey() {
+		return apikey;
 	}
 
-	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
+	public void setApikey(String apikey) {
+		this.apikey = apikey;
 	}
 
-	public String getPrivateKey() {
-		return privateKey;
+	public String getPrivatekey() {
+		return privatekey;
 	}
 
-	public void setPrivateKey(String privateKey) {
-		this.privateKey = privateKey;
+	public void setPrivatekey(String privatekey) {
+		this.privatekey = privatekey;
 	}
 
 	public Date getRegistrationDate() {
@@ -268,12 +268,12 @@ public class Apikey {
 		this.deprecationDate = deprecationDate;
 	}
 
-	public Date getLastaccessDate() {
-		return lastaccessDate;
+	public Date getLastAccessDate() {
+		return lastAccessDate;
 	}
 
-	public void setLastaccessDate(Date lastaccessDate) {
-		this.lastaccessDate = lastaccessDate;
+	public void setLastAccessDate(Date lastAccessDate) {
+		this.lastAccessDate = lastAccessDate;
 	}
 
 	public Long getUsage() {
@@ -288,8 +288,8 @@ public class Apikey {
 	@Override
 	public String toString() {
 		return "Apikey {" +
-				" apiKey = " + apiKey +
-				", privateKey = " + nvl(privateKey) +
+				" apikey = " + apikey +
+				", privatekey = " + nvl(privatekey) +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +
@@ -302,7 +302,7 @@ public class Apikey {
 				", sector = " + nvl(sector) +
 				", activationDate = " + nvl(activationDate) +
 				", registrationDate = " + nvl(registrationDate) +
-				", lastaccessDate = " + nvl(lastaccessDate) +
+				", lastAccessDate = " + nvl(lastAccessDate) +
 				", deprecationDate = " + nvl(deprecationDate) +
 				" }";
 	}

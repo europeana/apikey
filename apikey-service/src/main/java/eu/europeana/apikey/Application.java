@@ -112,7 +112,7 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
                 Apikey apikey = apikeyRepo.findOne(id);
                 // && apikey.getLevel().equalsIgnoreCase("ADMIN")
                 if(apikey != null) {
-                    return new User(apikey.getApiKey(), apikey.getPrivateKey(),
+                    return new User(apikey.getApikey(), apikey.getPrivatekey(),
                             true, true, true, true,
                             AuthorityUtils.createAuthorityList(
                                     apikey.getLevel().equalsIgnoreCase("ADMIN") ? "ROLE_ADMIN" : "USER"));

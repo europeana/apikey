@@ -23,7 +23,6 @@
 package eu.europeana.apikey.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.domain.*;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
@@ -35,7 +34,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,8 +41,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.zalando.problem.ProblemModule;
-import org.zalando.problem.validation.ConstraintViolationProblemModule;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,11 +53,11 @@ public class ApikeyController {
     private static final String READ  = "read";
     private static final String WRITE = "write";
 
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper().registerModule(new ProblemModule())
-                                 .registerModule(new ConstraintViolationProblemModule());
-    }
+//    @Bean
+//    public ObjectMapper objectMapper() {
+//        return new ObjectMapper().registerModule(new ProblemModule())
+//                                 .registerModule(new ConstraintViolationProblemModule());
+//    }
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo) {
@@ -171,8 +167,8 @@ public class ApikeyController {
                                                     apikeyCreatedMail,
                                                     apikey.getFirstName(),
                                                     apikey.getLastName(),
-                                                    apikey.getApiKey(),
-                                                    apikey.getPrivateKey());
+                                                    apikey.getApikey(),
+                                                    apikey.getPrivatekey());
         return new ResponseEntity<>(apikey, HttpStatus.CREATED);
     }
 
@@ -389,13 +385,13 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
-        // set activationdate = sysdate if null
+        // set activationDate = sysdate if null
         if (null == apikey.getActivationDate()) {
             apikey.setActivationDate(now);
         }
 
-        // set lastaccessDate = sysdate
-        apikey.setLastaccessDate(now);
+        // set lastAccessDate = sysdate
+        apikey.setLastAccessDate(now);
 
         // (mock-)check usage
         long usage     = apikey.getUsage();
