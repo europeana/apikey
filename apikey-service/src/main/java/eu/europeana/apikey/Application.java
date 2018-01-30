@@ -233,27 +233,25 @@ class MailConfig extends WebMvcConfigurerAdapter {
     public SimpleMailMessage apikeyCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setText("Dear %s %s,%n%nThank you for registering for the Europeana API." +
-                "%n" +
-                "These are your Europeana API keys: %n%n===========================%n" +
-                "API key: \t\t%s %nPrivate key: \t%s %n===========================%n%n" +
-                "Please keep a safe record of these keys." +
+                "%n%n" +
+                "These are your Europeana API keys: %n===========================%n" +
+                "API key: \t\t%s %nPrivate key: \t%s %n===========================%n" +
                 "%n%n" +
                 "The private key is used for specific API methods that require additional user authentication while " +
                 "the public key must be used by all others, see https://pro.europeana.eu/resources/apis/intro#access." +
-                "%n" +
-                "Please do not share these keys with third parties or expose it in user interfaces or in markup, as the " +
+                "%n%n" +
+                "Please keep a safe record of these keys and do not share them with third parties or expose it in user " +
+                "interfaces or in markup, as the " +
                 "API keys are confidential and are for use by the client or user only." +
                 "%n%n" +
                 "Our technical documentation for all APIs is available at https://pro.europeana.eu/resources/apis which " +
                 "includes an API console for testing and community developed libraries for a variety of programming languages." +
-                "%n" +
-                "Please join us in the Europeana API Forum (https://groups.google.com/forum/?pli=1#!forum/europeanaapi) " +
-                "to ask questions to us and other developers and to give us your feedback on our API. " +
-                "%n" +
-                "You can also contact us directly by mailing api@europeana.eu." +
                 "%n%n" +
-                "We would be especially grateful if you would let us know about your implementation so that we can " +
-                "feature it in our application gallery on Europeana Pro: https://pro.europeana.eu/resources/apps." +
+                "Please join us in the Europeana API Forum (https://groups.google.com/forum/?pli=1#!forum/europeanaapi) " +
+                "- to ask questions to us and other developers and to give us your feedback on our API. " +
+                "You can also contact us directly by mailing api@europeana.eu " +
+                "and we would be especially grateful if you would let us know about your implementation so that we can " +
+                "feature it in our application gallery on Europeana Pro - https://pro.europeana.eu/resources/apps." +
                 "%n%n" +
                 "Best regards," +
                 "%n" +
