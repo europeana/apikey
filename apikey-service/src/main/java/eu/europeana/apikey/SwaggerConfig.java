@@ -13,8 +13,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import java.util.Collections;
 
 /**
- * Configures swagger on all requests. Swagger Json file is availabe at <hostname>/v2/api-docs and if you add
- * Swagger UI package the <hostname>/swagger-ui.html
+ * Configures swagger on all requests. Swagger Json file is availabe at /v2/api-docs
  * @author Patrick Ehlert
  * Created on 26-01-2018
  */
