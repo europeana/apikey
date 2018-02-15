@@ -17,6 +17,8 @@
 
 package eu.europeana.apikey.mail;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.MailException;
@@ -35,11 +37,13 @@ import java.io.File;
  */
 @Component
 public class MailServiceImpl implements MailService {
+    private static final Logger LOG = LogManager.getLogger(MailServiceImpl.class);
 
     @Autowired
     public JavaMailSender emailSender;
 
     public void sendSimpleMessage(String from, String to, String subject, String messageBody) {
+        LOG.debug("send email ...");
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(from);
@@ -48,8 +52,8 @@ public class MailServiceImpl implements MailService {
             message.setText(messageBody);
 
             emailSender.send(message);
-        } catch (MailException exception) {
-            exception.printStackTrace();
+        } catch (MailException e) {
+            LOG.error("Exception occurred sending email message {} ", e);
         }
     }
 
@@ -67,6 +71,7 @@ public class MailServiceImpl implements MailService {
                                           String subject,
                                           String messageBody,
                                           String pathToAttachment) {
+        LOG.debug("send email with attachment ...");
         try {
             MimeMessage message = emailSender.createMimeMessage();
             // pass 'true' to the constructor to create a multipart message
@@ -81,7 +86,7 @@ public class MailServiceImpl implements MailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            LOG.error("Exception occurred sending email message with attachment {} ", e);
         }
     }
 }

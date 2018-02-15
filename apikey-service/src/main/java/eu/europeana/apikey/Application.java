@@ -145,22 +145,6 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
 }
 
-//@Import(SecurityProblemSupport.class)
-//@Configuration
-//class SecurityConfiguration extends ResourceServerConfigurerAdapter {
-//
-//    @Autowired
-//    private SecurityProblemSupport problemSupport;
-//
-//    @Override
-//    public void configure(final HttpSecurity http) throws Exception {
-//        http.exceptionHandling()
-//                .authenticationEntryPoint(problemSupport)
-//                .accessDeniedHandler(problemSupport);
-//    }
-//
-//}
-
 @Component
 @ConfigurationProperties("europeanamail")
 class EuropeanaMailProperties {

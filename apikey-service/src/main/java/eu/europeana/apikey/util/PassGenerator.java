@@ -17,6 +17,9 @@
 
 package eu.europeana.apikey.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.security.SecureRandom;
 
 /**
@@ -26,6 +29,7 @@ import java.security.SecureRandom;
  * .
  */
 public class PassGenerator {
+    private static final Logger LOG = LogManager.getLogger(PassGenerator.class);
 
     private final SecureRandom random = new SecureRandom();
 
@@ -36,6 +40,7 @@ public class PassGenerator {
      * @return the shiny new password
      */
     public String generate(int length) {
+        LOG.debug("generate new human-pronouncable password with length: " + length);
         StringBuffer password = new StringBuffer(length);
 
         double pik   = random.nextDouble(); // random number [0,1]

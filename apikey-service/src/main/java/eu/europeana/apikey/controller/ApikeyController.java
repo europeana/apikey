@@ -30,6 +30,8 @@ import eu.europeana.apikey.util.ApiName;
 import eu.europeana.apikey.util.PassGenerator;
 import eu.europeana.apikey.util.Tools;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -52,12 +54,7 @@ public class ApikeyController {
     private final ApikeyRepo apikeyRepo;
     private static final String READ  = "read";
     private static final String WRITE = "write";
-
-//    @Bean
-//    public ObjectMapper objectMapper() {
-//        return new ObjectMapper().registerModule(new ProblemModule())
-//                                 .registerModule(new ConstraintViolationProblemModule());
-//    }
+    private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo) {
@@ -70,19 +67,6 @@ public class ApikeyController {
 
     @Autowired
     public SimpleMailMessage apikeyCreatedMail;
-
-//    @RequestMapping(method = RequestMethod.PUT)
-//    public ResponseEntity<Apikey> zupdate(@RequestBody @Valid Apikey apikey) {
-//        Apikey savedApikey = this.apikeyRepo.save(apikey);
-//        return new ResponseEntity<>(savedApikey, HttpStatus.CREATED);
-//    }
-
-//    @RequestMapping(method = RequestMethod.GET)
-//    public ResponseEntity<Page<Apikey>> getPage(Pageable pageable) {
-//        Page<Apikey> page = this.apikeyRepo.findAll(pageable);
-//        return new ResponseEntity<>(page, HttpStatus.OK);
-//    }
-
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -120,19 +104,12 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyCreate apikeyCreate) {
+        LOG.debug("creating new apikey");
         String missing = mandatoryMissing(apikeyCreate);
         if (!missing.equals("")){
+            LOG.debug(missing + ", abort creating apikey");
             return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
         }
-
-//        if (null == apikeyCreate.getLevel() ||
-//             (!apikeyCreate.getLevel().equalsIgnoreCase(Level.ADMIN.getLevelName()) &&
-//              !apikeyCreate.getLevel().equalsIgnoreCase(Level.CLIENT.getLevelName()) &&
-//              !apikeyCreate.getLevel().equalsIgnoreCase("default"))
-//            ){
-//            return new ResponseEntity<>(
-//                    new ApikeyException(400, "missing or wrong parameter", "parameter 'level': [default|CLIENT|ADMIN]"), HttpStatus.BAD_REQUEST);
-//        }
 
         PassGenerator pg = new PassGenerator();
         String        newApiKey;
@@ -161,6 +138,7 @@ public class ApikeyController {
             apikey.setSector(apikeyCreate.getSector());
         }
         this.apikeyRepo.save(apikey);
+        LOG.debug("apikey: {} created", apikey.getApikey());
 
         emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
                                                     "Your Europeana API keys",
@@ -199,8 +177,10 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@RequestBody ApikeyUpdate apikeyUpdate) {
+        LOG.debug("update registration details for apikey: {}", apikeyUpdate.getApikey());
         String missing = mandatoryMissing(apikeyUpdate);
         if (!missing.equals("")){
+            LOG.debug(missing + ", aborting registration details update");
             return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
         }
         HttpHeaders headers = new HttpHeaders();
@@ -208,12 +188,16 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(apikeyUpdate.getApikey());
         if (null == apikey) {
+            LOG.debug("apikey: {} not found", apikeyUpdate.getApikey());
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+        } else {
+            LOG.debug("update registration details for apikey: {}", apikey.getApikey());
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
+            LOG.debug("apikey {} is deprecated", apikeyUpdate.getApikey());
             return new ResponseEntity<>(HttpStatus.GONE);
         }
         apikey = copyUpdateValues(apikey, apikeyUpdate);
@@ -242,11 +226,13 @@ public class ApikeyController {
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
                                            @RequestBody(required = false) ApikeyUpdate apikeyUpdate ) {
+        LOG.debug("re-enable invalidated apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
+            LOG.debug("apikey: " + id + " not found");
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
@@ -284,17 +270,20 @@ public class ApikeyController {
     @CrossOrigin(maxAge = 600)
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<String> delete(@PathVariable("id") String id) {
+        LOG.debug("invalidate apikey: {}", id);
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         HttpHeaders headers = new HttpHeaders();
 
         // check if apikey exists
         if (null == apikey) {
+            LOG.debug("apikey: " + id + " not found");
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
+            LOG.debug("apikey {} is deprecated", id);
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -316,9 +305,11 @@ public class ApikeyController {
     @JsonView(View.Public.class)
     @RequestMapping(path = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Apikey> get(@PathVariable("id") String id) {
+        LOG.debug("retrieve details for apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
+            LOG.debug("apikey: " + id + " not found");
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
@@ -352,6 +343,7 @@ public class ApikeyController {
                                            @RequestParam(value = "api", required = false) String api,
                                            @RequestParam(value = "method", required = false) String method) {
 
+        LOG.debug("validate apikey: {}", id);
         ApiName     apiName; //TODO usage not implemented yet
         HttpHeaders headers  = new HttpHeaders();
         DateTime    nowDtUtc = new DateTime(DateTimeZone.UTC);
@@ -361,13 +353,16 @@ public class ApikeyController {
             try {
                 apiName = ApiName.valueOf(api.toUpperCase().trim());
             } catch (IllegalArgumentException e) {
+                LOG.debug("illegal value for parameter 'api': {}", api);
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         } else {
+            LOG.debug("no value for parameter 'api' supplied");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         if (!StringUtils.isEmpty(method)) {
+            LOG.debug("no value for parameter 'method' supplied");
             if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
@@ -376,12 +371,14 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
+            LOG.debug("apikey {} not found", id);
             headers.add("Apikey-not-found", "apikey-not-found");
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
+            LOG.debug("apikey {} is deprecated", id);
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -404,6 +401,7 @@ public class ApikeyController {
         if (remaining <= 0L) {
             // You shall not pass!
             headers.add("X-RateLimit-Remaining", String.valueOf(0));
+            LOG.debug("usage limit of apikey {} reached", id);
             return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
         } else {
             // Welcome, gringo!

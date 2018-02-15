@@ -23,12 +23,15 @@
 package eu.europeana.apikey.util;
 
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.Random;
 
 public class Tools {
+    private static final Logger LOG = LogManager.getLogger(Tools.class);
 
     public static String nvl(String input){
         return StringUtils.isEmpty(input) ? "" : input;
@@ -47,6 +50,7 @@ public class Tools {
         // pass phrase. Note that the number 0 and the letter 'O' have been
         // removed to avoid confusion between the two. The same is true
         // of 'I', 1, and 'l'.
+        LOG.debug("generate new random passphrase with length: " + length);
         Random random = new Random();
         final char[] allowableCharacters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm',
                 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
