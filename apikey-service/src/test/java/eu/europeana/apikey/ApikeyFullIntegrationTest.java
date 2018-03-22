@@ -47,6 +47,8 @@ import org.springframework.util.Base64Utils;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.Optional;
+
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -54,7 +56,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Created by luthien on 20/03/2018.
@@ -300,6 +305,12 @@ public class ApikeyFullIntegrationTest {
                             .param("method", READ))
            .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
            .andExpect(MockMvcResultMatchers.header().string("X-RateLimit-Remaining", String.valueOf(0)));
+    }
+
+    @Test
+    public void zhouldReturnDefaultMessage() throws Exception {
+        this.mvc.perform(get("/apikey")).andDo(print()).andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Hello World!")));
     }
 
 }
