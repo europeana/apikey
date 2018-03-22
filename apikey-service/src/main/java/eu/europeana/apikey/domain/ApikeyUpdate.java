@@ -26,23 +26,52 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  */
 
 @JsonInclude(NON_EMPTY)
-public class ApikeyUpdate implements ApikeyAction{
+public class ApikeyUpdate implements ApikeyAction {
+
+    public ApikeyUpdate(String apikey,
+                        String firstName,
+                        String lastName,
+                        String email,
+                        String appName,
+                        String company,
+                        String sector,
+                        String website) {
+        this.apikey  = apikey;
+        this.firstName  = firstName;
+        this.lastName   = lastName;
+        this.email      = email;
+        this.appName    = appName;
+        this.company    = company;
+        this.sector     = sector;
+        this.website    = website;
+    }
+
+    //empty constructor needed to facilitate integration testing
+    public ApikeyUpdate() {}
 
     private String apikey;
-    private String website;
+    private String firstName;
+    private String lastName;
+    private String email;
     private String appName;
     private String company;
     private String sector;
-    private String email;
-    private String firstName;
-    private String lastName;
+    private String website;
 
     public String getApikey() {
         return apikey;
     }
 
-    public String getWebsite() {
-        return website;
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public String getAppName() {
@@ -57,15 +86,7 @@ public class ApikeyUpdate implements ApikeyAction{
         return sector;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
+    public String getWebsite() {
+        return website;
     }
 }

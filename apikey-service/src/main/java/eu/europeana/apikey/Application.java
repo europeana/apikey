@@ -58,13 +58,6 @@ public class Application {
         builder.sources(Application.class).run(args);
     }
 
-//    @Bean
-//    public ObjectMapper objectMapper() {
-//        return new ObjectMapper()
-//                .registerModule(new ProblemModule())
-//                .registerModule(new ConstraintViolationProblemModule());
-//    }
-
     @Component
     public static class SampleDataPopulator implements CommandLineRunner {
 
@@ -74,22 +67,6 @@ public class Application {
         @Override
         public void run(String... args) throws Exception {
         }
-
-//        private Apikey saveIfNew(Apikey apikey) {
-//            Optional<Apikey> fromDb = this.courseRepo.findByCourseCode(apikey.getCourseCode());
-//
-//            if (!fromDb.isPresent()) {
-//                return this.courseRepo.save(apikey);
-//            }
-//            return fromDb.get();
-//        }
-//        private Teacher sampleTeacher(String name, String department) {
-//            return new Teacher(name, department);
-//        }
-
-//        private Apikey sampleCourse(String courseCode, String courseName) {
-//            return new Apikey(courseCode, courseName);
-//        }
     }
 }
 @Configuration

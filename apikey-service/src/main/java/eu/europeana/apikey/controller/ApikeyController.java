@@ -448,6 +448,13 @@ public class ApikeyController {
         }
     }
 
+//    @CrossOrigin(maxAge = 600)
+    @RequestMapping(path = "", method = RequestMethod.GET)
+    public String helloWorld() {
+        LOG.debug("hello world endpoint");
+        return "Hello World!";
+    }
+
     private Apikey copyUpdateValues(Apikey apikey, ApikeyUpdate apikeyUpdate){
         if (null != apikeyUpdate.getFirstName()) {
             apikey.setFirstName(apikeyUpdate.getFirstName());

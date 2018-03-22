@@ -54,14 +54,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-            <version>1.5.4.RELEASE</version>
+            <version>1.5.10.RELEASE</version>
         </dependency>
 
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
         <dependency>
             <groupId>org.zalando</groupId>
             <artifactId>problem-spring-web</artifactId>
-            <version>0.19.1</version>
+            <version>0.22.2</version>
         </dependency>
 
         <!-- Test Dependencies -->
