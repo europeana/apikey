@@ -30,7 +30,10 @@ import org.springframework.util.StringUtils;
 import java.util.Date;
 import java.util.Random;
 
-public class Tools {
+public final class Tools {
+
+    private Tools(){}
+
     private static final Logger LOG = LogManager.getLogger(Tools.class);
 
     public static String nvl(String input){

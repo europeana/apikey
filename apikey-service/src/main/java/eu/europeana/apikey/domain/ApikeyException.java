@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonView;
  */
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApikeyException {
+public class ApikeyException extends Exception {
     private static final long serialVersionUID = 43L;
 
     @JsonView(View.Public.class)
@@ -97,6 +97,7 @@ public class ApikeyException {
         this.error = error;
     }
 
+    @Override
     public String getMessage() {
         return message;
     }

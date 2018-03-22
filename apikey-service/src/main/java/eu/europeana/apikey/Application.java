@@ -85,7 +85,7 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
         return new UserDetailsService() {
 
             @Override
-            public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
+            public UserDetails loadUserByUsername(String id)  {
                 Apikey apikey = apikeyRepo.findOne(id);
                 // && apikey.getLevel().equalsIgnoreCase("ADMIN")
                 if(apikey != null) {
@@ -125,63 +125,63 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 @Component
 @ConfigurationProperties("europeanamail")
 class EuropeanaMailProperties {
-    private String register_api_to;
-    private String register_api_from;
-    private String admin_to;
-    private String system_from;
-    private String register_to;
-    private String feedback_to;
-    private String exception_to;
-    private String feedback_from;
+    private String registerApiTo;
+    private String registerApiFrom;
+    private String adminTo;
+    private String systemFrom;
+    private String registerTo;
+    private String feedbackTo;
+    private String exceptionTo;
+    private String feedbackFrom;
 
-    public String getRegister_api_to() {
-        return register_api_to;
+    public String getRegisterApiTo() {
+        return registerApiTo;
     }
-    public void setRegister_api_to(String register_api_to) {
-        this.register_api_to = register_api_to;
+    public void setRegisterApiTo(String registerApiTo) {
+        this.registerApiTo = registerApiTo;
     }
-    public String getRegister_api_from() {
-        return register_api_from;
+    public String getRegisterApiFrom() {
+        return registerApiFrom;
     }
-    public void setRegister_api_from(String register_api_from) {
-        this.register_api_from = register_api_from;
+    public void setRegisterApiFrom(String registerApiFrom) {
+        this.registerApiFrom = registerApiFrom;
     }
-    public String getAdmin_to() {
-        return admin_to;
+    public String getAdminTo() {
+        return adminTo;
     }
-    public void setAdmin_to(String admin_to) {
-        this.admin_to = admin_to;
+    public void setAdminTo(String adminTo) {
+        this.adminTo = adminTo;
     }
-    public String getSystem_from() {
-        return system_from;
+    public String getSystemFrom() {
+        return systemFrom;
     }
-    public void setSystem_from(String system_from) {
-        this.system_from = system_from;
+    public void setSystemFrom(String systemFrom) {
+        this.systemFrom = systemFrom;
     }
-    public String getRegister_to() {
-        return register_to;
+    public String getRegisterTo() {
+        return registerTo;
     }
-    public void setRegister_to(String register_to) {
-        this.register_to = register_to;
+    public void setRegisterTo(String registerTo) {
+        this.registerTo = registerTo;
     }
-    public String getFeedback_to() {
-        return feedback_to;
+    public String getFeedbackTo() {
+        return feedbackTo;
     }
-    public void setFeedback_to(String feedback_to) {
-        this.feedback_to = feedback_to;
+    public void setFeedbackTo(String feedbackTo) {
+        this.feedbackTo = feedbackTo;
     }
-    public String getException_to() {
-        return exception_to;
+    public String getExceptionTo() {
+        return exceptionTo;
     }
-    public void setException_to(String exception_to) {
-        this.exception_to = exception_to;
+    public void setExceptionTo(String exceptionTo) {
+        this.exceptionTo = exceptionTo;
     }
-    public String getFeedback_from() {
-        return feedback_from;
+    public String getFeedbackFrom() {
+        return feedbackFrom;
     }
-    public void setFeedback_from(String feedback_from) {
-            this.feedback_from = feedback_from;
-        }
+    public void setFeedbackFrom(String feedbackFrom) {
+        this.feedbackFrom = feedbackFrom;
+    }
 
 }
 
@@ -217,7 +217,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "Best regards," +
                 "%n" +
                 "The Europeana API Team");
-        message.setFrom(europeanaMailProperties.getSystem_from());
+        message.setFrom(europeanaMailProperties.getSystemFrom());
         return message;
     }
 }

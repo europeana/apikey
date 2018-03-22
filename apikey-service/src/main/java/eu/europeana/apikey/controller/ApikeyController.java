@@ -30,6 +30,7 @@ import eu.europeana.apikey.util.ApiName;
 import eu.europeana.apikey.util.PassGenerator;
 import eu.europeana.apikey.util.Tools;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -55,6 +56,9 @@ public class ApikeyController {
     private static final String READ  = "read";
     private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
+    private static final String MISSINGPARAMETER = "missing parameter";
+    private static final String APIKEYNOTFOUND = "Apikey-not-found";
+    private static final String APIKEYDEPRECATED = "apikey {} is deprecated";
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo) {
@@ -108,7 +112,7 @@ public class ApikeyController {
         String missing = mandatoryMissing(apikeyCreate);
         if (!missing.equals("")){
             LOG.debug(missing + ", abort creating apikey");
-            return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
         }
 
         PassGenerator pg = new PassGenerator();
@@ -181,7 +185,7 @@ public class ApikeyController {
         String missing = mandatoryMissing(apikeyUpdate);
         if (!missing.equals("")){
             LOG.debug(missing + ", aborting registration details update");
-            return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
         }
         HttpHeaders headers = new HttpHeaders();
 
@@ -189,7 +193,7 @@ public class ApikeyController {
         Apikey apikey = this.apikeyRepo.findOne(apikeyUpdate.getApikey());
         if (null == apikey) {
             LOG.debug("apikey: {} not found", apikeyUpdate.getApikey());
-            headers.add("Apikey-not-found", "apikey-not-found");
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         } else {
             LOG.debug("update registration details for apikey: {}", apikey.getApikey());
@@ -197,7 +201,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug("apikey {} is deprecated", apikeyUpdate.getApikey());
+            LOG.debug(APIKEYDEPRECATED, apikeyUpdate.getApikey());
             return new ResponseEntity<>(HttpStatus.GONE);
         }
         apikey = copyUpdateValues(apikey, apikeyUpdate);
@@ -232,8 +236,8 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug("apikey: " + id + " not found");
-            headers.add("Apikey-not-found", "apikey-not-found");
+            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
         // remove deprecationdate: this enables the key again
@@ -243,7 +247,7 @@ public class ApikeyController {
         if (null != apikeyUpdate) {
             String missing = mandatoryMissing(apikeyUpdate);
             if (!missing.equals("")){
-                return new ResponseEntity<>(new ApikeyException(400, "missing parameter", missing), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
             }
             apikey = copyUpdateValues(apikey, apikeyUpdate);
         }
@@ -276,14 +280,14 @@ public class ApikeyController {
 
         // check if apikey exists
         if (null == apikey) {
-            LOG.debug("apikey: " + id + " not found");
-            headers.add("Apikey-not-found", "apikey-not-found");
+            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug("apikey {} is deprecated", id);
+            LOG.debug(APIKEYDEPRECATED, id);
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -309,8 +313,8 @@ public class ApikeyController {
         HttpHeaders headers = new HttpHeaders();
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug("apikey: " + id + " not found");
-            headers.add("Apikey-not-found", "apikey-not-found");
+            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
@@ -371,14 +375,14 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug("apikey {} not found", id);
-            headers.add("Apikey-not-found", "apikey-not-found");
+            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug("apikey {} is deprecated", id);
+            LOG.debug(APIKEYDEPRECATED, id);
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -433,10 +437,10 @@ public class ApikeyController {
         if (null != limit) {
             apikey.setUsageLimit(limit);
         }
-        // if deprecate == true: set dateDeprecated to last week; if false, set null
-        if (null != deprecated && deprecated) {
+        // if deprecated == true: set dateDeprecated to last week; if false, set null
+        if (BooleanUtils.isTrue(deprecated)){
             apikey.setDeprecationDate(lastWeek);
-        } else if (null != deprecated && !deprecated) {
+        } else if (BooleanUtils.isFalse(deprecated)) {
             apikey.setDeprecationDate(null);
         }
 
