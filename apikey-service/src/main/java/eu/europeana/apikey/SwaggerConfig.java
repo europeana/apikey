@@ -25,7 +25,7 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("eu.europeana.iiif"))
+                .apis(RequestHandlerSelectors.basePackage("eu.europeana.apikey"))
                 .paths(PathSelectors.any())
                 .build();
     }
