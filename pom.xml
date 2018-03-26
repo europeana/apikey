@@ -8,41 +8,45 @@
     <packaging>pom</packaging>
 
     <name>Apikey</name>
-    <description>Centralised API-key validation and OAuth authentication services built on Spring Boot</description>
+    <description>Centralised API-key validation services built on Spring Boot</description>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.10.RELEASE</version>
-        <!--<artifactId>europeana-parent-pom</artifactId>-->
-        <!--<groupId>eu.europeana</groupId>-->
-        <!--<version>1.7</version>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-parent</artifactId>-->
+        <!--<version>1.5.10.RELEASE</version>-->
+        <artifactId>europeana-parent-pom</artifactId>
+        <groupId>eu.europeana</groupId>
+        <version>2.0</version>
     </parent>
 
     <modules>
         <module>apikey-service</module>
     </modules>
 
-    <!--instead of inheriting from Spring Boot Parent-->
-    <!--<dependencyManagement>-->
-    <!--<dependencies>-->
-    <!--&lt;!&ndash; Override Spring Data release train provided by Spring Boot &ndash;&gt;-->
-    <!--<dependency>-->
-    <!--<groupId>org.springframework.data</groupId>-->
-    <!--<artifactId>spring-data-releasetrain</artifactId>-->
-    <!--<version>Fowler-SR2</version>-->
-    <!--<scope>import</scope>-->
-    <!--<type>pom</type>-->
-    <!--</dependency>-->
-    <!--<dependency>-->
-    <!--<groupId>org.springframework.boot</groupId>-->
-    <!--<artifactId>spring-boot-dependencies</artifactId>-->
-    <!--<version>1.5.9.RELEASE</version>-->
-    <!--<type>pom</type>-->
-    <!--<scope>import</scope>-->
-    <!--</dependency>-->
-    <!--</dependencies>-->
-    <!--</dependencyManagement>-->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <javadoc.opts>-Xdoclint:none</javadoc.opts>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <spring-boot.version>1.5.10.RELEASE</spring-boot.version>
+        <spring-cloud.version>1.4.3.RELEASE</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- Import dependency management from Spring Boot (because we don't use Spring-Boot as parent pom)-->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -72,6 +76,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
@@ -82,13 +90,8 @@
         </dependency>
     </dependencies>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
-        <javadoc.opts>-Xdoclint:none</javadoc.opts>
-    </properties>
-
     <build>
+        <finalName>apikey-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -32,6 +32,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpMethod;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -49,6 +50,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+
+@PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
 @ComponentScan("eu.europeana.apikey")
 public class Application {
@@ -109,8 +112,8 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity webSecurity) throws Exception {
         webSecurity
                 .ignoring()
-                .antMatchers(HttpMethod.GET, "/apikey/**");
-
+                .antMatchers(HttpMethod.GET, "/apikey/**")
+                .antMatchers(HttpMethod.GET, "/info");
     }
 
     @Override
