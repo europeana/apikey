@@ -29,6 +29,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +55,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
 @ComponentScan("eu.europeana.apikey")
-public class Application {
+public class Application extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder();
