@@ -127,6 +127,7 @@
                     <version>${spring-boot.version}</version>
                 </plugin>
 
+                <!--
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -153,10 +154,10 @@
                     <artifactId>maven-war-plugin</artifactId>
                     <version>2.6</version>
                     <configuration>
-                        <webResources>
+                        <webResources> -->
                             <!-- Try to include a build.txt file in the generated war that contains version and build
                                  information (from the buildnumber-maven-plugin) -->
-                            <resource>
+                           <!-- <resource>
                                 <directory>src/main/resources</directory>
                                 <filtering>true</filtering>
                                 <includes>
@@ -174,9 +175,9 @@
                     <version>3.0.2</version>
                     <configuration>
                         <archive>
-                            <manifest>
+                            <manifest> -->
                                 <!-- This adds version information to the MANIFEST.MF in the generated jars -->
-                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  <!--              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             </manifest>
                         </archive>
                     </configuration>
@@ -221,7 +222,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.3</version>
-                </plugin>
+                </plugin> -->
             </plugins>
         </pluginManagement>
     </build>
