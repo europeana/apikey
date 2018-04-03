@@ -2,5 +2,5 @@
 .idea
 *.iml
 
-/apikey-service/src/main/resources/apikey.properties
 
+/apikey-service/src/main/resources/application.yml

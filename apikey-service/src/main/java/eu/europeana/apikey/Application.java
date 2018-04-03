@@ -51,7 +51,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-
 @PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
 @ComponentScan("eu.europeana.apikey")
@@ -129,64 +128,14 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 @Component
 @ConfigurationProperties("europeanamail")
 class EuropeanaMailProperties {
-    private String registerApiTo;
-    private String registerApiFrom;
-    private String adminTo;
-    private String systemFrom;
-    private String registerTo;
-    private String feedbackTo;
-    private String exceptionTo;
-    private String feedbackFrom;
+    private String sentFrom;
 
-    public String getRegisterApiTo() {
-        return registerApiTo;
+    public String getSentFrom() {
+        return sentFrom;
     }
-    public void setRegisterApiTo(String registerApiTo) {
-        this.registerApiTo = registerApiTo;
+    public void setSentFrom(String sentFrom) {
+        this.sentFrom = sentFrom;
     }
-    public String getRegisterApiFrom() {
-        return registerApiFrom;
-    }
-    public void setRegisterApiFrom(String registerApiFrom) {
-        this.registerApiFrom = registerApiFrom;
-    }
-    public String getAdminTo() {
-        return adminTo;
-    }
-    public void setAdminTo(String adminTo) {
-        this.adminTo = adminTo;
-    }
-    public String getSystemFrom() {
-        return systemFrom;
-    }
-    public void setSystemFrom(String systemFrom) {
-        this.systemFrom = systemFrom;
-    }
-    public String getRegisterTo() {
-        return registerTo;
-    }
-    public void setRegisterTo(String registerTo) {
-        this.registerTo = registerTo;
-    }
-    public String getFeedbackTo() {
-        return feedbackTo;
-    }
-    public void setFeedbackTo(String feedbackTo) {
-        this.feedbackTo = feedbackTo;
-    }
-    public String getExceptionTo() {
-        return exceptionTo;
-    }
-    public void setExceptionTo(String exceptionTo) {
-        this.exceptionTo = exceptionTo;
-    }
-    public String getFeedbackFrom() {
-        return feedbackFrom;
-    }
-    public void setFeedbackFrom(String feedbackFrom) {
-        this.feedbackFrom = feedbackFrom;
-    }
-
 }
 
 @Configuration
@@ -221,7 +170,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "Best regards," +
                 "%n" +
                 "The Europeana API Team");
-        message.setFrom(europeanaMailProperties.getSystemFrom());
+        message.setFrom(europeanaMailProperties.getSentFrom());
         return message;
     }
 }
