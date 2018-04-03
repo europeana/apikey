@@ -1,10 +1,6 @@
-target/
-.settings/
-.springBeans
-.classpath
-.project
-bin/
+/apikey-service/target/
 .idea
 *.iml
-.gradle
-build/
+
+/apikey-service/src/main/resources/apikey.properties
+
