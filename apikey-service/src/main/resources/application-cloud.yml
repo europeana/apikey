@@ -1,0 +1,12 @@
+---
+
+spring:
+
+  mail:
+    host: REMOVED
+    username: REMOVED
+    password: REMOVED
+    port: 0
+
+europeanamail:
+  sent_from: REMOVED
