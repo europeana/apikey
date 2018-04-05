@@ -119,8 +119,8 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http    .authorizeRequests().anyRequest().access("hasRole('ROLE_ADMIN')")
-                .and().httpBasic();
-//                .and().csrf().disable();
+                .and().httpBasic()
+                .and().csrf().disable();
     }
 
 }
