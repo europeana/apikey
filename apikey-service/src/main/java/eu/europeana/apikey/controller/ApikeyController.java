@@ -29,8 +29,9 @@ import eu.europeana.apikey.repos.ApikeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import eu.europeana.apikey.util.PassGenerator;
 import eu.europeana.apikey.util.Tools;
-import org.apache.commons.lang.math.RandomUtils;
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -118,7 +119,7 @@ public class ApikeyController {
         PassGenerator pg = new PassGenerator();
         String        newApiKey;
         do {
-            newApiKey = pg.generate(RandomUtils.nextInt(4) + 8);
+            newApiKey = pg.generate(RandomUtils.nextInt(8, 13));
         } while (null != this.apikeyRepo.findOne(newApiKey));
 
         Apikey apikey = new Apikey(newApiKey,
@@ -353,23 +354,24 @@ public class ApikeyController {
         DateTime    nowDtUtc = new DateTime(DateTimeZone.UTC);
         Date        now      = nowDtUtc.toDate();
 
-        if (!StringUtils.isEmpty(api)) {
-            try {
-                apiName = ApiName.valueOf(api.toUpperCase().trim());
-            } catch (IllegalArgumentException e) {
+        if (StringUtils.isEmpty(api)) {
+            LOG.debug("no value for parameter 'api' supplied");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else if (!EnumUtils.isValidEnum(ApiName.class, api.toUpperCase())) {
                 LOG.debug("illegal value for parameter 'api': {}", api);
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-        } else {
-            LOG.debug("no value for parameter 'api' supplied");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
-        if (!StringUtils.isEmpty(method)) {
+        if (StringUtils.isEmpty(method)) {
             LOG.debug("no value for parameter 'method' supplied");
-            if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else if (api.equalsIgnoreCase("krakboem")){
+            try {
+                int oops = 0 / 0;
+            } catch (ArithmeticException e) {
+                LOG.error("Deliberate error thrown: ", e);
             }
+        } else if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         // retrieve apikey & check if available
