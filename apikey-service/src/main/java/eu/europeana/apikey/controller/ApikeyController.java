@@ -364,7 +364,7 @@ public class ApikeyController {
 
         if (StringUtils.isEmpty(method)) {
             LOG.debug("no value for parameter 'method' supplied");
-        } else if (api.equalsIgnoreCase("krakboem")){
+        } else if (method.equalsIgnoreCase("krakboem")){
             try {
                 int oops = 0 / 0;
             } catch (ArithmeticException e) {
