@@ -1,6 +1,11 @@
+
+**/apikey.user.properties
+
 /apikey-service/target/
 .idea
 *.iml
+
+console.log
 
 
 /apikey-service/src/main/resources/application.yml
