@@ -40,7 +40,6 @@ public class ApikeyCreate implements ApikeyAction{
     private String firstName;
     private String lastName;
     private String email;
-    private String level;
     private String appName;
     private String company;
     private String sector;
@@ -57,10 +56,6 @@ public class ApikeyCreate implements ApikeyAction{
 
     public String getEmail() {
         return email;
-    }
-
-    public String getLevel() {
-        return level;
     }
 
     public String getAppName() {

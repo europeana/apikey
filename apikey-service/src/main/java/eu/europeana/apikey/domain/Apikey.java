@@ -41,17 +41,10 @@ import static eu.europeana.apikey.util.Tools.nvl;
 @Table(name = "apikey")
 public class Apikey {
 	@Id
-//	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "apikey")
 	@JsonProperty("apikey")
 	@JsonView(View.Public.class)
 	private String apikey;
-
-	@NotNull
-	@Size(min = 1, max = 30)
-	@Column(name = "privatekey")
-	@JsonProperty("privatekey")
-	private String privatekey;
 
 	@NotNull
 	@Column(name = "registrationdate")
@@ -59,11 +52,6 @@ public class Apikey {
 	@JsonProperty("registrationDate")
 	@JsonView(View.Public.class)
 	private Date registrationDate;
-
-	@Column(name = "usagelimit")
-	@JsonProperty("usageLimit")
-	@JsonView(View.Public.class)
-	private Long usageLimit;
 
 	@Size(max = 100)
 	@Column(name = "website")
@@ -116,12 +104,6 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	protected String lastName;
 
-	@NotNull
-	@Size(max = 8)
-	@Column(name = "level")
-	@JsonProperty("level")
-	private String level;
-
 	@Column(name = "deprecationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("deprecationDate")
@@ -134,26 +116,31 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date lastAccessDate;
 
-	@NotNull
-	@Column(name = "usage")
-	@JsonProperty("usage")
-	@JsonView(View.Public.class)
-	private Long usage;
-
 	public Apikey() {
 
 	}
 
-	public Apikey(String apikey, String privatekey, String firstName, String lastName, String email, String level) {
+	public Apikey(String apikey, String firstName, String lastName, String email) {
 		this.apikey = apikey;
-		this.privatekey = privatekey;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
-		this.level = level;
 		this.registrationDate = new Date();
-		this.usageLimit = 10000L;
-		this.usage = 0L;
+	}
+
+	public Apikey(Apikey copy) {
+		this.apikey = copy.apikey;
+		this.registrationDate = copy.registrationDate;
+		this.website = copy.website;
+		this.activationDate = copy.activationDate;
+		this.appName = copy.appName;
+		this.company = copy.company;
+		this.sector = copy.sector;
+		this.email = copy.email;
+		this.firstName = copy.firstName;
+		this.lastName = copy.lastName;
+		this.deprecationDate = copy.deprecationDate;
+		this.lastAccessDate = copy.lastAccessDate;
 	}
 
 	public String getApikey() {
@@ -164,28 +151,12 @@ public class Apikey {
 		this.apikey = apikey;
 	}
 
-	public String getPrivatekey() {
-		return privatekey;
-	}
-
-	public void setPrivatekey(String privatekey) {
-		this.privatekey = privatekey;
-	}
-
 	public Date getRegistrationDate() {
 		return registrationDate;
 	}
 
 	public void setRegistrationDate(Date registrationDate) {
 		this.registrationDate = registrationDate;
-	}
-
-	public Long getUsageLimit() {
-		return usageLimit;
-	}
-
-	public void setUsageLimit(Long usageLimit) {
-		this.usageLimit = usageLimit;
 	}
 
 	public String getWebsite() {
@@ -252,14 +223,6 @@ public class Apikey {
 		this.lastName = lastName;
 	}
 
-	public String getLevel() {
-		return level;
-	}
-
-	public void setLevel(String level) {
-		this.level = level;
-	}
-
 	public Date getDeprecationDate() {
 		return deprecationDate;
 	}
@@ -276,26 +239,14 @@ public class Apikey {
 		this.lastAccessDate = lastAccessDate;
 	}
 
-	public Long getUsage() {
-		return usage;
-	}
-
-	public void setUsage(Long usage) {
-		this.usage = usage;
-	}
-
 
 	@Override
 	public String toString() {
 		return "Apikey {" +
 				" apikey = " + apikey +
-				", privatekey = " + nvl(privatekey) +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +
-				", level = " + nvl(level) +
-				", usage = " + nvl(usage) +
-				", usageLimit = " + nvl(usageLimit) +
 				", appName = " + nvl(appName) +
 				", website = " + nvl(website) +
 				", company = " + nvl(company) +

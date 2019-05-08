@@ -22,8 +22,8 @@
 
 package eu.europeana.apikey;
 
-import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.repos.ApikeyRepo;
+import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
+import eu.europeana.apikey.keycloak.KeycloakManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -42,11 +42,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -64,9 +59,6 @@ public class Application extends SpringBootServletInitializer {
     @Component
     public static class SampleDataPopulator implements CommandLineRunner {
 
-        @Autowired
-        private ApikeyRepo apikeyRepo;
-
         @Override
         public void run(String... args) throws Exception {
         }
@@ -75,32 +67,14 @@ public class Application extends SpringBootServletInitializer {
 @Configuration
 class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
-    @Autowired
-    ApikeyRepo apikeyRepo;
-
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService());
+        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
     }
 
     @Bean
-    UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
-
-            @Override
-            public UserDetails loadUserByUsername(String id)  {
-                Apikey apikey = apikeyRepo.findOne(id);
-                // && apikey.getLevel().equalsIgnoreCase("ADMIN")
-                if(apikey != null) {
-                    return new User(apikey.getApikey(), apikey.getPrivatekey(),
-                            true, true, true, true,
-                            AuthorityUtils.createAuthorityList(
-                                    apikey.getLevel().equalsIgnoreCase("ADMIN") ? "ROLE_ADMIN" : "USER"));
-                } else    {
-                    throw new UsernameNotFoundException("could not find apikey '"  + id + "'");
-                }
-            }
-        };
+    public KeycloakManager getKeycloakManager() {
+        return new KeycloakManager();
     }
 }
 
@@ -118,11 +92,10 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().anyRequest().access("hasRole('ROLE_ADMIN')")
+        http    .authorizeRequests().anyRequest().authenticated()
                 .and().httpBasic()
                 .and().csrf().disable();
     }
-
 }
 
 @Component

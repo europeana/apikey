@@ -24,25 +24,25 @@ package eu.europeana.apikey.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import eu.europeana.apikey.domain.*;
+import eu.europeana.apikey.keycloak.KeycloakAuthenticationToken;
+import eu.europeana.apikey.keycloak.KeycloakManager;
+import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import eu.europeana.apikey.util.ApiName;
-import eu.europeana.apikey.util.PassGenerator;
-import eu.europeana.apikey.util.Tools;
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,6 +73,10 @@ public class ApikeyController {
     @Autowired
     public SimpleMailMessage apikeyCreatedMail;
 
+
+    @Autowired
+    private KeycloakManager keycloakManager;
+
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
      * - firstName
@@ -97,7 +101,7 @@ public class ApikeyController {
      *
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 201 upon successful Apikey creation
-     *          HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
+     *          HTTP 400 when a required parameter is missing or has an invalid value
      *          HTTP 401 in case of an invalid request
      *          HTTP 403 if the request is unauthorised
      *          HTTP 406 if a response MIME type other than application/JSON was requested
@@ -116,43 +120,27 @@ public class ApikeyController {
             return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
         }
 
-        PassGenerator pg = new PassGenerator();
-        String        newApiKey;
-        do {
-            newApiKey = pg.generate(RandomUtils.nextInt(8, 13));
-        } while (null != this.apikeyRepo.findOne(newApiKey));
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        KeycloakSecurityContext securityContext = (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials();
+        try {
+            FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
+            if (apikey != null) {
+                this.apikeyRepo.save(new Apikey(apikey));
+                LOG.debug("apikey: {} created", apikey.getApikey());
 
-        Apikey apikey = new Apikey(newApiKey,
-                                   Tools.generatePassPhrase(10),
-                                   apikeyCreate.getFirstName(),
-                                   apikeyCreate.getLastName(),
-                                   apikeyCreate.getEmail(),
-                                   null != apikeyCreate.getLevel() && apikeyCreate.getLevel()
-                                            .equalsIgnoreCase(Level.ADMIN.getLevelName()) ?
-                                            Level.ADMIN.getLevelName() : Level.CLIENT.getLevelName());
-        if (null != apikeyCreate.getWebsite()) {
-            apikey.setWebsite(apikeyCreate.getWebsite());
+                emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
+                        "Your Europeana API keys",
+                        apikeyCreatedMail,
+                        apikey.getFirstName(),
+                        apikey.getLastName(),
+                        apikey.getApikey(),
+                        apikey.getClientSecret());
+                return new ResponseEntity<>(apikey, HttpStatus.CREATED);
+            }
+        } catch (ApikeyException e) {
+            return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
         }
-        if (null != apikeyCreate.getAppName()) {
-            apikey.setAppName(apikeyCreate.getAppName());
-        }
-        if (null != apikeyCreate.getCompany()) {
-            apikey.setCompany(apikeyCreate.getCompany());
-        }
-        if (null != apikeyCreate.getSector()) {
-            apikey.setSector(apikeyCreate.getSector());
-        }
-        this.apikeyRepo.save(apikey);
-        LOG.debug("apikey: {} created", apikey.getApikey());
-
-        emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
-                                                    "Your Europeana API keys",
-                                                    apikeyCreatedMail,
-                                                    apikey.getFirstName(),
-                                                    apikey.getLastName(),
-                                                    apikey.getApikey(),
-                                                    apikey.getPrivatekey());
-        return new ResponseEntity<>(apikey, HttpStatus.CREATED);
+        return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -219,7 +207,7 @@ public class ApikeyController {
      * @param   apikeyUpdate RequestBody containing supplied values
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 200 upon successful Apikey update
-     *          HTTP 400 when a required parameter is missing or (for 'Level') has an invalid value
+     *          HTTP 400 when a required parameter is missing or has an invalid value
      *          HTTP 401 in case of an invalid request
      *          HTTP 403 if the request is unauthorised
      *          HTTP 404 if the apikey is not found
@@ -395,33 +383,15 @@ public class ApikeyController {
 
         // set lastAccessDate = sysdate
         apikey.setLastAccessDate(now);
+        this.apikeyRepo.save(apikey);
 
-        // (mock-)check usage
-        long usage     = apikey.getUsage();
-        long remaining = apikey.getUsageLimit() - usage;
-        headers.add("X-RateLimit-Reset",
-                    String.valueOf(new Duration(nowDtUtc,
-                                                nowDtUtc.plusDays(1).withTimeAtStartOfDay()).toStandardSeconds()
-                                                                                            .getSeconds()));
-
-        if (remaining <= 0L) {
-            // You shall not pass!
-            headers.add("X-RateLimit-Remaining", String.valueOf(0));
-            LOG.debug("usage limit of apikey {} reached", id);
-            return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
-        } else {
-            // Welcome, gringo!
-            headers.add("X-RateLimit-Remaining", String.valueOf(remaining - 1));
-            apikey.setUsage(usage + 1);
-            this.apikeyRepo.save(apikey);
-            return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
-        }
+        // Welcome, gringo!
+        return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
     }
 
     // created to facilitate Rene's testing
     @RequestMapping(path = "/{id}/set", method = RequestMethod.PUT)
     public ResponseEntity<Apikey> validate(@PathVariable("id") String id,
-                                           @RequestParam(value = "limit", required = false) Long limit,
                                            @RequestParam(value = "reset", required = false) Boolean reset,
                                            @RequestParam(value = "deprecated", required = false) Boolean deprecated) {
 
@@ -431,14 +401,6 @@ public class ApikeyController {
         if (null == apikey) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        // if reset == true: reset usage to zero
-        if (null != reset && reset) {
-            apikey.setUsage(0L);
-        }
-        // if limit is set: reset usageLimit to limit
-        if (null != limit) {
-            apikey.setUsageLimit(limit);
-        }
         // if deprecated == true: set dateDeprecated to last week; if false, set null
         if (BooleanUtils.isTrue(deprecated)){
             apikey.setDeprecationDate(lastWeek);
@@ -446,7 +408,7 @@ public class ApikeyController {
             apikey.setDeprecationDate(null);
         }
 
-        if (null == reset && null == deprecated && null == limit) {
+        if (null == reset && null == deprecated) {
             return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT); // HTTP 418
         } else {
             this.apikeyRepo.save(apikey);
