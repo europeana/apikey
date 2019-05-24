@@ -69,7 +69,12 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
+        auth.authenticationProvider(getAuthenticationProvider());
+    }
+
+    @Bean
+    public CustomKeycloakAuthenticationProvider getAuthenticationProvider() {
+        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
     }
 
     @Bean
@@ -83,16 +88,10 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
-    public void configure(WebSecurity webSecurity) throws Exception {
-        webSecurity
-                .ignoring()
-                .antMatchers(HttpMethod.GET, "/apikey/**")
-                .antMatchers(HttpMethod.GET, "/info");
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().anyRequest().authenticated()
+        http    .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
+                .anyRequest().authenticated()
                 .and().httpBasic()
                 .and().csrf().disable();
     }

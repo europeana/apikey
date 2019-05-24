@@ -114,33 +114,31 @@ public class ApikeyController {
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyCreate apikeyCreate) {
         LOG.debug("creating new apikey");
-        String missing = mandatoryMissing(apikeyCreate);
-        if (!missing.equals("")){
-            LOG.debug(missing + ", abort creating apikey");
-            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+        try {
+            mandatoryMissing(apikeyCreate);
+        } catch (ApikeyException e) {
+            LOG.debug(e.getMessage() + ", abort creating apikey");
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         KeycloakSecurityContext securityContext = (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials();
         try {
             FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
-            if (apikey != null) {
-                this.apikeyRepo.save(new Apikey(apikey));
-                LOG.debug("apikey: {} created", apikey.getApikey());
+            this.apikeyRepo.save(new Apikey(apikey));
+            LOG.debug("apikey: {} created", apikey.getApikey());
 
-                emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
-                        "Your Europeana API keys",
-                        apikeyCreatedMail,
-                        apikey.getFirstName(),
-                        apikey.getLastName(),
-                        apikey.getApikey(),
-                        apikey.getClientSecret());
-                return new ResponseEntity<>(apikey, HttpStatus.CREATED);
-            }
+            emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
+                    "Your Europeana API keys",
+                    apikeyCreatedMail,
+                    apikey.getFirstName(),
+                    apikey.getLastName(),
+                    apikey.getApikey(),
+                    apikey.getClientSecret());
+            return new ResponseEntity<>(apikey, HttpStatus.CREATED);
         } catch (ApikeyException e) {
-            return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.valueOf(e.getStatus()));
         }
-        return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -171,11 +169,13 @@ public class ApikeyController {
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@RequestBody ApikeyUpdate apikeyUpdate) {
         LOG.debug("update registration details for apikey: {}", apikeyUpdate.getApikey());
-        String missing = mandatoryMissing(apikeyUpdate);
-        if (!missing.equals("")){
-            LOG.debug(missing + ", aborting registration details update");
-            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+        try {
+            mandatoryMissing(apikeyUpdate);
+        } catch (ApikeyException e) {
+            LOG.debug(e.getMessage() + ", aborting registration details update");
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
+
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
@@ -234,9 +234,10 @@ public class ApikeyController {
 
         // update values if supplied
         if (null != apikeyUpdate) {
-            String missing = mandatoryMissing(apikeyUpdate);
-            if (!missing.equals("")){
-                return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+            try {
+                mandatoryMissing(apikeyUpdate);
+            } catch (ApikeyException e) {
+                return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
             }
             apikey = copyUpdateValues(apikey, apikeyUpdate);
         }
@@ -448,22 +449,15 @@ public class ApikeyController {
         return apikey;
     }
 
-    private String mandatoryMissing(ApikeyAction apikeyUpdate){
-        String retval = "required parameter";
+    private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
+        String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
         if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
         if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
         if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
-        if (missingList.size() == 3) {
-            retval += "s " + missingList.get(0) + ", " + missingList.get(1) + " and " + missingList.get(2);
-        } else if (missingList.size() == 2) {
-            retval += "s " + missingList.get(0) + " and " + missingList.get(1);
-        } else if (missingList.size() == 1) {
-            retval += " " + missingList.get(0);
-        } else {
-            return "";
+        if (!missingList.isEmpty()) {
+            throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
         }
-        return retval + " not provided";
     }
 
 
