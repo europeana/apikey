@@ -302,13 +302,21 @@ public class ApikeyController {
     public ResponseEntity<Apikey> get(@PathVariable("id") String id) {
         LOG.debug("retrieve details for apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
+
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        KeycloakSecurityContext securityContext = (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials();
+
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
             LOG.debug(APIKEYNOTFOUND + " with value: " + id);
             headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
+
+        if (keycloakManager.checkClient(id, keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(null, headers, HttpStatus.UNAUTHORIZED);
     }
 
     /**

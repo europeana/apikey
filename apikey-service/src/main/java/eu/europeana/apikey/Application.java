@@ -22,18 +22,14 @@
 
 package eu.europeana.apikey;
 
-import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
-import eu.europeana.apikey.keycloak.KeycloakManager;
+import eu.europeana.apikey.keycloak.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.http.HttpMethod;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -42,9 +38,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import java.security.Principal;
 
 @PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
@@ -95,6 +97,7 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
         http    .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
+                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().csrf().disable();
     }
 }

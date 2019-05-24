@@ -125,11 +125,12 @@ public class KeycloakManagerTest {
     public void authenticateClient() throws VerificationException {
         prepareForAuthentication();
 
-        KeycloakSecurityContext context = keycloakManager.authenticateClient(CLIENT_ID, CLIENT_SECRET);
+        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(CLIENT_ID, CLIENT_SECRET);
 
-        Assert.assertNotNull(context);
-        Assert.assertEquals(accessToken, context.getAccessToken());
-        Assert.assertEquals(ACCESS_TOKEN_STRING, context.getAccessTokenString());
+        Assert.assertNotNull(principal);
+        Assert.assertNotNull(principal.getKeycloakSecurityContext());
+        Assert.assertEquals(accessToken, principal.getKeycloakSecurityContext().getAccessToken());
+        Assert.assertEquals(ACCESS_TOKEN_STRING, principal.getKeycloakSecurityContext().getAccessTokenString());
     }
 
     private void prepareForAuthentication() throws VerificationException {

@@ -31,8 +31,12 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.annotation.RequestScope;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -99,7 +103,7 @@ public class KeycloakManager {
      * @param clientSecret client secret used to authenticate the client in Keycloak
      * @return security context with configured admin client together with access and refresh tokens
      */
-    KeycloakSecurityContext authenticateClient(String clientId, String clientSecret) {
+    KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
         Keycloak keycloak = KeycloakBuilder.builder()
                 .realm(realm)
                 .serverUrl(authServerUrl)
@@ -115,7 +119,7 @@ public class KeycloakManager {
         try {
             AccessToken accessToken = KeycloakTokenVerifier.verifyToken(token.getToken());
             if (accessToken != null) {
-                return new KeycloakSecurityContext(keycloak, accessToken, token.getToken());
+                return new KeycloakPrincipal<>(clientId, new KeycloakSecurityContext(keycloak, accessToken, token.getToken()));
             }
         } catch (VerificationException e) {
             throw new KeycloakAuthenticationException("Authentication failed for client " + clientId, e);
@@ -225,13 +229,13 @@ public class KeycloakManager {
      * @param securityContext security context with current access token
      * @throws ApikeyException if any exception happens while executing the request
      */
-    void createClient(ClientRepresentation clientRepresentation, KeycloakSecurityContext securityContext) throws ApikeyException {
+    private void createClient(ClientRepresentation clientRepresentation, KeycloakSecurityContext securityContext) throws ApikeyException {
         HttpPost httpPost = preparePostClientRequest(clientRepresentation, securityContext.getAccessTokenString());
         CloseableHttpResponse response = null;
         try {
             response = httpClient.execute(httpPost);
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
             LOG.error("Error communicating with Keycloak", e);
@@ -302,6 +306,7 @@ public class KeycloakManager {
                 , null != apikeyCreate.getAppName() ? apikeyCreate.getAppName() : newApiKey
                 , null != apikeyCreate.getCompany() ? apikeyCreate.getCompany() : ""));
         clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyCreate.getFirstName(), apikeyCreate.getLastName(), apikeyCreate.getEmail()));
+        clientRepresentation.setDirectAccessGrantsEnabled(false);
         return clientRepresentation;
     }
 
@@ -399,5 +404,26 @@ public class KeycloakManager {
      */
     private void addAuthorizationHeader(String accessToken, HttpRequestBase request) {
         request.addHeader("Authorization", "bearer " + accessToken);
+    }
+
+    public boolean isClientAuthorized(String apikey, KeycloakAuthenticationToken keycloakAuthenticationToken) {
+        if (apikey == null || keycloakAuthenticationToken == null || keycloakAuthenticationToken.getCredentials() == null) {
+            return false;
+        }
+
+        // apikey parameter is the one that we want to check against the name in the authentication token
+        if (apikey.equals(keycloakAuthenticationToken.getName())) {
+            return true;
+        }
+
+        Collection<GrantedAuthority> authorities = keycloakAuthenticationToken.getAuthorities();
+        if (authorities == null || authorities.isEmpty()) {
+            return false;
+        }
+
+//        authorities.forEach(grantedAuthority -> {
+//            grantedAuthority.getAuthority()
+//        });
+        return true;
     }
 }
