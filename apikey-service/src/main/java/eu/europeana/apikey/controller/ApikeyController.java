@@ -355,9 +355,14 @@ public class ApikeyController {
             apikey.setActivationDate(now);
         }
 
-        // set lastAccessDate = sysdate
-        apikey.setLastAccessDate(now);
-        this.apikeyRepo.save(apikey);
+        try {
+            // set lastAccessDate = sysdate
+            apikey.setLastAccessDate(now);
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // Welcome, gringo!
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -367,11 +372,15 @@ public class ApikeyController {
         String authorization = httpServletRequest.getHeader("Authorization");
         if (authorization != null) {
 
-            Pattern pattern = Pattern.compile(APIKEY_PATTERN);
-            Matcher matcher = pattern.matcher(authorization);
+            try {
+                Pattern pattern = Pattern.compile(APIKEY_PATTERN);
+                Matcher matcher = pattern.matcher(authorization);
 
-            if (matcher.find()) {
-                return matcher.group(1);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            } catch (RuntimeException e) {
+                LOG.error("Regex problem while parsing authorization header", e);
             }
         }
         return null;
