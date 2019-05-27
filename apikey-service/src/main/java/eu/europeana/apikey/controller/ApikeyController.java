@@ -58,8 +58,8 @@ public class ApikeyController {
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
     private static final String APIKEYNOTFOUND = "Apikey-not-found";
-    private static final String APIKEYDEPRECATED = "apikey {} is deprecated";
-    private static final String APIKEYNOTREGISTERED = "Apikey {} is not registered";
+    private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
+    private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
 
@@ -192,7 +192,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, apikeyUpdate.getApikey());
+            LOG.debug(String.format(APIKEYDEPRECATED, apikeyUpdate.getApikey()));
             return new ResponseEntity<>(HttpStatus.GONE);
         }
         apikey = copyUpdateValues(apikey, apikeyUpdate);
@@ -278,7 +278,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
+            LOG.debug(String.format(APIKEYDEPRECATED, id));
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -323,12 +323,12 @@ public class ApikeyController {
      *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
      */
     @PostMapping(path = "/validate")
-    public ResponseEntity<Apikey> validate(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) {
         // When no apikey was supplied return 400
         String id = getApikey(httpServletRequest);
         if (null == id) {
             LOG.debug(APIKEYMISSING);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(APIKEYMISSING, HttpStatus.BAD_REQUEST);
         }
 
         LOG.debug("validate apikey: {}", id);
@@ -336,14 +336,16 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTREGISTERED, id);
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            String reason = String.format(APIKEYNOTREGISTERED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.UNAUTHORIZED);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
-            return new ResponseEntity<>(HttpStatus.GONE);
+            String reason = String.format(APIKEYDEPRECATED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.GONE);
         }
 
         Date now = new DateTime(DateTimeZone.UTC).toDate();
@@ -364,9 +366,8 @@ public class ApikeyController {
     private String getApikey(HttpServletRequest httpServletRequest) {
         String authorization = httpServletRequest.getHeader("Authorization");
         if (authorization != null) {
-            String patternString = APIKEY_PATTERN;
 
-            Pattern pattern = Pattern.compile(patternString);
+            Pattern pattern = Pattern.compile(APIKEY_PATTERN);
             Matcher matcher = pattern.matcher(authorization);
 
             if (matcher.find()) {
