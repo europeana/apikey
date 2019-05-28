@@ -91,7 +91,8 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http    .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
-                .anyRequest().authenticated()
+                .antMatchers(HttpMethod.POST, "/apikey").authenticated()
+                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
                 .and().csrf().disable();
     }

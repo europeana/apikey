@@ -29,9 +29,7 @@ import eu.europeana.apikey.keycloak.KeycloakManager;
 import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
-import eu.europeana.apikey.util.ApiName;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -43,23 +41,27 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/apikey")
 public class ApikeyController {
-
     private final ApikeyRepo apikeyRepo;
     private static final String READ  = "read";
     private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
     private static final String APIKEYNOTFOUND = "Apikey-not-found";
-    private static final String APIKEYDEPRECATED = "apikey {} is deprecated";
+    private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
+    private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
+    private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
+    private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo) {
@@ -190,7 +192,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, apikeyUpdate.getApikey());
+            LOG.debug(String.format(APIKEYDEPRECATED, apikeyUpdate.getApikey()));
             return new ResponseEntity<>(HttpStatus.GONE);
         }
         apikey = copyUpdateValues(apikey, apikeyUpdate);
@@ -277,7 +279,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
+            LOG.debug(String.format(APIKEYDEPRECATED, id));
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -314,80 +316,75 @@ public class ApikeyController {
      * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the
      * current date and +1 increments the usage count of this Apikey.
      *
-     * @param   id     the apikey to validate
-     * @param   api    API for which validate this apikey
-     * @param   method method (read, write) for which validate this apikey
+     * @param   httpServletRequest     request
      *
      * @return  HTTP 204 upon successful validation
-     *          HTTP 400 if a mandatory parameter is missing
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 404 when the requested Apikey is not found in the database
+     *          HTTP 400 bad request when header does not contain api key
+     *          HTTP 401 in case of an unregistered api key
      *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
-     *          HTTP 429 if the assigned usagelimit has been reached
-     *          Addionally, the following fields are (optionally) available in the response header:
-     *          - "X-RateLimit-Remaining" access usage number since the previous reset
-     *          - "X-RateLimit-Reset"     the number of seconds until the access usage count is reset
-     *          - "Apikey-not-found"      containing the string "apikey-not-found" is added when the Apikey
-     *                                    is not found, to help telling this HTTP 404 apart from one returned
-     *                                    by the webserver for other reasons
      */
-    @RequestMapping(path = "/{id}/validate", method = RequestMethod.POST)
-    public ResponseEntity<Apikey> validate(@PathVariable("id") String id,
-                                           @RequestParam(value = "api", required = false) String api,
-                                           @RequestParam(value = "method", required = false) String method) {
+    @PostMapping(path = "/validate")
+    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) {
+        // When no apikey was supplied return 400
+        String id = getApikey(httpServletRequest);
+        if (null == id) {
+            LOG.debug(APIKEYMISSING);
+            return new ResponseEntity<>(APIKEYMISSING, HttpStatus.BAD_REQUEST);
+        }
 
         LOG.debug("validate apikey: {}", id);
-        ApiName     apiName; //TODO usage not implemented yet
-        HttpHeaders headers  = new HttpHeaders();
-        DateTime    nowDtUtc = new DateTime(DateTimeZone.UTC);
-        Date        now      = nowDtUtc.toDate();
-
-        if (StringUtils.isEmpty(api)) {
-            LOG.debug("no value for parameter 'api' supplied");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else if (!EnumUtils.isValidEnum(ApiName.class, api.toUpperCase())) {
-                LOG.debug("illegal value for parameter 'api': {}", api);
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-        if (StringUtils.isEmpty(method)) {
-            LOG.debug("no value for parameter 'method' supplied");
-        } else if (method.equalsIgnoreCase("krakboem")){
-            try {
-                int oops = 0 / 0;
-            } catch (ArithmeticException e) {
-                LOG.error("Deliberate error thrown: ", e);
-            }
-        } else if (!method.equalsIgnoreCase(READ) && !method.equalsIgnoreCase(WRITE)) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            String reason = String.format(APIKEYNOTREGISTERED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.UNAUTHORIZED);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
-            return new ResponseEntity<>(HttpStatus.GONE);
+            String reason = String.format(APIKEYDEPRECATED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.GONE);
         }
+
+        Date now = new DateTime(DateTimeZone.UTC).toDate();
 
         // set activationDate = sysdate if null
         if (null == apikey.getActivationDate()) {
             apikey.setActivationDate(now);
         }
 
-        // set lastAccessDate = sysdate
-        apikey.setLastAccessDate(now);
-        this.apikeyRepo.save(apikey);
+        try {
+            // set lastAccessDate = sysdate
+            apikey.setLastAccessDate(now);
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // Welcome, gringo!
-        return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    private String getApikey(HttpServletRequest httpServletRequest) {
+        String authorization = httpServletRequest.getHeader("Authorization");
+        if (authorization != null) {
+
+            try {
+                Pattern pattern = Pattern.compile(APIKEY_PATTERN);
+                Matcher matcher = pattern.matcher(authorization);
+
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            } catch (RuntimeException e) {
+                LOG.error("Regex problem while parsing authorization header", e);
+            }
+        }
+        return null;
     }
 
     // created to facilitate Rene's testing
