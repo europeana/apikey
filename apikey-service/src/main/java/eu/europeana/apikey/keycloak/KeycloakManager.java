@@ -40,11 +40,13 @@ import org.springframework.web.context.annotation.RequestScope;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Class for working with Keycloak
@@ -64,6 +66,9 @@ public class KeycloakManager {
 
     /** Template for client-secret endpoint */
     private static final String CLIENT_SECRET_ENDPOINT = "%s/admin/realms/%s/clients/%s/client-secret";
+
+    /** Role for managing clients used to authorize access by Manager Client */
+    private static final String MANAGE_CLIENTS_ROLE = "manage-clients";
 
     @Value("${keycloak.auth-server-url}")
     private String authServerUrl;
@@ -406,6 +411,12 @@ public class KeycloakManager {
         request.addHeader("Authorization", "bearer " + accessToken);
     }
 
+    /**
+     * Checks whether the client for which the token was issued is the owner of the apikey or a manager client
+     * @param apikey api key to check
+     * @param keycloakAuthenticationToken token issued for the caller of the request
+     * @return true when authorized, false otherwise
+     */
     public boolean isClientAuthorized(String apikey, KeycloakAuthenticationToken keycloakAuthenticationToken) {
         if (apikey == null || keycloakAuthenticationToken == null || keycloakAuthenticationToken.getCredentials() == null) {
             return false;
@@ -421,9 +432,7 @@ public class KeycloakManager {
             return false;
         }
 
-//        authorities.forEach(grantedAuthority -> {
-//            grantedAuthority.getAuthority()
-//        });
-        return true;
+        Optional<String> manager = authorities.stream().map(GrantedAuthority::getAuthority).filter(MANAGE_CLIENTS_ROLE::equals).findFirst();
+        return manager.isPresent();
     }
 }
