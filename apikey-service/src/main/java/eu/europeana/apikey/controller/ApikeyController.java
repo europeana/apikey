@@ -168,11 +168,11 @@ public class ApikeyController {
      *          HTTP 415 if the submitted request does not contain a valid JSON body
      */
     @CrossOrigin(maxAge = 600)
-    @RequestMapping(method   = RequestMethod.PUT,
-                    produces = MediaType.APPLICATION_JSON_VALUE,
-                    consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> update(@RequestBody ApikeyUpdate apikeyUpdate) {
-        LOG.debug("update registration details for apikey: {}", apikeyUpdate.getApikey());
+    @PutMapping(value = "/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApikeyUpdate apikeyUpdate) {
+        LOG.debug("update registration details for apikey: {}", id);
         String missing = mandatoryMissing(apikeyUpdate);
         if (!missing.equals("")){
             LOG.debug(missing + ", aborting registration details update");
@@ -181,9 +181,9 @@ public class ApikeyController {
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
-        Apikey apikey = this.apikeyRepo.findOne(apikeyUpdate.getApikey());
+        Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug("apikey: {} not found", apikeyUpdate.getApikey());
+            LOG.debug("apikey: {} not found", id);
             headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         } else {
@@ -192,11 +192,21 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, apikeyUpdate.getApikey());
+            LOG.debug(APIKEYDEPRECATED, id);
             return new ResponseEntity<>(HttpStatus.GONE);
         }
-        apikey = copyUpdateValues(apikey, apikeyUpdate);
-        this.apikeyRepo.save(apikey);
+
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(headers, HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
+            apikey = copyUpdateValues(apikey, apikeyUpdate);
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
 
