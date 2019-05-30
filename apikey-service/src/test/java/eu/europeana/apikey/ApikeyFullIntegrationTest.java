@@ -18,9 +18,7 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.domain.ApikeyCreate;
-import eu.europeana.apikey.domain.ApikeyUpdate;
-import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
+import eu.europeana.apikey.domain.ApikeyDetails;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import org.joda.time.DateTime;
@@ -31,7 +29,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,15 +49,10 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 /**
@@ -89,7 +81,7 @@ public class ApikeyFullIntegrationTest {
     private static final String phypheysCompany     = "Smug, Spoiled, Stupid & Arrogant Inc.";
     private static final String phypheysSector      = "The Terminally Hip";
     private static final String phypheysWebsite     = "http://sssa4u.biz";
-    private static final ApikeyCreate fifisApikeyCreate = new ApikeyCreate(fifisFirstName, fifisLastName, fifisEmail);
+    private static final ApikeyDetails fifisApikeyCreate = new ApikeyDetails(fifisFirstName, fifisLastName, fifisEmail);
     private static final String READ  = "read";
 
 
@@ -131,10 +123,10 @@ public class ApikeyFullIntegrationTest {
     public void bUpdateApikey() throws Exception {
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
 
-        ApikeyUpdate phypheysApikeyUpdate = new ApikeyUpdate(fifisApikey, phypheysFirstName, phypheysLastName
+        ApikeyDetails phypheysApikeyUpdate = new ApikeyDetails(phypheysFirstName, phypheysLastName
                 , phypheysEmail, phypheysAppName, phypheysCompany, phypheysSector, phypheysWebsite);
 
-        mvc.perform(put("/apikey").header(HttpHeaders.AUTHORIZATION
+        mvc.perform(put("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION
                 , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                 .contentType(MediaType.APPLICATION_JSON).content(JsonUtil.toJson(phypheysApikeyUpdate)).with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -198,7 +190,7 @@ public class ApikeyFullIntegrationTest {
     @Test
     public void dReenableeApikey() throws Exception {
         String phypheysApikey = apikeyRepo.findByEmail(phypheysEmail).get().getApikey();
-        ApikeyUpdate fifisApikeyUpdate = new ApikeyUpdate(phypheysApikey, fifisFirstName, fifisLastName
+        ApikeyDetails fifisApikeyUpdate = new ApikeyDetails(fifisFirstName, fifisLastName
                 , fifisEmail, fifisAppName, fifisCompany, fifisSector, fifisWebsite);
 
         mvc.perform(post("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION

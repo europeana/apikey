@@ -114,7 +114,7 @@ public class ApikeyController {
     @RequestMapping(method = RequestMethod.POST,
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> save(@RequestBody ApikeyCreate apikeyCreate) {
+    public ResponseEntity<Object> save(@RequestBody ApikeyDetails apikeyCreate) {
         LOG.debug("creating new apikey");
         String missing = mandatoryMissing(apikeyCreate);
         if (!missing.equals("")){
@@ -156,12 +156,13 @@ public class ApikeyController {
      * - appName
      * - sector
      *
+     * @param   id PathParam containing api key to be updated
      * @param   apikeyUpdate RequestBody containing supplied values
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 200 upon successful Apikey update
      *          HTTP 400 when a required parameter is missing
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
+     *          HTTP 401 in case of an unauthorized request (client credential authentication fails)
+     *          HTTP 403 if the request is unauthorised (when the client is not a manager)
      *          HTTP 404 if the apikey is not found
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 410 if the apikey is invalidated / deprecated
@@ -171,7 +172,7 @@ public class ApikeyController {
     @PutMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApikeyUpdate apikeyUpdate) {
+    public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApikeyDetails apikeyUpdate) {
         LOG.debug("update registration details for apikey: {}", id);
         String missing = mandatoryMissing(apikeyUpdate);
         if (!missing.equals("")){
@@ -197,15 +198,20 @@ public class ApikeyController {
         }
 
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken)) {
-            return new ResponseEntity<>(headers, HttpStatus.UNAUTHORIZED);
+        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken, true)) {
+            return new ResponseEntity<>(headers, HttpStatus.FORBIDDEN);
         }
 
         try {
-            apikey = copyUpdateValues(apikey, apikeyUpdate);
+            keycloakManager.updateClient((KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials(), apikeyUpdate, id);
+            copyUpdateValues(apikey, apikeyUpdate);
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
             return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (ApikeyException e) {
+            LOG.error("Could not update client", e);
+            return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
@@ -230,7 +236,7 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
-                                           @RequestBody(required = false) ApikeyUpdate apikeyUpdate ) {
+                                           @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
 
@@ -322,7 +328,7 @@ public class ApikeyController {
         }
 
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken)) {
+        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken, false)) {
             return new ResponseEntity<>(headers, HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
@@ -427,7 +433,7 @@ public class ApikeyController {
         return "Hello World!";
     }
 
-    private Apikey copyUpdateValues(Apikey apikey, ApikeyUpdate apikeyUpdate){
+    private Apikey copyUpdateValues(Apikey apikey, ApikeyDetails apikeyUpdate){
         if (null != apikeyUpdate.getFirstName()) {
             apikey.setFirstName(apikeyUpdate.getFirstName());
         }
