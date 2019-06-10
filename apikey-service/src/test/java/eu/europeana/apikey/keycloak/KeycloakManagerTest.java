@@ -410,4 +410,19 @@ public class KeycloakManagerTest {
     private ApikeyDetails prepareApikeyUpdate() {
         return new ApikeyDetails(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
     }
+
+
+    @Test(expected = ApikeyException.class)
+    public void invalidateClientWhenClientMissing() throws IOException, ApikeyException {
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(false);
+
+        keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
+    }
+
+    @Test
+    public void invalidateClientWhenClientExists() throws IOException, ApikeyException {
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true);
+
+        keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
+    }
 }
