@@ -232,12 +232,17 @@ public class ApikeyController {
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
      */
-    @RequestMapping(path = "/{id}", method = RequestMethod.POST,
+    @PostMapping(path = "/{id}",
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
                                            @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
@@ -247,18 +252,25 @@ public class ApikeyController {
             headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
             return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
-        // remove deprecationdate: this enables the key again
-        apikey.setDeprecationDate(null);
 
-        // update values if supplied
-        if (null != apikeyUpdate) {
-            String missing = mandatoryMissing(apikeyUpdate);
-            if (!missing.equals("")){
-                return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+        try {
+            // remove deprecationdate: this enables the key again
+            apikey.setDeprecationDate(null);
+
+            // update values if supplied
+            if (null != apikeyUpdate) {
+                String missing = mandatoryMissing(apikeyUpdate);
+                if (!missing.equals("")) {
+                    return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+                }
+                apikey = copyUpdateValues(apikey, apikeyUpdate);
             }
-            apikey = copyUpdateValues(apikey, apikeyUpdate);
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
+            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        this.apikeyRepo.save(apikey);
+
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
      }
 
