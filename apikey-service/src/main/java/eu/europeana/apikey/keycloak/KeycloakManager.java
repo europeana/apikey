@@ -543,15 +543,16 @@ public class KeycloakManager {
      *
      * @param enable enable or disable a client
      * @param clientId client identifier
+     * @param apikeyUpdate update information which will be used in case of enabling
      * @param securityContext security context with access token
      * @throws ApikeyException when client not found in Keycloak or update failed
      */
-    public void enableClient(boolean enable, String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
+    public void enableClient(boolean enable, String clientId, ApikeyDetails apikeyUpdate, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
         if (clientRepresentation == null) {
             throw new ApikeyException(HttpStatus.SC_NOT_FOUND);
         }
-        if (clientRepresentation.isEnabled() != enable) {
+        if (clientRepresentation.isEnabled() != enable && !enable) {
             clientRepresentation.setEnabled(enable);
             updateClient(clientRepresentation, securityContext);
         }

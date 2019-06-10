@@ -316,7 +316,7 @@ public class ApikeyController {
         }
 
         try {
-            keycloakManager.enableClient(false, id, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
             apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
