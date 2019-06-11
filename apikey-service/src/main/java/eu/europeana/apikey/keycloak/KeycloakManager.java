@@ -193,6 +193,9 @@ public class KeycloakManager {
      * @return changed client representation
      */
     private ClientRepresentation updateClientRepresentation(ClientRepresentation clientRepresentation, ApikeyDetails apikeyUpdate) {
+        if (apikeyUpdate == null) {
+            return clientRepresentation;
+        }
         clientRepresentation.setName(String.format(CLIENT_NAME
                 , null != apikeyUpdate.getAppName() ? apikeyUpdate.getAppName() : clientRepresentation.getClientId()
                 , null != apikeyUpdate.getCompany() ? apikeyUpdate.getCompany() : ""));
@@ -552,7 +555,10 @@ public class KeycloakManager {
         if (clientRepresentation == null) {
             throw new ApikeyException(HttpStatus.SC_NOT_FOUND);
         }
-        if (clientRepresentation.isEnabled() != enable && !enable) {
+        if (clientRepresentation.isEnabled() != enable) {
+            if (enable) {
+                updateClientRepresentation(clientRepresentation, apikeyUpdate);
+            }
             clientRepresentation.setEnabled(enable);
             updateClient(clientRepresentation, securityContext);
         }

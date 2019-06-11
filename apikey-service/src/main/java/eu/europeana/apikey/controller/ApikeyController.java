@@ -254,21 +254,24 @@ public class ApikeyController {
         }
 
         try {
-            // remove deprecationdate: this enables the key again
-            apikey.setDeprecationDate(null);
-
             // update values if supplied
             if (null != apikeyUpdate) {
                 String missing = mandatoryMissing(apikeyUpdate);
                 if (!missing.equals("")) {
                     return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
                 }
-                apikey = copyUpdateValues(apikey, apikeyUpdate);
+                copyUpdateValues(apikey, apikeyUpdate);
             }
+            keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            // remove deprecationdate: this enables the key again
+            apikey.setDeprecationDate(null);
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
             LOG.error("Error saving to DB", e);
             return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (ApikeyException e) {
+            LOG.error("Could not reenable a client", e);
+            return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
         }
 
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
