@@ -44,8 +44,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,8 +114,7 @@ public class ApikeyController {
      */
 //    @JsonView(View.Public.class) -- commented out for EA-725
     @CrossOrigin(maxAge = 600)
-    @RequestMapping(method = RequestMethod.POST,
-                    produces = MediaType.APPLICATION_JSON_VALUE,
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyDetails apikeyCreate) {
         LOG.debug("creating new apikey");
@@ -222,6 +224,7 @@ public class ApikeyController {
      * in such cases.
      *
      * @param   id the apikey to re-enable
+     * @param   keycloakId keycloak client identifier, optional
      * @param   apikeyUpdate RequestBody containing supplied values
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 200 upon successful Apikey update
@@ -236,6 +239,7 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
+                                           @RequestParam(value = "keycloakId", required = false) String keycloakId,
                                            @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -248,9 +252,20 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            if (keycloakId != null) {
+                // maybe there was a change of the apikey in Keycloak and the only way to find the key is by keycloakId
+                Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(keycloakId);
+                if (optionalApikey.isPresent()) {
+                    apikey = optionalApikey.get();
+                }
+            }
+            if (null == apikey) {
+                LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+                headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
+                return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            } else {
+                LOG.warn("Apikey " + apikey.getApikey() + " was changed in Keycloak to " + id + ". Please change it back to retain consistency.");
+            }
         }
 
         try {
@@ -262,7 +277,10 @@ public class ApikeyController {
                 }
                 copyUpdateValues(apikey, apikeyUpdate);
             }
-            keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            if (!requestFromKeycloak(keycloakAuthenticationToken)) {
+                // call Keycloak update only when this request does not come from Keycloak
+                keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            }
             // remove deprecationdate: this enables the key again
             apikey.setDeprecationDate(null);
             this.apikeyRepo.save(apikey);
@@ -277,6 +295,11 @@ public class ApikeyController {
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
      }
 
+    private boolean requestFromKeycloak(KeycloakAuthenticationToken keycloakAuthenticationToken) {
+        return keycloakAuthenticationToken.getAuthorities()
+                .stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("synchronize"));
+    }
 
 
     /**
@@ -319,7 +342,9 @@ public class ApikeyController {
         }
 
         try {
-            keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            if (!requestFromKeycloak(keycloakAuthenticationToken)) {
+                keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            }
             apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
@@ -330,6 +355,34 @@ public class ApikeyController {
             return new ResponseEntity<>("Could not delete a client", HttpStatus.valueOf(e.getStatus()));
         }
         return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * This is request for removing the api key completely from the service. It may be executed only by the privileged client
+     * representing synchronization procedure in Keycloak.
+     *
+     * @param id api key identifier from Keycloak
+     * @return  HTTP 204 upon successful execution
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 when the requested keycloak identifier is not found in the database
+     */
+    @CrossOrigin(maxAge = 600)
+    @DeleteMapping(path = "/synchronize/{keycloakid}")
+    public ResponseEntity<String> deleteCompletely(@PathVariable("keycloakid") String id) {
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true) ||
+                !requestFromKeycloak(keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(id);
+        if (optionalApikey.isPresent()) {
+            this.apikeyRepo.delete(optionalApikey.get());
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**

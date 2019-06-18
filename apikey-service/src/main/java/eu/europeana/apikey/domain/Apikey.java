@@ -47,6 +47,12 @@ public class Apikey {
 	private String apikey;
 
 	@NotNull
+	@Column(name = "keycloakid")
+	@JsonProperty("keycloakid")
+	@JsonView(View.Public.class)
+	private String keycloakId;
+
+	@NotNull
 	@Column(name = "registrationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("registrationDate")
@@ -130,6 +136,7 @@ public class Apikey {
 
 	public Apikey(Apikey copy) {
 		this.apikey = copy.apikey;
+		this.keycloakId = copy.keycloakId;
 		this.registrationDate = copy.registrationDate;
 		this.website = copy.website;
 		this.activationDate = copy.activationDate;
@@ -149,6 +156,14 @@ public class Apikey {
 
 	public void setApikey(String apikey) {
 		this.apikey = apikey;
+	}
+
+	public String getKeycloakId() {
+		return keycloakId;
+	}
+
+	public void setKeycloakId(String keycloakId) {
+		this.keycloakId = keycloakId;
 	}
 
 	public Date getRegistrationDate() {
@@ -244,6 +259,7 @@ public class Apikey {
 	public String toString() {
 		return "Apikey {" +
 				" apikey = " + apikey +
+				", keycloakid = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +
@@ -257,5 +273,4 @@ public class Apikey {
 				", deprecationDate = " + nvl(deprecationDate) +
 				" }";
 	}
-
 }
