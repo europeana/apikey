@@ -224,7 +224,6 @@ public class ApikeyController {
      * in such cases.
      *
      * @param   id the apikey to re-enable
-     * @param   keycloakId keycloak client identifier, optional
      * @param   apikeyUpdate RequestBody containing supplied values
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 200 upon successful Apikey update
@@ -239,7 +238,6 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
-                                           @RequestParam(value = "keycloakId", required = false) String keycloakId,
                                            @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -252,20 +250,9 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            if (keycloakId != null) {
-                // maybe there was a change of the apikey in Keycloak and the only way to find the key is by keycloakId
-                Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(keycloakId);
-                if (optionalApikey.isPresent()) {
-                    apikey = optionalApikey.get();
-                }
-            }
-            if (null == apikey) {
-                LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-                headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-                return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
-            } else {
-                LOG.warn("Apikey " + apikey.getApikey() + " was changed in Keycloak to " + id + ". Please change it back to retain consistency.");
-            }
+            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
+            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
+            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
         }
 
         try {
