@@ -280,8 +280,13 @@ public class ApikeyController {
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
      */
     @CrossOrigin(maxAge = 600)
-    @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
+    @DeleteMapping(path = "/{id}")
     public ResponseEntity<String> delete(@PathVariable("id") String id) {
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         LOG.debug("invalidate apikey: {}", id);
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         HttpHeaders headers = new HttpHeaders();
@@ -299,8 +304,17 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
-        apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
-        this.apikeyRepo.save(apikey);
+        try {
+            keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
+            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (ApikeyException e) {
+            LOG.error("Could not delete a client", e);
+            return new ResponseEntity<>("Could not delete a client", HttpStatus.valueOf(e.getStatus()));
+        }
         return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
     }
 
