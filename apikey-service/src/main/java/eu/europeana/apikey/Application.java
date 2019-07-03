@@ -42,6 +42,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -69,12 +70,7 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(getAuthenticationProvider());
-    }
-
-    @Bean
-    public CustomKeycloakAuthenticationProvider getAuthenticationProvider() {
-        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
+        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
     }
 
     @Bean
@@ -88,12 +84,20 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
+    public void configure(WebSecurity webSecurity) throws Exception {
+        webSecurity
+                .ignoring()
+                .antMatchers(HttpMethod.GET, "/info");
+    }
+
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
         http    .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
                 .antMatchers(HttpMethod.POST, "/apikey").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
+                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().csrf().disable();
     }
 }
