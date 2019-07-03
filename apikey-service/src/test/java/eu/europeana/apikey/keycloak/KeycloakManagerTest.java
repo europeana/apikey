@@ -1,6 +1,7 @@
 package eu.europeana.apikey.keycloak;
 
-import eu.europeana.apikey.domain.ApikeyCreate;
+import eu.europeana.apikey.domain.Apikey;
+import eu.europeana.apikey.domain.ApikeyDetails;
 import eu.europeana.apikey.domain.ApikeyException;
 import eu.europeana.apikey.domain.FullApikey;
 import org.apache.http.HttpEntity;
@@ -8,6 +9,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
@@ -111,6 +113,14 @@ public class KeycloakManagerTest {
 
     private static final String REALM_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp7sc54z9WkhvzCLTumC/lUq25iebcJbtk11qQY6CgAsWzXQ5fQHTQTe5bmc7moZTsDDgNWD6PHiQAUce2tMLNA1l9QFJQQXeWl7OOeFHw40erLQMbCFP9GKizMqFHSbwjgaFfyJGud6Z9KpRZ8vwyPQsxu8wB4Vi8tM3JSCRDCn3NhcRkw1KIBWboiPu4W02+XPkK7tqsotY8Dwd//Iudq5wU865Tx+9DNR0Kr/SyJaCIvwIN5agsu7dOVPQChoWkxUnOvJxpiI20jahLng5E/rxUYJD+a9Ih1CNCsQTLjAcjMxBKW0m97BmPy0rhlf1gWlhM+6/J0y8siq7WmwV9wIDAQAB";
 
+    private static final String APP_NAME = "App name";
+
+    private static final String WEBSITE = "www.website.com";
+
+    private static final String SECTOR = "Sector";
+
+    private static final String COMPANY = "Company";
+
     @Mock
     private AccessToken accessToken;
 
@@ -156,7 +166,7 @@ public class KeycloakManagerTest {
 
     @Test
     public void createClient() throws ApikeyException, IOException {
-        ApikeyCreate apikeyCreate = prepareApikeyCreate();
+        ApikeyDetails apikeyCreate = prepareApikeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
 
@@ -230,8 +240,8 @@ public class KeycloakManagerTest {
         return securityContext;
     }
 
-    private ApikeyCreate prepareApikeyCreate() {
-        return new ApikeyCreate(FIRST_NAME, LAST_NAME, EMAIL);
+    private ApikeyDetails prepareApikeyCreate() {
+        return new ApikeyDetails(FIRST_NAME, LAST_NAME, EMAIL);
     }
 
     @Test
@@ -304,7 +314,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken);
+        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken, false);
 
         Assert.assertTrue(authorized);
     }
@@ -321,7 +331,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn("manager");
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken);
+        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken, true);
 
         Assert.assertTrue(authorized);
     }
@@ -333,9 +343,71 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized("other_key", keycloakAuthenticationToken);
+        boolean authorized = keycloakManager.isClientAuthorized("other_key", keycloakAuthenticationToken, false);
 
         Assert.assertFalse(authorized);
     }
 
+    @Test(expected = ApikeyException.class)
+    public void updateClientWhenClientMissing() throws IOException, ApikeyException {
+        ApikeyDetails apikeyDetails = prepareApikeyUpdate();
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(false);
+
+        keycloakManager.updateClient(securityContext, apikeyDetails, CLIENT_ID);
+    }
+
+    @Test
+    public void updateClientWhenClientExists() throws IOException, ApikeyException {
+        ApikeyDetails apikeyUpdate = prepareApikeyUpdate();
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true);
+
+        keycloakManager.updateClient(securityContext, apikeyUpdate, CLIENT_ID);
+    }
+
+    private KeycloakSecurityContext prepareForUpdateClient(boolean existing) throws IOException {
+        KeycloakSecurityContext securityContext = Mockito.mock(KeycloakSecurityContext.class);
+        Mockito.when(securityContext.getAccessTokenString()).thenReturn("TEST");
+
+        CloseableHttpResponse putResponse = Mockito.mock(CloseableHttpResponse.class);
+        StatusLine putStatusLine = Mockito.mock(StatusLine.class);
+        Mockito.when(putResponse.getStatusLine()).thenReturn(putStatusLine);
+        Mockito.when(putStatusLine.getStatusCode()).thenReturn(204);
+
+        CloseableHttpResponse getResponse = Mockito.mock(CloseableHttpResponse.class);
+        StatusLine getStatusLine = Mockito.mock(StatusLine.class);
+        Mockito.when(getResponse.getStatusLine()).thenReturn(getStatusLine);
+        Mockito.when(getStatusLine.getStatusCode()).thenReturn(200);
+        HttpEntity getEntity = Mockito.mock(HttpEntity.class);
+        Mockito.when(getResponse.getEntity()).thenReturn(getEntity);
+        if (existing) {
+            Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
+        } else {
+            Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(EMPTY_CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
+        }
+
+        Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(
+                invocation -> {
+                    Object argument = invocation.getArguments()[0];
+                    if (argument instanceof HttpGet) {
+                        return getResponse;
+                    }
+                    throw new InvalidUseOfMatchersException(
+                            String.format("Argument %s does not match", argument)
+                    );
+                }).thenAnswer(
+                invocation -> {
+                    Object argument = invocation.getArguments()[0];
+                    if (argument instanceof HttpPut) {
+                        return putResponse;
+                    }
+                    throw new InvalidUseOfMatchersException(
+                            String.format("Argument %s does not match", argument)
+                    );
+                });
+        return securityContext;
+    }
+
+    private ApikeyDetails prepareApikeyUpdate() {
+        return new ApikeyDetails(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
+    }
 }
