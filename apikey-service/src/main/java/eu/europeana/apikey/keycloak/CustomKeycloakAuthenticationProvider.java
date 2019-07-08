@@ -14,11 +14,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         this.keycloakManager = keycloakManager;
     }
 
-    @Override
-    public Authentication authenticate(Authentication authentication) {
-        String clientId = authentication.getName();
-        String clientSecret = authentication.getCredentials().toString();
-
+    public Authentication authenticate(String clientId, String clientSecret) {
         KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(clientId, clientSecret);
 
         if (principal != null) {
@@ -26,6 +22,11 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         }
 
         return null;
+    }
+
+    @Override
+    public Authentication authenticate(Authentication authentication) {
+        return authenticate(authentication.getName(), authentication.getCredentials().toString());
     }
 
     @Override

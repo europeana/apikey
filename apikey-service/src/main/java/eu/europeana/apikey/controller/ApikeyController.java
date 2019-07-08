@@ -23,7 +23,9 @@
 package eu.europeana.apikey.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import eu.europeana.apikey.captcha.CaptchaManager;
 import eu.europeana.apikey.domain.*;
+import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import eu.europeana.apikey.keycloak.KeycloakAuthenticationToken;
 import eu.europeana.apikey.keycloak.KeycloakManager;
 import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
@@ -35,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -62,6 +65,21 @@ public class ApikeyController {
     private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
+    private static final String CAPTCHA_PATTERN = "Bearer\\s+([^\\s]+)";
+    private static final String CAPTCHA_MISSING = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
+    private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
+
+    @Value("${keycloak.manager-client-id}")
+    private String managerClientId;
+
+    @Value("${keycloak.manager-client-secret}")
+    private String managerClientSecret;
+
+    @Autowired
+    private CaptchaManager captchaManager;
+
+    @Autowired
+    private CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo) {
@@ -78,6 +96,7 @@ public class ApikeyController {
 
     @Autowired
     private KeycloakManager keycloakManager;
+
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -111,8 +130,7 @@ public class ApikeyController {
      */
 //    @JsonView(View.Public.class) -- commented out for EA-725
     @CrossOrigin(maxAge = 600)
-    @RequestMapping(method = RequestMethod.POST,
-                    produces = MediaType.APPLICATION_JSON_VALUE,
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyDetails apikeyCreate) {
         LOG.debug("creating new apikey");
@@ -122,9 +140,92 @@ public class ApikeyController {
             LOG.debug(e.getMessage() + ", abort creating apikey");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        KeycloakSecurityContext securityContext = (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials();
+
+        return createClient(apikeyCreate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+    }
+
+    /**
+     * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
+     * - firstName
+     * - lastName
+     * - email
+     * - level (either 'default' or 'admin')
+     *
+     * The following fields are optional:
+     * - website
+     * - company
+     * - appName
+     * - sector
+     *
+     * The Apikey field is generated: Apikey is a unique and random 'readable' lowercase string,
+     * 8 to 12 characters long, e.g. 'rhossindri', 'viancones' or 'ebobrent'. The method is protected with
+     * captcha token supplied in the Authorization header.
+     *
+     * Upon successful execution, the code will send an email message containing the Apikey and secret generated
+     * by Kyecloak to the email address supplied in the request.
+     *
+     * @param   apikeyCreate requestbody containing supplied values
+     *
+     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     *          HTTP 201 upon successful Apikey creation
+     *          HTTP 400 when a required parameter is missing or has an invalid value
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 406 if a response MIME type other than application/JSON was requested
+     *          HTTP 415 if the submitted request does not contain a valid JSON body
+     */
+    @CrossOrigin(maxAge = 600)
+    @PostMapping(path = "/captcha",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> altSave(HttpServletRequest httpServletRequest, @RequestBody ApikeyDetails apikeyCreate) {
+        LOG.debug("creating new apikey secured by captcha");
+
+        // When no captcha token was supplied return 401
+        String captchaToken = getAuthorizationHeader(httpServletRequest, CAPTCHA_PATTERN);
+        if (null == captchaToken) {
+            LOG.debug(CAPTCHA_MISSING);
+            return new ResponseEntity<>(CAPTCHA_MISSING, HttpStatus.UNAUTHORIZED);
+        }
+
+        // Captcha verification, when failed return 403
+        try {
+            if (!captchaManager.verifyCaptchaToken(captchaToken)) {
+                LOG.debug(CAPTCHA_VERIFICATION_FAILED + ", abort creating apikey");
+                return new ResponseEntity<>(CAPTCHA_VERIFICATION_FAILED, HttpStatus.FORBIDDEN);
+            }
+        } catch (ApikeyException e) {
+            LOG.debug(e.getError() + ", abort creating apikey");
+            return new ResponseEntity<>(e.getError(), HttpStatus.FORBIDDEN);
+        }
+
+        try {
+            mandatoryMissing(apikeyCreate);
+        } catch (ApikeyException e) {
+            LOG.debug(e.getMessage() + ", abort creating apikey");
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
+        // authenticate manager client to get the access token
+        KeycloakAuthenticationToken authenticationToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticate(managerClientId, managerClientSecret);
+        if (authenticationToken == null) {
+            return new ResponseEntity<>("Operation forbidden.", HttpStatus.FORBIDDEN);
+        }
+
+        return createClient(apikeyCreate, (KeycloakSecurityContext) authenticationToken.getCredentials());
+    }
+
+    /**
+     * Create client based on the details supplied in the request. Security context is used for creating client in
+     * Keycloak. When this succeeds the client information is save in the local database and sent to the supplied
+     * email.
+     *
+     * @param apikeyCreate details to be used for the created client
+     * @param securityContext security context neede for authorization in Keycloak
+     * @return response with created Apikey details
+     */
+    private ResponseEntity<Object> createClient(@RequestBody ApikeyDetails apikeyCreate, KeycloakSecurityContext securityContext) {
         try {
             FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
             this.apikeyRepo.save(new Apikey(apikey));
@@ -141,6 +242,31 @@ public class ApikeyController {
         } catch (ApikeyException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.valueOf(e.getStatus()));
         }
+    }
+
+    /**
+     * Get value from the Authorization header of the given request based on the supplied pattern.
+     *
+     * @param httpServletRequest request with the header
+     * @param valuePattern pattern of the Authorization header to retrieve the value
+     * @return value of the Authorization header
+     */
+    private String getAuthorizationHeader(HttpServletRequest httpServletRequest, String valuePattern) {
+        String authorization = httpServletRequest.getHeader("Authorization");
+        if (authorization != null) {
+
+            try {
+                Pattern pattern = Pattern.compile(valuePattern);
+                Matcher matcher = pattern.matcher(authorization);
+
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            } catch (RuntimeException e) {
+                LOG.error("Regex problem while parsing authorization header", e);
+            }
+        }
+        return null;
     }
 
     /**
@@ -378,7 +504,7 @@ public class ApikeyController {
     @PostMapping(path = "/validate")
     public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) {
         // When no apikey was supplied return 400
-        String id = getApikey(httpServletRequest);
+        String id = getAuthorizationHeader(httpServletRequest, APIKEY_PATTERN);
         if (null == id) {
             LOG.debug(APIKEYMISSING);
             return new ResponseEntity<>(APIKEYMISSING, HttpStatus.BAD_REQUEST);
@@ -421,23 +547,6 @@ public class ApikeyController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    private String getApikey(HttpServletRequest httpServletRequest) {
-        String authorization = httpServletRequest.getHeader("Authorization");
-        if (authorization != null) {
-
-            try {
-                Pattern pattern = Pattern.compile(APIKEY_PATTERN);
-                Matcher matcher = pattern.matcher(authorization);
-
-                if (matcher.find()) {
-                    return matcher.group(1);
-                }
-            } catch (RuntimeException e) {
-                LOG.error("Regex problem while parsing authorization header", e);
-            }
-        }
-        return null;
-    }
 
     // created to facilitate Rene's testing
     @RequestMapping(path = "/{id}/set", method = RequestMethod.PUT)

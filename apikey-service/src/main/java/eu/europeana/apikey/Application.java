@@ -70,7 +70,12 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
+        auth.authenticationProvider(getCustomKeycloakAuthenticationProvider());
+    }
+
+    @Bean
+    public CustomKeycloakAuthenticationProvider getCustomKeycloakAuthenticationProvider() {
+        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
     }
 
     @Bean

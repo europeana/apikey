@@ -71,6 +71,12 @@
             <version>${spring-boot.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20140107</version>
+        </dependency>
+
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
         <dependency>
             <groupId>org.zalando</groupId>
