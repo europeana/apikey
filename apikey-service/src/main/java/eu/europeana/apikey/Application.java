@@ -70,7 +70,12 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
+        auth.authenticationProvider(getAuthenticationProvider());
+    }
+
+    @Bean
+    public CustomKeycloakAuthenticationProvider getAuthenticationProvider() {
+        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
     }
 
     @Bean
@@ -92,7 +97,9 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey").authenticated()
+        http    .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
