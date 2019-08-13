@@ -30,6 +30,7 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -57,6 +58,7 @@ public class ApikeyController {
     private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
+    private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
     private static final String APIKEYNOTFOUND = "Apikey-not-found";
     private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
     private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
@@ -78,6 +80,7 @@ public class ApikeyController {
 
     @Autowired
     private KeycloakManager keycloakManager;
+
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -452,8 +455,13 @@ public class ApikeyController {
         if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
         if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
         if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
+
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
+        }
+
+        if (!EmailValidator.getInstance().isValid(apikeyUpdate.getEmail())) {
+            throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
     }
 
