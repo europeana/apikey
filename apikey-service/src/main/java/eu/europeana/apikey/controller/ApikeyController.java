@@ -297,20 +297,27 @@ public class ApikeyController {
      * @param   id the apikey to retrieve
      * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
      *          HTTP 200 upon successful execution
+     *          HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
      *          HTTP 404 when the requested Apikey is not found in the database
      *          HTTP 406 if a MIME type other than application/JSON was requested
      */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Apikey> get(@PathVariable("id") String id) {
         LOG.debug("retrieve details for apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
+
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
             LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            headers.add(APIKEYNOTFOUND, id);
+            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+        }
+
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(headers, HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }

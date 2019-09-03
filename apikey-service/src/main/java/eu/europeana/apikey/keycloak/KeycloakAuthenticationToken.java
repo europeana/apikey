@@ -1,39 +1,40 @@
 package eu.europeana.apikey.keycloak;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.context.WebApplicationContext;
 
+import java.security.Principal;
 import java.util.Collection;
 
 public class KeycloakAuthenticationToken
         extends AbstractAuthenticationToken
         implements Authentication {
 
-    private String clientId;
+    private Principal principal;
 
-    private KeycloakSecurityContext securityContext;
-
-    public KeycloakAuthenticationToken(String clientId) {
+    public KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> principal) {
         super((Collection) null);
-        this.clientId = clientId;
+        this.principal = principal;
     }
 
-    KeycloakAuthenticationToken(String clientId, KeycloakSecurityContext securityContext, Collection<? extends GrantedAuthority> authorities) {
+    KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> keycloakPrincipal, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
-        this.clientId = clientId;
-        this.securityContext = securityContext;
+        this.principal = keycloakPrincipal;
         setAuthenticated(true);
-        setDetails(securityContext);
+        setDetails(keycloakPrincipal.getName());
     }
 
     @Override
     public Object getCredentials() {
-        return securityContext;
+        return ((KeycloakPrincipal) principal).getKeycloakSecurityContext();
     }
 
     @Override
     public Object getPrincipal() {
-        return clientId;
+        return principal;
     }
 }
