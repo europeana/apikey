@@ -257,11 +257,9 @@ public class ApikeyController {
         }
 
         // update values if supplied
-        if (null != apikeyUpdate) {
-            try {
+        try {
+            if (null != apikeyUpdate) {
                 mandatoryMissing(apikeyUpdate);
-            } catch (ApikeyException e) {
-                return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
             }
             keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
             // remove deprecationdate: this enables the key again
