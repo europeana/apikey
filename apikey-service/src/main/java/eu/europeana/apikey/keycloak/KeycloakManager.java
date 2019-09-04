@@ -146,12 +146,14 @@ public class KeycloakManager {
         createClient(
                 createClientRepresentation(newApiKey, apikeyCreate),
                 securityContext);
+        ClientRepresentation createdClient = getClientSecret(newApiKey, securityContext);
 
         // create DB entity
         FullApikey apikey = new FullApikey(newApiKey,
                 apikeyCreate.getFirstName(),
                 apikeyCreate.getLastName(),
-                apikeyCreate.getEmail(), getClientSecret(newApiKey, securityContext));
+                apikeyCreate.getEmail(), createdClient.getSecret());
+        apikey.setKeycloakId(createdClient.getId());
         if (null != apikeyCreate.getWebsite()) {
             apikey.setWebsite(apikeyCreate.getWebsite());
         }
@@ -239,16 +241,17 @@ public class KeycloakManager {
      *
      * @param clientId client id
      * @param securityContext security context with access token
-     * @return client secret
+     * @return client secret wrapped in ClientRepresentation object
      * @throws ApikeyException when any exception happens during communication with Keycloak
      */
-    private String getClientSecret(String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
+    private ClientRepresentation getClientSecret(String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation representation = getClientRepresentation(clientId, securityContext);
         if (representation == null) {
             return null;
         }
         HttpGet httpGetSecret = prepareGetClientSecretRequest(representation.getId(), securityContext.getAccessTokenString());
-        return getClientSecret(httpGetSecret);
+        representation.setSecret(getClientSecret(httpGetSecret));
+        return representation;
     }
 
     /**

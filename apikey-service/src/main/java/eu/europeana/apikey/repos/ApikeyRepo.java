@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface ApikeyRepo extends JpaRepository<Apikey, String> {
 
     Optional<Apikey> findByEmail(String apikey);
+    Optional<Apikey> findByKeycloakId(String keycloakId);
     public List<Apikey> findAll();
 }
