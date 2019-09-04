@@ -3,6 +3,12 @@ package eu.europeana.apikey.keycloak;
 import java.io.Serializable;
 import java.security.Principal;
 
+/**
+ * This class implements Principal interface used in Spring security. It holds information on Keycloak clientId that
+ * was authorized and KeycloakSecurityContext that contains access tokens.
+ *
+ * @param <T> KeycloakSecurityContext class used for context field.
+ */
 public class KeycloakPrincipal<T extends KeycloakSecurityContext>
         implements Principal, Serializable {
 
