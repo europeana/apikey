@@ -30,6 +30,7 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -57,9 +58,10 @@ public class ApikeyController {
     private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
+    private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
     private static final String APIKEYNOTFOUND = "Apikey-not-found";
-    private static final String APIKEYDEPRECATED = "apikey {} is deprecated";
-    private static final String APIKEYNOTREGISTERED = "Apikey {} is not registered";
+    private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
+    private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
 
@@ -78,6 +80,7 @@ public class ApikeyController {
 
     @Autowired
     private KeycloakManager keycloakManager;
+
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -116,33 +119,31 @@ public class ApikeyController {
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> save(@RequestBody ApikeyDetails apikeyCreate) {
         LOG.debug("creating new apikey");
-        String missing = mandatoryMissing(apikeyCreate);
-        if (!missing.equals("")){
-            LOG.debug(missing + ", abort creating apikey");
-            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+        try {
+            mandatoryMissing(apikeyCreate);
+        } catch (ApikeyException e) {
+            LOG.debug(e.getMessage() + ", abort creating apikey");
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         KeycloakSecurityContext securityContext = (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials();
         try {
             FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
-            if (apikey != null) {
-                this.apikeyRepo.save(new Apikey(apikey));
-                LOG.debug("apikey: {} created", apikey.getApikey());
+            this.apikeyRepo.save(new Apikey(apikey));
+            LOG.debug("apikey: {} created", apikey.getApikey());
 
-                emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
-                        "Your Europeana API keys",
-                        apikeyCreatedMail,
-                        apikey.getFirstName(),
-                        apikey.getLastName(),
-                        apikey.getApikey(),
-                        apikey.getClientSecret());
-                return new ResponseEntity<>(apikey, HttpStatus.CREATED);
-            }
+            emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
+                    "Your Europeana API keys",
+                    apikeyCreatedMail,
+                    apikey.getFirstName(),
+                    apikey.getLastName(),
+                    apikey.getApikey(),
+                    apikey.getClientSecret());
+            return new ResponseEntity<>(apikey, HttpStatus.CREATED);
         } catch (ApikeyException e) {
-            return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.valueOf(e.getStatus()));
         }
-        return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -174,11 +175,13 @@ public class ApikeyController {
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApikeyDetails apikeyUpdate) {
         LOG.debug("update registration details for apikey: {}", id);
-        String missing = mandatoryMissing(apikeyUpdate);
-        if (!missing.equals("")){
-            LOG.debug(missing + ", aborting registration details update");
-            return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+        try {
+            mandatoryMissing(apikeyUpdate);
+        } catch (ApikeyException e) {
+            LOG.debug(e.getMessage() + ", aborting registration details update");
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
+
         HttpHeaders headers = new HttpHeaders();
 
         // retrieve apikey & check if available
@@ -252,9 +255,10 @@ public class ApikeyController {
 
         // update values if supplied
         if (null != apikeyUpdate) {
-            String missing = mandatoryMissing(apikeyUpdate);
-            if (!missing.equals("")){
-                return new ResponseEntity<>(new ApikeyException(400, MISSINGPARAMETER, missing), HttpStatus.BAD_REQUEST);
+            try {
+                mandatoryMissing(apikeyUpdate);
+            } catch (ApikeyException e) {
+                return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
             }
             apikey = copyUpdateValues(apikey, apikeyUpdate);
         }
@@ -294,7 +298,7 @@ public class ApikeyController {
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
+            LOG.debug(String.format(APIKEYDEPRECATED, id));
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
@@ -346,12 +350,12 @@ public class ApikeyController {
      *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
      */
     @PostMapping(path = "/validate")
-    public ResponseEntity<Apikey> validate(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) {
         // When no apikey was supplied return 400
         String id = getApikey(httpServletRequest);
         if (null == id) {
             LOG.debug(APIKEYMISSING);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(APIKEYMISSING, HttpStatus.BAD_REQUEST);
         }
 
         LOG.debug("validate apikey: {}", id);
@@ -359,14 +363,16 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTREGISTERED, id);
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            String reason = String.format(APIKEYNOTREGISTERED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.UNAUTHORIZED);
         }
 
         // check if not deprecated (deprecationDate != null & in the past)
         if (null != apikey.getDeprecationDate() && apikey.getDeprecationDate().before(new Date())) {
-            LOG.debug(APIKEYDEPRECATED, id);
-            return new ResponseEntity<>(HttpStatus.GONE);
+            String reason = String.format(APIKEYDEPRECATED, id);
+            LOG.debug(reason);
+            return new ResponseEntity<>(reason, HttpStatus.GONE);
         }
 
         Date now = new DateTime(DateTimeZone.UTC).toDate();
@@ -376,9 +382,14 @@ public class ApikeyController {
             apikey.setActivationDate(now);
         }
 
-        // set lastAccessDate = sysdate
-        apikey.setLastAccessDate(now);
-        this.apikeyRepo.save(apikey);
+        try {
+            // set lastAccessDate = sysdate
+            apikey.setLastAccessDate(now);
+            this.apikeyRepo.save(apikey);
+        } catch (RuntimeException e) {
+            LOG.error("Error saving to DB", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // Welcome, gringo!
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -387,13 +398,16 @@ public class ApikeyController {
     private String getApikey(HttpServletRequest httpServletRequest) {
         String authorization = httpServletRequest.getHeader("Authorization");
         if (authorization != null) {
-            String patternString = APIKEY_PATTERN;
 
-            Pattern pattern = Pattern.compile(patternString);
-            Matcher matcher = pattern.matcher(authorization);
+            try {
+                Pattern pattern = Pattern.compile(APIKEY_PATTERN);
+                Matcher matcher = pattern.matcher(authorization);
 
-            if (matcher.find()) {
-                return matcher.group(1);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            } catch (RuntimeException e) {
+                LOG.error("Regex problem while parsing authorization header", e);
             }
         }
         return null;
@@ -458,22 +472,20 @@ public class ApikeyController {
         return apikey;
     }
 
-    private String mandatoryMissing(ApikeyAction apikeyUpdate){
-        String retval = "required parameter";
+    private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
+        String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
         if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
         if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
         if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
-        if (missingList.size() == 3) {
-            retval += "s " + missingList.get(0) + ", " + missingList.get(1) + " and " + missingList.get(2);
-        } else if (missingList.size() == 2) {
-            retval += "s " + missingList.get(0) + " and " + missingList.get(1);
-        } else if (missingList.size() == 1) {
-            retval += " " + missingList.get(0);
-        } else {
-            return "";
+
+        if (!missingList.isEmpty()) {
+            throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
         }
-        return retval + " not provided";
+
+        if (!EmailValidator.getInstance().isValid(apikeyUpdate.getEmail())) {
+            throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
+        }
     }
 
 

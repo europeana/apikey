@@ -39,7 +39,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configurers.GlobalAuthenticationConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -70,7 +69,12 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(new CustomKeycloakAuthenticationProvider(getKeycloakManager()));
+        auth.authenticationProvider(getAuthenticationProvider());
+    }
+
+    @Bean
+    public CustomKeycloakAuthenticationProvider getAuthenticationProvider() {
+        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
     }
 
     @Bean
@@ -92,7 +96,9 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey").authenticated()
+        http    .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
