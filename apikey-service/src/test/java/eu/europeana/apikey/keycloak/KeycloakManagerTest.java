@@ -60,6 +60,49 @@ public class KeycloakManagerTest {
 
     private static final String EMPTY_CLIENT_REPRESENTATIONS = "[]";
 
+    private static final String DISABLED_CLIENT_REPRESENTATIONS  = "[\n" +
+            "    {\n" +
+            "        \"id\": \"fff0fb90-739d-448e-b511-3738af0a2355\",\n" +
+            "        \"clientId\": \"test-add-rest\",\n" +
+            "        \"surrogateAuthRequired\": false,\n" +
+            "        \"enabled\": false,\n" +
+            "        \"clientAuthenticatorType\": \"client-secret\",\n" +
+            "        \"redirectUris\": [],\n" +
+            "        \"webOrigins\": [],\n" +
+            "        \"notBefore\": 0,\n" +
+            "        \"bearerOnly\": false,\n" +
+            "        \"consentRequired\": false,\n" +
+            "        \"standardFlowEnabled\": true,\n" +
+            "        \"implicitFlowEnabled\": false,\n" +
+            "        \"directAccessGrantsEnabled\": false,\n" +
+            "        \"serviceAccountsEnabled\": false,\n" +
+            "        \"publicClient\": false,\n" +
+            "        \"frontchannelLogout\": false,\n" +
+            "        \"protocol\": \"openid-connect\",\n" +
+            "        \"attributes\": {},\n" +
+            "        \"authenticationFlowBindingOverrides\": {},\n" +
+            "        \"fullScopeAllowed\": true,\n" +
+            "        \"nodeReRegistrationTimeout\": -1,\n" +
+            "        \"defaultClientScopes\": [\n" +
+            "            \"web-origins\",\n" +
+            "            \"role_list\",\n" +
+            "            \"profile\",\n" +
+            "            \"roles\",\n" +
+            "            \"email\"\n" +
+            "        ],\n" +
+            "        \"optionalClientScopes\": [\n" +
+            "            \"address\",\n" +
+            "            \"phone\",\n" +
+            "            \"offline_access\"\n" +
+            "        ],\n" +
+            "        \"access\": {\n" +
+            "            \"view\": true,\n" +
+            "            \"configure\": true,\n" +
+            "            \"manage\": true\n" +
+            "        }\n" +
+            "    }\n" +
+            "]";
+
     private static final String CLIENT_REPRESENTATIONS = "[\n" +
             "    {\n" +
             "        \"id\": \"fff0fb90-739d-448e-b511-3738af0a2355\",\n" +
@@ -351,7 +394,7 @@ public class KeycloakManagerTest {
     @Test(expected = ApikeyException.class)
     public void updateClientWhenClientMissing() throws IOException, ApikeyException {
         ApikeyDetails apikeyDetails = prepareApikeyUpdate();
-        KeycloakSecurityContext securityContext = prepareForUpdateClient(false);
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
         keycloakManager.updateClient(securityContext, apikeyDetails, CLIENT_ID);
     }
@@ -359,12 +402,12 @@ public class KeycloakManagerTest {
     @Test
     public void updateClientWhenClientExists() throws IOException, ApikeyException {
         ApikeyDetails apikeyUpdate = prepareApikeyUpdate();
-        KeycloakSecurityContext securityContext = prepareForUpdateClient(true);
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
         keycloakManager.updateClient(securityContext, apikeyUpdate, CLIENT_ID);
     }
 
-    private KeycloakSecurityContext prepareForUpdateClient(boolean existing) throws IOException {
+    private KeycloakSecurityContext prepareForUpdateClient(boolean existing, boolean enabled) throws IOException {
         KeycloakSecurityContext securityContext = Mockito.mock(KeycloakSecurityContext.class);
         Mockito.when(securityContext.getAccessTokenString()).thenReturn("TEST");
 
@@ -380,7 +423,11 @@ public class KeycloakManagerTest {
         HttpEntity getEntity = Mockito.mock(HttpEntity.class);
         Mockito.when(getResponse.getEntity()).thenReturn(getEntity);
         if (existing) {
-            Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
+            if (enabled) {
+                Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
+            } else {
+                Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(DISABLED_CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
+            }
         } else {
             Mockito.when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(EMPTY_CLIENT_REPRESENTATIONS.getBytes(Charset.forName("UTF-8"))));
         }
@@ -414,15 +461,38 @@ public class KeycloakManagerTest {
 
     @Test(expected = ApikeyException.class)
     public void invalidateClientWhenClientMissing() throws IOException, ApikeyException {
-        KeycloakSecurityContext securityContext = prepareForUpdateClient(false);
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
         keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
     }
 
     @Test
     public void invalidateClientWhenClientExists() throws IOException, ApikeyException {
-        KeycloakSecurityContext securityContext = prepareForUpdateClient(true);
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
         keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
+    }
+
+
+    @Test(expected = ApikeyException.class)
+    public void reenableClientWhenClientMissing() throws IOException, ApikeyException {
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
+
+        keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
+    }
+
+    @Test
+    public void reenableClientWhenClientExists() throws IOException, ApikeyException {
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
+
+        keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
+    }
+
+    @Test
+    public void reenableClientWithUpdateWhenClientExists() throws IOException, ApikeyException {
+        ApikeyDetails apikeyDetails = prepareApikeyUpdate();
+        KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
+
+        keycloakManager.enableClient(true, CLIENT_ID, apikeyDetails, securityContext);
     }
 }
