@@ -1,0 +1,31 @@
+---
+server:
+  port: 8081
+
+spring:
+  profiles:
+    active: user
+
+  mail:
+    host: REMOVED
+    username: REMOVED
+    password: REMOVED
+    port: 0
+
+europeanamail:
+  sent_from: REMOVED
+
+keycloak:
+  realm: REMOVED
+  realm-public-key: REMOVED
+  auth-server-url: REMOVED
+  use-resource-role-mappings: true
+  manager-client-id: REMOVED
+  manager-client-secret: REMOVED
+
+recaptcha:
+  verification-url:
+    scheme: https
+    host: www.google.com
+    path: /recaptcha/api/siteverify
+  secret: REMOVED

@@ -8,4 +8,4 @@
 console.log
 
 
-/apikey-service/src/main/resources/application.yml
+**/application-user.yml
