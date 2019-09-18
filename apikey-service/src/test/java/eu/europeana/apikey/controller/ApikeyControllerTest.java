@@ -50,10 +50,12 @@ public class ApikeyControllerTest {
     public void setup()throws Exception {
         Apikey apikey = new Apikey(EXISTING_API_KEY, "edward",
                 "potts", "potts@mail.com");
+        apikey.setKeycloakId(EXISTING_API_KEY);
         apikeyRepo.saveAndFlush(apikey);
 
         apikey = new Apikey(DEPRECATED_API_KEY, "frank",
                 "sinatra", "sinatra@mail.com");
+        apikey.setKeycloakId(DEPRECATED_API_KEY);
         apikey.setDeprecationDate(new Date());
         apikeyRepo.saveAndFlush(apikey);
     }
