@@ -75,28 +75,25 @@ public class ApikeyController {
     @Value("${keycloak.manager-client-secret}")
     private String managerClientSecret;
 
-    @Autowired
-    private CaptchaManager captchaManager;
+    private final CaptchaManager captchaManager;
+
+    private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
+
+    private final MailServiceImpl emailService;
+
+    private final SimpleMailMessage apikeyCreatedMail;
+
+    private final KeycloakManager keycloakManager;
 
     @Autowired
-    private CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
-
-    @Autowired
-    public ApikeyController(ApikeyRepo apikeyRepo) {
+    public ApikeyController(ApikeyRepo apikeyRepo, CaptchaManager captchaManager, CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider, MailServiceImpl emailService, SimpleMailMessage apikeyCreatedMail, KeycloakManager keycloakManager) {
         this.apikeyRepo = apikeyRepo;
+        this.captchaManager = captchaManager;
+        this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
+        this.emailService = emailService;
+        this.apikeyCreatedMail = apikeyCreatedMail;
+        this.keycloakManager = keycloakManager;
     }
-
-    @Autowired
-    public MailServiceImpl emailService;
-
-
-    @Autowired
-    public SimpleMailMessage apikeyCreatedMail;
-
-
-    @Autowired
-    private KeycloakManager keycloakManager;
-
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -252,7 +249,7 @@ public class ApikeyController {
      * @return value of the Authorization header
      */
     private String getAuthorizationHeader(HttpServletRequest httpServletRequest, String valuePattern) {
-        String authorization = httpServletRequest.getHeader("Authorization");
+        String authorization = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization != null) {
 
             try {

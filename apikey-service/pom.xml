@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20140107</version>
+            <version>20190722</version>
         </dependency>
 
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+<!--            <scope>test</scope>-->
         </dependency>
 
         <dependency>

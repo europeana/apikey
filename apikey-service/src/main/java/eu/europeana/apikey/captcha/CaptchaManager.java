@@ -73,9 +73,10 @@ public class CaptchaManager {
      * @return JSON response from the verification URL or null in case of any exception
      */
     private String getVerificationResponse(String captchaToken) {
+        CloseableHttpResponse response = null;
         try {
             HttpPost httpPost = new HttpPost(getVerificationURI(captchaToken));
-            CloseableHttpResponse response = httpClient.execute(httpPost);
+            response = httpClient.execute(httpPost);
             if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
                 return IOUtils.toString(response.getEntity().getContent(), "UTF-8");
             }
@@ -83,6 +84,14 @@ public class CaptchaManager {
             LOG.error("Wrong URI syntax.", e);
         } catch (IOException e) {
             LOG.error("Captcha verification request failed.", e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (IOException e) {
+                    LOG.error("Close response for captcha verification failed.", e);
+                }
+            }
         }
         return null;
     }
