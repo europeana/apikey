@@ -99,7 +99,7 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http    .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
-                .antMatchers(HttpMethod.POST, "/apikey").authenticated()
+                .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

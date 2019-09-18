@@ -21,6 +21,7 @@
 
 package eu.europeana.apikey.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -47,10 +48,17 @@ public class Apikey {
 	private String apikey;
 
 	@NotNull
+	@Column(name = "keycloakid")
+	@JsonProperty("keycloakid")
+	@JsonView(View.Public.class)
+	private String keycloakId;
+
+	@NotNull
 	@Column(name = "registrationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("registrationDate")
 	@JsonView(View.Public.class)
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private Date registrationDate;
 
 	@Size(max = 100)
@@ -130,6 +138,7 @@ public class Apikey {
 
 	public Apikey(Apikey copy) {
 		this.apikey = copy.apikey;
+		this.keycloakId = copy.keycloakId;
 		this.registrationDate = copy.registrationDate;
 		this.website = copy.website;
 		this.activationDate = copy.activationDate;
@@ -149,6 +158,14 @@ public class Apikey {
 
 	public void setApikey(String apikey) {
 		this.apikey = apikey;
+	}
+
+	public String getKeycloakId() {
+		return keycloakId;
+	}
+
+	public void setKeycloakId(String keycloakId) {
+		this.keycloakId = keycloakId;
 	}
 
 	public Date getRegistrationDate() {
@@ -244,6 +261,7 @@ public class Apikey {
 	public String toString() {
 		return "Apikey {" +
 				" apikey = " + apikey +
+				", keycloakid = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +
@@ -257,5 +275,4 @@ public class Apikey {
 				", deprecationDate = " + nvl(deprecationDate) +
 				" }";
 	}
-
 }

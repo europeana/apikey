@@ -32,6 +32,7 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -47,8 +48,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,6 +64,7 @@ public class ApikeyController {
     private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
+    private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
     private static final String APIKEYNOTFOUND = "Apikey-not-found";
     private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
     private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
@@ -94,6 +99,7 @@ public class ApikeyController {
         this.apikeyCreatedMail = apikeyCreatedMail;
         this.keycloakManager = keycloakManager;
     }
+
 
     /**
      * Generates a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -386,7 +392,10 @@ public class ApikeyController {
                 }
                 apikey = copyUpdateValues(apikey, apikeyUpdate);
             }
-            keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            if (!requestFromKeycloak(keycloakAuthenticationToken)) {
+                // call Keycloak update only when this request does not come from Keycloak
+                keycloakManager.enableClient(true, id, apikeyUpdate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            }
             // remove deprecationdate: this enables the key again
             apikey.setDeprecationDate(null);
             this.apikeyRepo.save(apikey);
@@ -401,6 +410,11 @@ public class ApikeyController {
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
      }
 
+    private boolean requestFromKeycloak(KeycloakAuthenticationToken keycloakAuthenticationToken) {
+        return keycloakAuthenticationToken.getAuthorities()
+                .stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("synchronize"));
+    }
 
 
     /**
@@ -443,7 +457,9 @@ public class ApikeyController {
         }
 
         try {
-            keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            if (!requestFromKeycloak(keycloakAuthenticationToken)) {
+                keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
+            }
             apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
@@ -454,6 +470,34 @@ public class ApikeyController {
             return new ResponseEntity<>("Could not delete a client", HttpStatus.valueOf(e.getStatus()));
         }
         return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * This is request for removing the api key completely from the service. It may be executed only by the privileged client
+     * representing synchronization procedure in Keycloak.
+     *
+     * @param id api key identifier from Keycloak
+     * @return  HTTP 204 upon successful execution
+     *          HTTP 401 in case of an invalid request
+     *          HTTP 403 if the request is unauthorised
+     *          HTTP 404 when the requested keycloak identifier is not found in the database
+     */
+    @CrossOrigin(maxAge = 600)
+    @DeleteMapping(path = "/synchronize/{keycloakid}")
+    public ResponseEntity<String> deleteCompletely(@PathVariable("keycloakid") String id) {
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true) ||
+                !requestFromKeycloak(keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(id);
+        if (optionalApikey.isPresent()) {
+            this.apikeyRepo.delete(optionalApikey.get());
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -610,8 +654,13 @@ public class ApikeyController {
         if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
         if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
         if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
+
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
+        }
+
+        if (!EmailValidator.getInstance().isValid(apikeyUpdate.getEmail())) {
+            throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
     }
 
