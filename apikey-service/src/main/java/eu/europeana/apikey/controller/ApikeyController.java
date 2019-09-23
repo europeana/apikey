@@ -196,11 +196,11 @@ public class ApikeyController {
         try {
             if (!captchaManager.verifyCaptchaToken(captchaToken)) {
                 LOG.debug(CAPTCHA_VERIFICATION_FAILED + ", abort creating apikey");
-                return new ResponseEntity<>(CAPTCHA_VERIFICATION_FAILED, HttpStatus.FORBIDDEN);
+                return new ResponseEntity<>(CAPTCHA_VERIFICATION_FAILED, HttpStatus.UNAUTHORIZED);
             }
         } catch (ApikeyException e) {
             LOG.debug(e.getError() + ", abort creating apikey");
-            return new ResponseEntity<>(e.getError(), HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(e.getError(), HttpStatus.UNAUTHORIZED);
         }
 
         try {
