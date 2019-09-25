@@ -60,19 +60,18 @@ import java.util.regex.Pattern;
 @RequestMapping("/apikey")
 public class ApikeyController {
     private final ApikeyRepo apikeyRepo;
-    private static final String READ  = "read";
-    private static final String WRITE = "write";
     private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
     private static final String MISSINGPARAMETER = "missing parameter";
     private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
-    private static final String APIKEYNOTFOUND = "Apikey-not-found";
-    private static final String APIKEYDEPRECATED = "apikey %s is deprecated";
-    private static final String APIKEYNOTREGISTERED = "Apikey %s is not registered";
+    private static final String APIKEYNOTFOUND = "API key %s does not exist.";
+    private static final String APIKEYDEPRECATED = "API key %s is deprecated";
+    private static final String APIKEYNOTREGISTERED = "API key %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
     private static final String CAPTCHA_PATTERN = "Bearer\\s+([^\\s]+)";
     private static final String CAPTCHA_MISSING = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
     private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
+    private static final String NOT_FOUND_ERROR = "Not found";
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -313,9 +312,8 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug("apikey: {} not found", id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            LOG.debug(String.format(APIKEYNOTFOUND, id));
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
         } else {
             LOG.debug("update registration details for apikey: {}", apikey.getApikey());
         }
@@ -377,9 +375,8 @@ public class ApikeyController {
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            LOG.debug(String.format(APIKEYNOTFOUND, id));
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
         }
 
         try {
@@ -433,7 +430,7 @@ public class ApikeyController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") String id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") String id) {
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -445,9 +442,8 @@ public class ApikeyController {
 
         // check if apikey exists
         if (null == apikey) {
-            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, APIKEYNOTFOUND.toLowerCase());
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            LOG.debug(String.format(APIKEYNOTFOUND, id));
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
         }
 
         // check if apikey is deprecated (deprecationDate != null & in the past)
@@ -513,15 +509,14 @@ public class ApikeyController {
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Apikey> get(@PathVariable("id") String id) {
+    public ResponseEntity<Object> get(@PathVariable("id") String id) {
         LOG.debug("retrieve details for apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
 
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
-            LOG.debug(APIKEYNOTFOUND + " with value: " + id);
-            headers.add(APIKEYNOTFOUND, id);
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            LOG.debug(String.format(APIKEYNOTFOUND, id));
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
         }
 
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();

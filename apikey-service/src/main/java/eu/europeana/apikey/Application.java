@@ -89,18 +89,11 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
-    public void configure(WebSecurity webSecurity) throws Exception {
-        webSecurity
-                .ignoring()
-                .antMatchers(HttpMethod.GET, "/info");
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
         http    .authorizeRequests()
-                .antMatchers(HttpMethod.GET, "/apikey/**", "/info").permitAll()
                 .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
+                .and().authorizeRequests().antMatchers("/apikey/**").authenticated()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().csrf().disable();
