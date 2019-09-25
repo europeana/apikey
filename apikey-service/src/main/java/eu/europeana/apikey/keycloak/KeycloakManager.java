@@ -26,6 +26,7 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
@@ -420,6 +421,7 @@ public class KeycloakManager {
                 , null != apikeyDetails.getCompany() ? apikeyDetails.getCompany() : ""));
         clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyDetails.getFirstName(), apikeyDetails.getLastName(), apikeyDetails.getEmail()));
         clientRepresentation.setDirectAccessGrantsEnabled(false);
+        clientRepresentation.setServiceAccountsEnabled(true);
         return clientRepresentation;
     }
 
@@ -455,7 +457,7 @@ public class KeycloakManager {
             return keycloak.tokenManager().getAccessToken();
         } catch (Exception anyException) {
             LOG.error("Retrieving access token failed", anyException);
-            return null;
+            throw new AuthenticationServiceException("Retrieving access token failed: " + anyException.getMessage());
         }
     }
 
