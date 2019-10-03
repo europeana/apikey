@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
@@ -73,6 +74,7 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date activationDate;
 
+	@NotNull
 	@Size(max = 255)
 	@Column(name = "appname")
 	@JsonProperty("appName")
@@ -128,11 +130,12 @@ public class Apikey {
 
 	}
 
-	public Apikey(String apikey, String firstName, String lastName, String email) {
+	public Apikey(String apikey, String firstName, String lastName, String email, String appName) {
 		this.apikey = apikey;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
+		this.appName = appName;
 		this.registrationDate = new Date();
 	}
 

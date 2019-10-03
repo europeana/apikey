@@ -153,13 +153,12 @@ public class KeycloakManager {
         FullApikey apikey = new FullApikey(newApiKey,
                 apikeyCreate.getFirstName(),
                 apikeyCreate.getLastName(),
-                apikeyCreate.getEmail(), createdClient.getSecret());
+                apikeyCreate.getEmail(),
+                apikeyCreate.getAppName(),
+                createdClient.getSecret());
         apikey.setKeycloakId(createdClient.getId());
         if (null != apikeyCreate.getWebsite()) {
             apikey.setWebsite(apikeyCreate.getWebsite());
-        }
-        if (null != apikeyCreate.getAppName()) {
-            apikey.setAppName(apikeyCreate.getAppName());
         }
         if (null != apikeyCreate.getCompany()) {
             apikey.setCompany(apikeyCreate.getCompany());
