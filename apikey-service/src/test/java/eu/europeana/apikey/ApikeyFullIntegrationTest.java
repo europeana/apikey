@@ -94,7 +94,7 @@ public class ApikeyFullIntegrationTest {
     @Before
     public void setup()throws Exception {
         Apikey adminKey = new Apikey("ApiKey1", "luthien",
-                                     "inedhil", "luthien@parendili.org", "appName");
+                                     "inedhil", "luthien@parendili.org", "appName", "company");
         adminKey.setKeycloakId("ApiKey1");
         apikeyRepo.saveAndFlush(adminKey);
     }

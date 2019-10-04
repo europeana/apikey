@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class FullApikey extends Apikey {
     private String clientSecret;
 
-    public FullApikey(String apikey, String firstName, String lastName, String email, String appName, String clientSecret) {
-        super(apikey, firstName, lastName, email,appName);
+    public FullApikey(String apikey, String firstName, String lastName, String email, String appName, String company, String clientSecret) {
+        super(apikey, firstName, lastName, email,appName,company);
         this.clientSecret = clientSecret;
     }
 

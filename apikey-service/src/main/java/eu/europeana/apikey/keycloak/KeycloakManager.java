@@ -155,6 +155,7 @@ public class KeycloakManager {
                 apikeyCreate.getLastName(),
                 apikeyCreate.getEmail(),
                 apikeyCreate.getAppName(),
+                apikeyCreate.getCompany(),
                 createdClient.getSecret());
         apikey.setKeycloakId(createdClient.getId());
         if (null != apikeyCreate.getWebsite()) {
