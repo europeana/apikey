@@ -157,6 +157,7 @@ public class Apikey {
 		this.apikey = apikey;
 	}
 
+	@JsonIgnore
 	public String getKeycloakId() {
 		return keycloakId;
 	}
