@@ -665,6 +665,7 @@ public class ApikeyController {
         if (null == apikeyUpdate.getLastName() || apikeyUpdate.getLastName().isEmpty()) missingList.add("'lastName'");
         if (null == apikeyUpdate.getEmail() || apikeyUpdate.getEmail().isEmpty()) missingList.add("'email'");
         if (null == apikeyUpdate.getAppName() || apikeyUpdate.getAppName().isEmpty()) missingList.add("'appName'");
+        if (null == apikeyUpdate.getCompany() || apikeyUpdate.getCompany().isEmpty()) missingList.add("'company'");
 
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
@@ -678,7 +679,7 @@ public class ApikeyController {
         Apikey apikey= this.apikeyRepo.findByEmailAndAppName(apikeyUpdate.getEmail(), apikeyUpdate.getAppName());
         System.out.println(apikey);
         if(apikey!=null){
-            String message= APIKEYALREADYEXIST +" for : "+apikeyUpdate.getEmail() +" and " +apikeyUpdate.getAppName();
+            String message = APIKEYALREADYEXIST +" for : " +apikeyUpdate.getEmail() +", " +apikeyUpdate.getAppName();
             throw new ApikeyException(400, APIKEYALREADYEXIST, message);
         }
     }
