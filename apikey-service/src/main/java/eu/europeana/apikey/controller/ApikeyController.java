@@ -32,6 +32,7 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -144,11 +145,9 @@ public class ApikeyController {
             LOG.debug(e.getMessage() + ", abort creating apikey");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        try{
-            apiKeyAlreadyExist(apikeyCreate);
-        } catch (ApikeyException e) {
-            LOG.debug("Api key already exist for " + e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if(apiKeyAlreadyExist(apikeyCreate)) {
+            String message = APIKEYALREADYEXIST +" for : " +apikeyCreate.getEmail() +", " +apikeyCreate.getAppName();
+            return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
         }
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
@@ -218,11 +217,9 @@ public class ApikeyController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        try{
-            apiKeyAlreadyExist(apikeyCreate);
-        } catch (ApikeyException e) {
-            LOG.debug("Api key already exist for " + e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if(apiKeyAlreadyExist(apikeyCreate)) {
+            String message = APIKEYALREADYEXIST +" for : " +apikeyCreate.getEmail() +", " +apikeyCreate.getAppName();
+            return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
         }
         // authenticate manager client to get the access token
         KeycloakAuthenticationToken authenticationToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticate(managerClientId, managerClientSecret);
@@ -661,11 +658,21 @@ public class ApikeyController {
     private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
         String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
-        if (apikeyUpdate.getFirstName()==null || apikeyUpdate.getFirstName().isEmpty()) missingList.add("'firstName'");
-        if (null == apikeyUpdate.getLastName() || apikeyUpdate.getLastName().isEmpty()) missingList.add("'lastName'");
-        if (null == apikeyUpdate.getEmail() || apikeyUpdate.getEmail().isEmpty()) missingList.add("'email'");
-        if (null == apikeyUpdate.getAppName() || apikeyUpdate.getAppName().isEmpty()) missingList.add("'appName'");
-        if (null == apikeyUpdate.getCompany() || apikeyUpdate.getCompany().isEmpty()) missingList.add("'company'");
+        if (apikeyUpdate.getFirstName() == null || StringUtils.isEmpty(apikeyUpdate.getFirstName())) {
+            missingList.add("'firstName'");
+        }
+        if (apikeyUpdate.getLastName() == null || StringUtils.isEmpty(apikeyUpdate.getLastName())) {
+            missingList.add("'lastName'");
+        }
+        if (apikeyUpdate.getEmail() == null || StringUtils.isEmpty(apikeyUpdate.getEmail())) {
+            missingList.add("'email'");
+        }
+        if (apikeyUpdate.getAppName() == null || StringUtils.isEmpty(apikeyUpdate.getAppName())) {
+            missingList.add("'appName'");
+        }
+        if (apikeyUpdate.getCompany() == null || StringUtils.isEmpty(apikeyUpdate.getCompany())){
+            missingList.add("'company'");
+        }
 
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
@@ -675,13 +682,12 @@ public class ApikeyController {
             throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
     }
-    private void apiKeyAlreadyExist(ApikeyAction apikeyUpdate) throws ApikeyException{
+    private boolean apiKeyAlreadyExist(ApikeyAction apikeyUpdate){
         Apikey apikey= this.apikeyRepo.findByEmailAndAppName(apikeyUpdate.getEmail(), apikeyUpdate.getAppName());
-        System.out.println(apikey);
         if(apikey!=null){
-            String message = APIKEYALREADYEXIST +" for : " +apikeyUpdate.getEmail() +", " +apikeyUpdate.getAppName();
-            throw new ApikeyException(400, APIKEYALREADYEXIST, message);
+            return true;
         }
+        return false;
     }
 
 }
