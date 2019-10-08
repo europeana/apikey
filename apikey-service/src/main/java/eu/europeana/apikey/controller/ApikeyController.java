@@ -63,6 +63,7 @@ public class ApikeyController {
     private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
     private static final String APIKEYNOTFOUND = "API key %s does not exist.";
     private static final String APIKEYDEPRECATED = "API key %s is deprecated";
+    private static final String APIKEY_ALREADY_ENABLED = "API key %s is already enabled";
     private static final String APIKEYNOTREGISTERED = "API key %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
@@ -72,6 +73,7 @@ public class ApikeyController {
     private static final String NOT_FOUND_ERROR = "Not found";
     private static final String FORBIDDEN_ERROR = "Forbidden";
     private static final String OPERATION_FORBIDDEN_MESSAGE = "Operation forbidden.";
+    private static final String BAD_REQUEST_ERROR = "Bad request";
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -375,6 +377,10 @@ public class ApikeyController {
         if (null == apikey) {
             LOG.debug(String.format(APIKEYNOTFOUND, id));
             return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
+        }
+
+        if (apikey.getDeprecationDate() == null) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.BAD_REQUEST.value(), BAD_REQUEST_ERROR, String.format(APIKEY_ALREADY_ENABLED, id)), HttpStatus.BAD_REQUEST);
         }
 
         try {
