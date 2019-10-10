@@ -21,10 +21,7 @@
 
 package eu.europeana.apikey.domain;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
@@ -50,7 +47,7 @@ public class Apikey {
 	@NotNull
 	@Column(name = "keycloakid")
 	@JsonProperty("keycloakid")
-	@JsonView(View.Public.class)
+	@JsonIgnore
 	private String keycloakId;
 
 	@NotNull
@@ -164,6 +161,7 @@ public class Apikey {
 		this.apikey = apikey;
 	}
 
+	@JsonIgnore
 	public String getKeycloakId() {
 		return keycloakId;
 	}

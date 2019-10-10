@@ -3,7 +3,9 @@ package eu.europeana.apikey.keycloak;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import eu.europeana.apikey.domain.*;
+import eu.europeana.apikey.domain.ApikeyDetails;
+import eu.europeana.apikey.domain.ApikeyException;
+import eu.europeana.apikey.domain.FullApikey;
 import eu.europeana.apikey.util.PassGenerator;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
@@ -457,7 +459,7 @@ public class KeycloakManager {
             return keycloak.tokenManager().getAccessToken();
         } catch (Exception anyException) {
             LOG.error("Retrieving access token failed", anyException);
-            throw new AuthenticationServiceException("Retrieving access token failed: " + anyException.getMessage());
+            throw new AuthenticationServiceException("Retrieving access token failed");
         }
     }
 
@@ -522,19 +524,28 @@ public class KeycloakManager {
     }
 
     /**
-     * Checks whether the client for which the token was issued is the owner of the apikey or a manager client
+     * Checks whether the client for which the token was issued is the owner of the apikey
      * @param apikey api key to check
      * @param keycloakAuthenticationToken token issued for the caller of the request
      * @return true when authorized, false otherwise
      */
-    public boolean isClientAuthorized(String apikey, KeycloakAuthenticationToken keycloakAuthenticationToken, boolean managerOnly) {
+    public boolean isOwner(String apikey, KeycloakAuthenticationToken keycloakAuthenticationToken) {
         if (apikey == null || keycloakAuthenticationToken == null || keycloakAuthenticationToken.getCredentials() == null) {
             return false;
         }
 
-        if (!managerOnly && apikey.equals(keycloakAuthenticationToken.getName())) {
-            // apikey parameter is the one that we want to check against the name in the authentication token
-            return true;
+        // apikey parameter is the one that we want to check against the name in the authentication token
+        return apikey.equals(keycloakAuthenticationToken.getName());
+    }
+
+    /**
+     * Checks whether the token was issued for a manager client
+     * @param keycloakAuthenticationToken token issued for the caller of the request
+     * @return true when authorized, false otherwise
+     */
+    public boolean isManagerClientAuthorized(KeycloakAuthenticationToken keycloakAuthenticationToken) {
+        if (keycloakAuthenticationToken == null || keycloakAuthenticationToken.getCredentials() == null) {
+            return false;
         }
 
         Collection<GrantedAuthority> authorities = keycloakAuthenticationToken.getAuthorities();

@@ -1,6 +1,5 @@
 package eu.europeana.apikey.keycloak;
 
-import eu.europeana.apikey.domain.Apikey;
 import eu.europeana.apikey.domain.ApikeyDetails;
 import eu.europeana.apikey.domain.ApikeyException;
 import eu.europeana.apikey.domain.FullApikey;
@@ -351,15 +350,28 @@ public class KeycloakManagerTest {
     }
 
     @Test
-    public void isClientAuthorizedWhenOwner() {
+    public void isOwnerWhenOwner() {
         KeycloakAuthenticationToken keycloakAuthenticationToken = Mockito.mock(KeycloakAuthenticationToken.class);
         KeycloakSecurityContext securityContext = Mockito.mock(KeycloakSecurityContext.class);
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken, false);
+        boolean authorized = keycloakManager.isOwner(CLIENT_ID, keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
+    }
+
+
+    @Test
+    public void isOwnerWhenOther() {
+        KeycloakAuthenticationToken keycloakAuthenticationToken = Mockito.mock(KeycloakAuthenticationToken.class);
+        KeycloakSecurityContext securityContext = Mockito.mock(KeycloakSecurityContext.class);
+        Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
+        Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
+
+        boolean authorized = keycloakManager.isOwner("other key", keycloakAuthenticationToken);
+
+        Assert.assertFalse(authorized);
     }
 
 
@@ -374,7 +386,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn("manager");
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized(CLIENT_ID, keycloakAuthenticationToken, true);
+        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
     }
@@ -386,7 +398,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isClientAuthorized("other_key", keycloakAuthenticationToken, false);
+        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertFalse(authorized);
     }

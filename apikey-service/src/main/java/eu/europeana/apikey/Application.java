@@ -39,7 +39,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configurers.GlobalAuthenticationConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -90,9 +89,10 @@ class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests()
+        http    .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                .and().authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
-                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/**").permitAll()
+                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
                 .and().authorizeRequests().antMatchers("/apikey/**").authenticated()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

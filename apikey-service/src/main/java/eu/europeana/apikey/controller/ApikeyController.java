@@ -49,8 +49,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
@@ -66,6 +64,7 @@ public class ApikeyController {
     private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
     private static final String APIKEYNOTFOUND = "API key %s does not exist.";
     private static final String APIKEYDEPRECATED = "API key %s is deprecated";
+    private static final String APIKEY_ALREADY_ENABLED = "API key %s is already enabled";
     private static final String APIKEYNOTREGISTERED = "API key %s is not registered";
     private static final String APIKEYMISSING = "Missing apikey in the header. Correct syntax: Authorization: APIKEY apikey";
     private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
@@ -74,6 +73,9 @@ public class ApikeyController {
     private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
     private static final String NOT_FOUND_ERROR = "Not found";
     private static final String APIKEYALREADYEXIST = "Apikey already exists";
+    private static final String FORBIDDEN_ERROR = "Forbidden";
+    private static final String OPERATION_FORBIDDEN_MESSAGE = "Operation forbidden.";
+    private static final String BAD_REQUEST_ERROR = "Bad request";
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -319,7 +321,10 @@ public class ApikeyController {
             return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
 
-        HttpHeaders headers = new HttpHeaders();
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.FORBIDDEN.value(), FORBIDDEN_ERROR, OPERATION_FORBIDDEN_MESSAGE), HttpStatus.FORBIDDEN);
+        }
 
         // retrieve apikey & check if available
         Apikey apikey = this.apikeyRepo.findOne(id);
@@ -336,23 +341,18 @@ public class ApikeyController {
             return new ResponseEntity<>(HttpStatus.GONE);
         }
 
-        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken, true)) {
-            return new ResponseEntity<>(headers, HttpStatus.FORBIDDEN);
-        }
-
         try {
             keycloakManager.updateClient((KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials(), apikeyUpdate, id);
             copyUpdateValues(apikey, apikeyUpdate);
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
             LOG.error("Error saving to DB", e);
-            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (ApikeyException e) {
             LOG.error("Could not update client", e);
             return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
         }
-        return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
+        return new ResponseEntity<>(apikey, HttpStatus.OK);
     }
 
     /**
@@ -378,8 +378,8 @@ public class ApikeyController {
                                            @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.FORBIDDEN.value(), FORBIDDEN_ERROR, OPERATION_FORBIDDEN_MESSAGE), HttpStatus.FORBIDDEN);
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -389,6 +389,10 @@ public class ApikeyController {
         if (null == apikey) {
             LOG.debug(String.format(APIKEYNOTFOUND, id));
             return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
+        }
+
+        if (apikey.getDeprecationDate() == null) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.BAD_REQUEST.value(), BAD_REQUEST_ERROR, String.format(APIKEY_ALREADY_ENABLED, id)), HttpStatus.BAD_REQUEST);
         }
 
         try {
@@ -410,7 +414,7 @@ public class ApikeyController {
             this.apikeyRepo.save(apikey);
         } catch (RuntimeException e) {
             LOG.error("Error saving to DB", e);
-            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (ApikeyException e) {
             LOG.error("Could not reenable a client", e);
             return new ResponseEntity<>(e, HttpStatus.valueOf(e.getStatus()));
@@ -444,8 +448,8 @@ public class ApikeyController {
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") String id) {
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.FORBIDDEN.value(), FORBIDDEN_ERROR, OPERATION_FORBIDDEN_MESSAGE), HttpStatus.FORBIDDEN);
         }
 
         LOG.debug("invalidate apikey: {}", id);
@@ -494,9 +498,9 @@ public class ApikeyController {
     @DeleteMapping(path = "/synchronize/{keycloakid}")
     public ResponseEntity<String> deleteCompletely(@PathVariable("keycloakid") String id) {
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(id, keycloakAuthenticationToken, true) ||
+        if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken) ||
                 !requestFromKeycloak(keycloakAuthenticationToken)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(OPERATION_FORBIDDEN_MESSAGE, HttpStatus.FORBIDDEN);
         }
 
         Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(id);
@@ -525,16 +529,17 @@ public class ApikeyController {
         LOG.debug("retrieve details for apikey: {}", id);
         HttpHeaders headers = new HttpHeaders();
 
+        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken) && !keycloakManager.isOwner(id, keycloakAuthenticationToken)) {
+            return new ResponseEntity<>(new ApikeyException(HttpStatus.FORBIDDEN.value(), FORBIDDEN_ERROR, OPERATION_FORBIDDEN_MESSAGE), HttpStatus.FORBIDDEN);
+        }
+
         Apikey      apikey  = this.apikeyRepo.findOne(id);
         if (null == apikey) {
             LOG.debug(String.format(APIKEYNOTFOUND, id));
             return new ResponseEntity<>(new ApikeyException(HttpStatus.NOT_FOUND.value(), NOT_FOUND_ERROR, String.format(APIKEYNOTFOUND, id)), HttpStatus.NOT_FOUND);
         }
 
-        KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (!keycloakManager.isClientAuthorized(apikey.getApikey(), keycloakAuthenticationToken, false)) {
-            return new ResponseEntity<>(headers, HttpStatus.UNAUTHORIZED);
-        }
         return new ResponseEntity<>(apikey, headers, HttpStatus.OK);
     }
 
