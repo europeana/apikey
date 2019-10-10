@@ -25,5 +25,6 @@ public interface ApikeyAction {
     public String getEmail();
     public String getFirstName();
     public String getLastName();
-
+    public String getAppName();
+    public String getCompany();
 }

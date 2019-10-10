@@ -32,6 +32,7 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailServiceImpl;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,6 +72,7 @@ public class ApikeyController {
     private static final String CAPTCHA_MISSING = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
     private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
     private static final String NOT_FOUND_ERROR = "Not found";
+    private static final String APIKEYALREADYEXIST = "Apikey already exists";
     private static final String FORBIDDEN_ERROR = "Forbidden";
     private static final String OPERATION_FORBIDDEN_MESSAGE = "Operation forbidden.";
     private static final String BAD_REQUEST_ERROR = "Bad request";
@@ -107,12 +109,12 @@ public class ApikeyController {
      * - firstName
      * - lastName
      * - email
+     * - appName
      * - level (either 'default' or 'admin')
      *
      * The following fields are optional:
      * - website
      * - company
-     * - appName
      * - sector
      *
      * The Apikey and Privatekey fields are generated: Apikey is a unique and random 'readable' lowercase string,
@@ -131,6 +133,7 @@ public class ApikeyController {
      *          HTTP 403 if the request is unauthorised
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
+     *          HTTP 400 if apikey already exist for <email,appName>
      */
 //    @JsonView(View.Public.class) -- commented out for EA-725
     @CrossOrigin(maxAge = 600)
@@ -144,6 +147,10 @@ public class ApikeyController {
             LOG.debug(e.getMessage() + ", abort creating apikey");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+        if(apiKeyAlreadyExist(apikeyCreate)) {
+            String message = APIKEYALREADYEXIST +" for : " +apikeyCreate.getEmail() +", " +apikeyCreate.getAppName();
+            return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+        }
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
         return createClient(apikeyCreate, (KeycloakSecurityContext) keycloakAuthenticationToken.getCredentials());
@@ -154,12 +161,12 @@ public class ApikeyController {
      * - firstName
      * - lastName
      * - email
+     * - appName
      * - level (either 'default' or 'admin')
      *
      * The following fields are optional:
      * - website
      * - company
-     * - appName
      * - sector
      *
      * The Apikey field is generated: Apikey is a unique and random 'readable' lowercase string,
@@ -178,6 +185,7 @@ public class ApikeyController {
      *          HTTP 403 if the request is unauthorised
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
+     *          HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
@@ -211,6 +219,10 @@ public class ApikeyController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
+        if(apiKeyAlreadyExist(apikeyCreate)) {
+            String message = APIKEYALREADYEXIST +" for : " +apikeyCreate.getEmail() +", " +apikeyCreate.getAppName();
+            return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+        }
         // authenticate manager client to get the access token
         KeycloakAuthenticationToken authenticationToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticate(managerClientId, managerClientSecret);
         if (authenticationToken == null) {
@@ -651,18 +663,34 @@ public class ApikeyController {
     private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
         String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
-        if (null == apikeyUpdate.getFirstName()) missingList.add("'firstName'");
-        if (null == apikeyUpdate.getLastName()) missingList.add("'lastName'");
-        if (null == apikeyUpdate.getEmail()) missingList.add("'email'");
+        if (StringUtils.isEmpty(apikeyUpdate.getFirstName())) {
+            missingList.add("'firstName' ");
+        }
+        if (StringUtils.isEmpty(apikeyUpdate.getLastName())) {
+            missingList.add("'lastName' ");
+        }
+        if (StringUtils.isEmpty(apikeyUpdate.getEmail())) {
+            missingList.add("'email' ");
+        }
+        if (StringUtils.isEmpty(apikeyUpdate.getAppName())) {
+            missingList.add("'appName' ");
+        }
+        if (StringUtils.isEmpty(apikeyUpdate.getCompany())){
+            missingList.add("'company' ");
+        }
 
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
         }
-
         if (!EmailValidator.getInstance().isValid(apikeyUpdate.getEmail())) {
             throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
     }
-
+    private boolean apiKeyAlreadyExist(ApikeyAction apikeyUpdate){
+        Apikey apikey= this.apikeyRepo.findByEmailAndAppName(apikeyUpdate.getEmail(), apikeyUpdate.getAppName());
+        return (apikey != null);
+    }
 
 }
+
+

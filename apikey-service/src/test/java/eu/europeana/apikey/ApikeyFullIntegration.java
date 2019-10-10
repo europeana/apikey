@@ -65,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = Application.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
-public class ApikeyFullIntegrationTest {
+public class ApikeyFullIntegration {
 
     private static final String fifisFirstName      = "Fifi";
     private static final String fifisLastName       = "Finufi";
@@ -94,7 +94,7 @@ public class ApikeyFullIntegrationTest {
     @Before
     public void setup()throws Exception {
         Apikey adminKey = new Apikey("ApiKey1", "luthien",
-                                     "inedhil", "luthien@parendili.org");
+                                     "inedhil", "luthien@parendili.org", "appName", "company");
         adminKey.setKeycloakId("ApiKey1");
         apikeyRepo.saveAndFlush(adminKey);
     }
@@ -291,6 +291,7 @@ public class ApikeyFullIntegrationTest {
            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
+    @Ignore
     @Test
     public void zhouldReturnDefaultMessage() throws Exception {
         this.mvc.perform(get("/apikey")).andDo(print()).andExpect(status().isOk())

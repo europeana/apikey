@@ -70,12 +70,14 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date activationDate;
 
+	@NotNull
 	@Size(max = 255)
 	@Column(name = "appname")
 	@JsonProperty("appName")
 	@JsonView(View.Public.class)
 	protected String appName;
 
+	@NotNull
 	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
@@ -125,11 +127,13 @@ public class Apikey {
 
 	}
 
-	public Apikey(String apikey, String firstName, String lastName, String email) {
+	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
 		this.apikey = apikey;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
+		this.appName = appName;
+		this.company = company;
 		this.registrationDate = new Date();
 	}
 
