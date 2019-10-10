@@ -663,20 +663,20 @@ public class ApikeyController {
     private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
         String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
-        if (StringUtils.isEmpty(apikeyUpdate.getFirstName())) {
-            missingList.add("'firstName' ");
+        if (StringUtils.isBlank(apikeyUpdate.getFirstName())) {
+            missingList.add("'firstName'");
         }
-        if (StringUtils.isEmpty(apikeyUpdate.getLastName())) {
-            missingList.add("'lastName' ");
+        if (StringUtils.isBlank(apikeyUpdate.getLastName())) {
+            missingList.add("'lastName'");
         }
-        if (StringUtils.isEmpty(apikeyUpdate.getEmail())) {
-            missingList.add("'email' ");
+        if (StringUtils.isBlank(apikeyUpdate.getEmail())) {
+            missingList.add("'email'");
         }
-        if (StringUtils.isEmpty(apikeyUpdate.getAppName())) {
-            missingList.add("'appName' ");
+        if (StringUtils.isBlank(apikeyUpdate.getAppName())) {
+            missingList.add("'appName'");
         }
-        if (StringUtils.isEmpty(apikeyUpdate.getCompany())){
-            missingList.add("'company' ");
+        if (StringUtils.isBlank(apikeyUpdate.getCompany())){
+            missingList.add("'company'");
         }
 
         if (!missingList.isEmpty()) {
