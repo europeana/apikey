@@ -658,36 +658,32 @@ public class ApikeyController {
     private void mandatoryMissing(ApikeyAction apikeyUpdate) throws ApikeyException {
         String retval = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
-        if (apikeyUpdate.getFirstName() == null || StringUtils.isEmpty(apikeyUpdate.getFirstName())) {
-            missingList.add("'firstName'");
+        if (StringUtils.isEmpty(apikeyUpdate.getFirstName())) {
+            missingList.add("'firstName' ");
         }
-        if (apikeyUpdate.getLastName() == null || StringUtils.isEmpty(apikeyUpdate.getLastName())) {
-            missingList.add("'lastName'");
+        if (StringUtils.isEmpty(apikeyUpdate.getLastName())) {
+            missingList.add("'lastName' ");
         }
-        if (apikeyUpdate.getEmail() == null || StringUtils.isEmpty(apikeyUpdate.getEmail())) {
-            missingList.add("'email'");
+        if (StringUtils.isEmpty(apikeyUpdate.getEmail())) {
+            missingList.add("'email' ");
         }
-        if (apikeyUpdate.getAppName() == null || StringUtils.isEmpty(apikeyUpdate.getAppName())) {
-            missingList.add("'appName'");
+        if (StringUtils.isEmpty(apikeyUpdate.getAppName())) {
+            missingList.add("'appName' ");
         }
-        if (apikeyUpdate.getCompany() == null || StringUtils.isEmpty(apikeyUpdate.getCompany())){
-            missingList.add("'company'");
+        if (StringUtils.isEmpty(apikeyUpdate.getCompany())){
+            missingList.add("'company' ");
         }
 
         if (!missingList.isEmpty()) {
             throw new ApikeyException(400, MISSINGPARAMETER, retval + missingList + " not provided");
         }
-
         if (!EmailValidator.getInstance().isValid(apikeyUpdate.getEmail())) {
             throw new ApikeyException(400, BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
     }
     private boolean apiKeyAlreadyExist(ApikeyAction apikeyUpdate){
         Apikey apikey= this.apikeyRepo.findByEmailAndAppName(apikeyUpdate.getEmail(), apikeyUpdate.getAppName());
-        if(apikey!=null){
-            return true;
-        }
-        return false;
+        return (apikey != null);
     }
 
 }
