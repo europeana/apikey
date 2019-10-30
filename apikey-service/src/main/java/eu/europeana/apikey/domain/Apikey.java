@@ -4,9 +4,7 @@
 
 package eu.europeana.apikey.domain;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
@@ -24,29 +22,24 @@ import static eu.europeana.apikey.util.Tools.nvl;
 @Table(name = "apikey")
 public class Apikey {
 	@Id
-//	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "apikey")
 	@JsonProperty("apikey")
 	@JsonView(View.Public.class)
 	private String apikey;
 
 	@NotNull
-	@Size(min = 1, max = 30)
-	@Column(name = "privatekey")
-	@JsonProperty("privatekey")
-	private String privatekey;
+	@Column(name = "keycloakid")
+	@JsonProperty("keycloakid")
+	@JsonIgnore
+	private String keycloakId;
 
 	@NotNull
 	@Column(name = "registrationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("registrationDate")
 	@JsonView(View.Public.class)
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private Date registrationDate;
-
-	@Column(name = "usagelimit")
-	@JsonProperty("usageLimit")
-	@JsonView(View.Public.class)
-	private Long usageLimit;
 
 	@Size(max = 100)
 	@Column(name = "website")
@@ -60,12 +53,14 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date activationDate;
 
+	@NotNull
 	@Size(max = 255)
 	@Column(name = "appname")
 	@JsonProperty("appName")
 	@JsonView(View.Public.class)
 	protected String appName;
 
+	@NotNull
 	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
@@ -99,12 +94,6 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	protected String lastName;
 
-	@NotNull
-	@Size(max = 8)
-	@Column(name = "level")
-	@JsonProperty("level")
-	private String level;
-
 	@Column(name = "deprecationdate")
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("deprecationDate")
@@ -117,26 +106,34 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date lastAccessDate;
 
-	@NotNull
-	@Column(name = "usage")
-	@JsonProperty("usage")
-	@JsonView(View.Public.class)
-	private Long usage;
-
 	public Apikey() {
 
 	}
 
-	public Apikey(String apikey, String privatekey, String firstName, String lastName, String email, String level) {
+	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
 		this.apikey = apikey;
-		this.privatekey = privatekey;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
-		this.level = level;
+		this.appName = appName;
+		this.company = company;
 		this.registrationDate = new Date();
-		this.usageLimit = 10000L;
-		this.usage = 0L;
+	}
+
+	public Apikey(Apikey copy) {
+		this.apikey = copy.apikey;
+		this.keycloakId = copy.keycloakId;
+		this.registrationDate = copy.registrationDate;
+		this.website = copy.website;
+		this.activationDate = copy.activationDate;
+		this.appName = copy.appName;
+		this.company = copy.company;
+		this.sector = copy.sector;
+		this.email = copy.email;
+		this.firstName = copy.firstName;
+		this.lastName = copy.lastName;
+		this.deprecationDate = copy.deprecationDate;
+		this.lastAccessDate = copy.lastAccessDate;
 	}
 
 	public String getApikey() {
@@ -147,12 +144,13 @@ public class Apikey {
 		this.apikey = apikey;
 	}
 
-	public String getPrivatekey() {
-		return privatekey;
+	@JsonIgnore
+	public String getKeycloakId() {
+		return keycloakId;
 	}
 
-	public void setPrivatekey(String privatekey) {
-		this.privatekey = privatekey;
+	public void setKeycloakId(String keycloakId) {
+		this.keycloakId = keycloakId;
 	}
 
 	public Date getRegistrationDate() {
@@ -161,14 +159,6 @@ public class Apikey {
 
 	public void setRegistrationDate(Date registrationDate) {
 		this.registrationDate = registrationDate;
-	}
-
-	public Long getUsageLimit() {
-		return usageLimit;
-	}
-
-	public void setUsageLimit(Long usageLimit) {
-		this.usageLimit = usageLimit;
 	}
 
 	public String getWebsite() {
@@ -235,14 +225,6 @@ public class Apikey {
 		this.lastName = lastName;
 	}
 
-	public String getLevel() {
-		return level;
-	}
-
-	public void setLevel(String level) {
-		this.level = level;
-	}
-
 	public Date getDeprecationDate() {
 		return deprecationDate;
 	}
@@ -259,26 +241,15 @@ public class Apikey {
 		this.lastAccessDate = lastAccessDate;
 	}
 
-	public Long getUsage() {
-		return usage;
-	}
-
-	public void setUsage(Long usage) {
-		this.usage = usage;
-	}
-
 
 	@Override
 	public String toString() {
 		return "Apikey {" +
 				" apikey = " + apikey +
-				", privatekey = " + nvl(privatekey) +
+				", keycloakid = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +
-				", level = " + nvl(level) +
-				", usage = " + nvl(usage) +
-				", usageLimit = " + nvl(usageLimit) +
 				", appName = " + nvl(appName) +
 				", website = " + nvl(website) +
 				", company = " + nvl(company) +
@@ -289,5 +260,4 @@ public class Apikey {
 				", deprecationDate = " + nvl(deprecationDate) +
 				" }";
 	}
-
 }

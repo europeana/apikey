@@ -4,8 +4,8 @@
 
 package eu.europeana.apikey;
 
-import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.repos.ApikeyRepo;
+import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
+import eu.europeana.apikey.keycloak.KeycloakManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,14 +21,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configurers.GlobalAuthenticationConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -46,9 +41,6 @@ public class Application extends SpringBootServletInitializer {
     @Component
     public static class SampleDataPopulator implements CommandLineRunner {
 
-        @Autowired
-        private ApikeyRepo apikeyRepo;
-
         @Override
         public void run(String... args) throws Exception {
         }
@@ -57,32 +49,19 @@ public class Application extends SpringBootServletInitializer {
 @Configuration
 class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
-    @Autowired
-    ApikeyRepo apikeyRepo;
-
     @Override
     public void init(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService());
+        auth.authenticationProvider(getCustomKeycloakAuthenticationProvider());
     }
 
     @Bean
-    UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
+    public CustomKeycloakAuthenticationProvider getCustomKeycloakAuthenticationProvider() {
+        return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
+    }
 
-            @Override
-            public UserDetails loadUserByUsername(String id)  {
-                Apikey apikey = apikeyRepo.findOne(id);
-                // && apikey.getLevel().equalsIgnoreCase("ADMIN")
-                if(apikey != null) {
-                    return new User(apikey.getApikey(), apikey.getPrivatekey(),
-                            true, true, true, true,
-                            AuthorityUtils.createAuthorityList(
-                                    apikey.getLevel().equalsIgnoreCase("ADMIN") ? "ROLE_ADMIN" : "USER"));
-                } else    {
-                    throw new UsernameNotFoundException("could not find apikey '"  + id + "'");
-                }
-            }
-        };
+    @Bean
+    public KeycloakManager getKeycloakManager() {
+        return new KeycloakManager();
     }
 }
 
@@ -91,20 +70,16 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
-    public void configure(WebSecurity webSecurity) throws Exception {
-        webSecurity
-                .ignoring()
-                .antMatchers(HttpMethod.GET, "/apikey/**")
-                .antMatchers(HttpMethod.GET, "/info");
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().anyRequest().access("hasRole('ROLE_ADMIN')")
+        http    .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                .and().authorizeRequests()
+                .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
+                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                .and().authorizeRequests().antMatchers("/apikey/**").authenticated()
                 .and().httpBasic()
+                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().csrf().disable();
     }
-
 }
 
 @Component
