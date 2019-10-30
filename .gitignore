@@ -1,5 +1,8 @@
 
 **/apikey.user.properties
+**/apikey.user.yml
+**/application.user.properties
+**/application.user.yml
 
 /apikey-service/target/
 .idea
@@ -7,5 +10,3 @@
 
 console.log
 
-
-**/application-user.yml
