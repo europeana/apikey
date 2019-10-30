@@ -5,6 +5,6 @@ Depends on the Europeana [Keycloak server project](https://github.com/europeana/
 
 ## License
 
-Licensed under the EUPL V.1.1.
+Licensed under the EUPL V.1.2.
 
 For full details, see [LICENSE.md](LICENSE.md).
