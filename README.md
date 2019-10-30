@@ -1,6 +1,7 @@
-# apikey-service
+# API-key service
 
-Europeana's API key service.
+Europeana's API-key service. 
+Depends on the Europeana [Keycloak server project](https://github.com/europeana/keycloak-server/)
 
 ## License
 
