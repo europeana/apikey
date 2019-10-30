@@ -1,7 +1,7 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.domain.ApikeyDetails;
+import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import org.joda.time.DateTime;
@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = Application.class)
+        classes = ApiKeyApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 public class ApikeyFullIntegration {
@@ -64,7 +64,7 @@ public class ApikeyFullIntegration {
     private static final String phypheysCompany     = "Smug, Spoiled, Stupid & Arrogant Inc.";
     private static final String phypheysSector      = "The Terminally Hip";
     private static final String phypheysWebsite     = "http://sssa4u.biz";
-    private static final ApikeyDetails fifisApikeyCreate = new ApikeyDetails(fifisFirstName, fifisLastName, fifisEmail);
+    private static final ApiKeyRequest fifisApikeyCreate = new ApiKeyRequest(fifisFirstName, fifisLastName, fifisEmail, fifisAppName, fifisCompany);
     private static final String READ  = "read";
 
 
@@ -107,7 +107,7 @@ public class ApikeyFullIntegration {
     public void bUpdateApikey() throws Exception {
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
 
-        ApikeyDetails phypheysApikeyUpdate = new ApikeyDetails(phypheysFirstName, phypheysLastName
+        ApiKeyRequest phypheysApikeyUpdate = new ApiKeyRequest(phypheysFirstName, phypheysLastName
                 , phypheysEmail, phypheysAppName, phypheysCompany, phypheysSector, phypheysWebsite);
 
         mvc.perform(put("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION
@@ -174,7 +174,7 @@ public class ApikeyFullIntegration {
     @Test
     public void dReenableeApikey() throws Exception {
         String phypheysApikey = apikeyRepo.findByEmail(phypheysEmail).get().getApikey();
-        ApikeyDetails fifisApikeyUpdate = new ApikeyDetails(fifisFirstName, fifisLastName
+        ApiKeyRequest fifisApikeyUpdate = new ApiKeyRequest(fifisFirstName, fifisLastName
                 , fifisEmail, fifisAppName, fifisCompany, fifisSector, fifisWebsite);
 
         mvc.perform(post("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION

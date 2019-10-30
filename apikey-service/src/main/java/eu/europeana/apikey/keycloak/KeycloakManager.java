@@ -3,7 +3,7 @@ package eu.europeana.apikey.keycloak;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import eu.europeana.apikey.domain.ApikeyDetails;
+import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.domain.ApikeyException;
 import eu.europeana.apikey.domain.FullApikey;
 import eu.europeana.apikey.util.PassGenerator;
@@ -141,7 +141,7 @@ public class KeycloakManager {
      * @return new Apikey object with all necessary fields.
      * @throws ApikeyException when there is a failure
      */
-    public FullApikey createClient(KeycloakSecurityContext securityContext, ApikeyDetails apikeyCreate) throws ApikeyException {
+    public FullApikey createClient(KeycloakSecurityContext securityContext, ApiKeyRequest apikeyCreate) throws ApikeyException {
         // ClientId must be unique
         String newApiKey = generateClientId(securityContext);
 
@@ -182,7 +182,7 @@ public class KeycloakManager {
      * @param apikeyUpdate containing updated registration data from the original request
      * @throws ApikeyException when there is a failure
      */
-    public void updateClient(KeycloakSecurityContext securityContext, ApikeyDetails apikeyUpdate, String clientId) throws ApikeyException {
+    public void updateClient(KeycloakSecurityContext securityContext, ApiKeyRequest apikeyUpdate, String clientId) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
         if (clientRepresentation == null) {
            throw new ApikeyException(HttpStatus.SC_NOT_FOUND);
@@ -197,7 +197,7 @@ public class KeycloakManager {
      * @param apikeyUpdate updated registration data
      * @return changed client representation
      */
-    private ClientRepresentation updateClientRepresentation(ClientRepresentation clientRepresentation, ApikeyDetails apikeyUpdate) {
+    private ClientRepresentation updateClientRepresentation(ClientRepresentation clientRepresentation, ApiKeyRequest apikeyUpdate) {
         if (apikeyUpdate == null) {
             return clientRepresentation;
         }
@@ -413,7 +413,7 @@ public class KeycloakManager {
      * @param apikeyDetails data of the key being registered coming from the original request
      * @return ClientRepresentation object that can be used for executing create client request
      */
-    private ClientRepresentation createClientRepresentation(String newApiKey, ApikeyDetails apikeyDetails) {
+    private ClientRepresentation createClientRepresentation(String newApiKey, ApiKeyRequest apikeyDetails) {
         ClientRepresentation clientRepresentation = new ClientRepresentation();
         clientRepresentation.setClientId(newApiKey);
         clientRepresentation.setPublicClient(false);
@@ -566,7 +566,7 @@ public class KeycloakManager {
      * @param securityContext security context with access token
      * @throws ApikeyException when client not found in Keycloak or update failed
      */
-    public void enableClient(boolean enable, String clientId, ApikeyDetails apikeyUpdate, KeycloakSecurityContext securityContext) throws ApikeyException {
+    public void enableClient(boolean enable, String clientId, ApiKeyRequest apikeyUpdate, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
         if (clientRepresentation == null) {
             throw new ApikeyException(HttpStatus.SC_NOT_FOUND);

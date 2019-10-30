@@ -1,7 +1,3 @@
-/**
- * Created by luthien on 18/04/2017.
- */
-
 package eu.europeana.apikey.domain;
 
 import com.fasterxml.jackson.annotation.*;
@@ -17,6 +13,10 @@ import java.util.Date;
 
 import static eu.europeana.apikey.util.Tools.nvl;
 
+/**
+ * API key as it is used internally and stored in the database
+ * Created by luthien on 18/04/2017.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "apikey")
@@ -35,8 +35,8 @@ public class Apikey {
 
 	@NotNull
 	@Column(name = "registrationdate")
-	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("registrationDate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonView(View.Public.class)
 	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private Date registrationDate;
@@ -48,8 +48,9 @@ public class Apikey {
 	private String website;
 
 	@Column(name = "activationdate")
-	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("activationDate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	@JsonView(View.Public.class)
 	private Date activationDate;
 
@@ -95,21 +96,27 @@ public class Apikey {
 	protected String lastName;
 
 	@Column(name = "deprecationdate")
-	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("deprecationDate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	@JsonView(View.Public.class)
 	private Date deprecationDate;
 
 	@Column(name = "lastaccessdate")
-	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	@JsonProperty("lastAccessDate")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
 	@JsonView(View.Public.class)
 	private Date lastAccessDate;
 
 	public Apikey() {
-
+		// default constructor required by JPA/Hibernate for deserialization
 	}
 
+	/**
+	 * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
+	 * an appName or company
+	 */
 	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
 		this.apikey = apikey;
 		this.firstName = firstName;
@@ -120,6 +127,9 @@ public class Apikey {
 		this.registrationDate = new Date();
 	}
 
+	/**
+	 * Constructor with all fields
+	 */
 	public Apikey(Apikey copy) {
 		this.apikey = copy.apikey;
 		this.keycloakId = copy.keycloakId;

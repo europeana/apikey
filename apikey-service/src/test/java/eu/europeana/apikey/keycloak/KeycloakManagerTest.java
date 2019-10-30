@@ -1,6 +1,6 @@
 package eu.europeana.apikey.keycloak;
 
-import eu.europeana.apikey.domain.ApikeyDetails;
+import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.domain.ApikeyException;
 import eu.europeana.apikey.domain.FullApikey;
 import org.apache.http.HttpEntity;
@@ -208,7 +208,7 @@ public class KeycloakManagerTest {
 
     @Test
     public void createClient() throws ApikeyException, IOException {
-        ApikeyDetails apikeyCreate = prepareApikeyCreate();
+        ApiKeyRequest apikeyCreate = prepareApikeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
 
@@ -282,8 +282,8 @@ public class KeycloakManagerTest {
         return securityContext;
     }
 
-    private ApikeyDetails prepareApikeyCreate() {
-        return new ApikeyDetails(FIRST_NAME, LAST_NAME, EMAIL);
+    private ApiKeyRequest prepareApikeyCreate() {
+        return new ApiKeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY);
     }
 
     @Test
@@ -405,7 +405,7 @@ public class KeycloakManagerTest {
 
     @Test(expected = ApikeyException.class)
     public void updateClientWhenClientMissing() throws IOException, ApikeyException {
-        ApikeyDetails apikeyDetails = prepareApikeyUpdate();
+        ApiKeyRequest apikeyDetails = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
         keycloakManager.updateClient(securityContext, apikeyDetails, CLIENT_ID);
@@ -413,7 +413,7 @@ public class KeycloakManagerTest {
 
     @Test
     public void updateClientWhenClientExists() throws IOException, ApikeyException {
-        ApikeyDetails apikeyUpdate = prepareApikeyUpdate();
+        ApiKeyRequest apikeyUpdate = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
         keycloakManager.updateClient(securityContext, apikeyUpdate, CLIENT_ID);
@@ -466,8 +466,8 @@ public class KeycloakManagerTest {
         return securityContext;
     }
 
-    private ApikeyDetails prepareApikeyUpdate() {
-        return new ApikeyDetails(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
+    private ApiKeyRequest prepareApikeyUpdate() {
+        return new ApiKeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
     }
 
 
@@ -502,7 +502,7 @@ public class KeycloakManagerTest {
 
     @Test
     public void reenableClientWithUpdateWhenClientExists() throws IOException, ApikeyException {
-        ApikeyDetails apikeyDetails = prepareApikeyUpdate();
+        ApiKeyRequest apikeyDetails = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
 
         keycloakManager.enableClient(true, CLIENT_ID, apikeyDetails, securityContext);

@@ -122,7 +122,7 @@ public class ApikeyController {
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> save(@RequestBody ApikeyDetails apikeyCreate) {
+    public ResponseEntity<Object> save(@RequestBody ApiKeyRequest apikeyCreate) {
         LOG.debug("creating new apikey");
         try {
             mandatoryMissing(apikeyCreate);
@@ -174,7 +174,7 @@ public class ApikeyController {
     @PostMapping(path = "/captcha",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> altSave(HttpServletRequest httpServletRequest, @RequestBody ApikeyDetails apikeyCreate) {
+    public ResponseEntity<Object> altSave(HttpServletRequest httpServletRequest, @RequestBody ApiKeyRequest apikeyCreate) {
         LOG.debug("creating new apikey secured by captcha");
 
         // When no captcha token was supplied return 401
@@ -224,7 +224,7 @@ public class ApikeyController {
      * @param securityContext security context neede for authorization in Keycloak
      * @return response with created Apikey details
      */
-    private ResponseEntity<Object> createClient(@RequestBody ApikeyDetails apikeyCreate, KeycloakSecurityContext securityContext) {
+    private ResponseEntity<Object> createClient(@RequestBody ApiKeyRequest apikeyCreate, KeycloakSecurityContext securityContext) {
         try {
             FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
             this.apikeyRepo.save(new Apikey(apikey));
@@ -295,7 +295,7 @@ public class ApikeyController {
     @PutMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApikeyDetails apikeyUpdate) {
+    public ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apikeyUpdate) {
         LOG.debug("update registration details for apikey: {}", id);
         try {
             mandatoryMissing(apikeyUpdate);
@@ -358,7 +358,7 @@ public class ApikeyController {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reenable(@PathVariable("id") String id,
-                                           @RequestBody(required = false) ApikeyDetails apikeyUpdate ) {
+                                           @RequestBody(required = false) ApiKeyRequest apikeyUpdate ) {
         LOG.debug("re-enable invalidated apikey: {}", id);
         KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         if (!keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken)) {
@@ -618,7 +618,7 @@ public class ApikeyController {
         return "Hello World!";
     }
 
-    private Apikey copyUpdateValues(Apikey apikey, ApikeyDetails apikeyUpdate){
+    private Apikey copyUpdateValues(Apikey apikey, ApiKeyRequest apikeyUpdate){
         if (null != apikeyUpdate.getFirstName()) {
             apikey.setFirstName(apikeyUpdate.getFirstName());
         }

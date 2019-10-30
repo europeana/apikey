@@ -1,4 +1,4 @@
-package eu.europeana.apikey;
+package eu.europeana.apikey.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,10 +33,10 @@ public class SwaggerConfig {
     private ApiInfo apiInfo() {
         return new ApiInfo(
                 "Apikey Service",
-                "Europeana APIkey service",
+                "Europeana API-key service",
                 null,
                 null,
                 new Contact("APIs team", "www.europeana.eu", "api@europeana.eu"),
-                "EUPL 1.1", "API license URL", Collections.emptyList());
+                "EUPL 1.2", "API license URL", Collections.emptyList());
     }
 }

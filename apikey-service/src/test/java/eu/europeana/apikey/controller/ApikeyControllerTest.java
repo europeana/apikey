@@ -1,6 +1,6 @@
 package eu.europeana.apikey.controller;
 
-import eu.europeana.apikey.Application;
+import eu.europeana.apikey.ApiKeyApplication;
 import eu.europeana.apikey.domain.Apikey;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.junit.Before;
@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = Application.class)
+        classes = ApiKeyApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 public class ApikeyControllerTest {
