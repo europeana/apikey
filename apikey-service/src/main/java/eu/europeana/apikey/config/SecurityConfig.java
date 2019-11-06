@@ -18,10 +18,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
-                .and().authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
+        http          .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                 .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
                 .and().authorizeRequests().antMatchers("/apikey/**").authenticated()
                 .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
