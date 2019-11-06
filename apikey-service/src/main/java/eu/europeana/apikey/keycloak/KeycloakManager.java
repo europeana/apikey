@@ -204,7 +204,8 @@ public class KeycloakManager {
         clientRepresentation.setName(String.format(CLIENT_NAME
                 , null != apikeyUpdate.getAppName() ? apikeyUpdate.getAppName() : clientRepresentation.getClientId()
                 , null != apikeyUpdate.getCompany() ? apikeyUpdate.getCompany() : ""));
-        clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyUpdate.getFirstName(), apikeyUpdate.getLastName(), apikeyUpdate.getEmail()));
+        clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyUpdate.getFirstName(), apikeyUpdate.getLastName(),
+                apikeyUpdate.getEmail()));
         return clientRepresentation;
     }
 
@@ -219,15 +220,17 @@ public class KeycloakManager {
         HttpPut httpPut = preparePutClientRequest(clientRepresentation, securityContext.getAccessTokenString());
         CloseableHttpResponse response = null;
         try {
+            LOG.debug("Sending updateClient {} to Keycloak...", clientRepresentation.getId());
             response = httpClient.execute(httpPut);
+            LOG.debug("Received updateClient from Keycloak");
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), response.getStatusLine().getReasonPhrase());
+                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(),
+                        response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
             LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-            throw new ApikeyException(500, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
-        }
-        finally {
+            throw new ApikeyException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
+        } finally {
             if (null != response) {
                 try {
                     response.close();
@@ -250,7 +253,8 @@ public class KeycloakManager {
     private ClientRepresentation getClientSecret(String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation representation = getClientRepresentation(clientId, securityContext);
         if (representation == null) {
-            return null;
+            throw new ApikeyException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ERROR_COMMUNICATING_WITH_KEYCLOAK,
+                    "Client secret not found for clientId " + clientId);
         }
         HttpGet httpGetSecret = prepareGetClientSecretRequest(representation.getId(), securityContext.getAccessTokenString());
         representation.setSecret(getClientSecret(httpGetSecret));
@@ -283,7 +287,9 @@ public class KeycloakManager {
      */
     private String getClientSecret(HttpGet httpGet) throws ApikeyException {
         try {
+            LOG.debug("Sending getClientSecret to Keycloak...");
             CloseableHttpResponse response = httpClient.execute(httpGet);
+            LOG.debug("Received getClientSecret from Keycloak");
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 InputStream is = response.getEntity().getContent();
                 return mapper.readValue(is, CredentialRepresentation.class).getValue();
@@ -291,7 +297,7 @@ public class KeycloakManager {
             throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
         } catch (IOException e) {
             LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-            throw new ApikeyException(500, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
+            throw new ApikeyException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
         }
     }
 
@@ -321,15 +327,17 @@ public class KeycloakManager {
         HttpPost httpPost = preparePostClientRequest(clientRepresentation, securityContext.getAccessTokenString());
         CloseableHttpResponse response = null;
         try {
+            LOG.debug("Sending createClient {} to Keycloak...", clientRepresentation.getId());
             response = httpClient.execute(httpPost);
+            LOG.debug("Received createClient from Keycloak {}", response);
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), response.getStatusLine().getReasonPhrase());
+                throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(),
+                        response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
             LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-            throw new ApikeyException(500, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
-        }
-        finally {
+            throw new ApikeyException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
+        } finally {
             if (null != response) {
                 try {
                     response.close();
@@ -387,7 +395,7 @@ public class KeycloakManager {
         try {
             entity = new StringEntity(mapper.writeValueAsString(clientRepresentation), "UTF-8");
         } catch (JsonProcessingException e) {
-            throw new ApikeyException(400, "Problem with creating client representation for the request", e.getMessage());
+            throw new ApikeyException(HttpStatus.SC_BAD_REQUEST, "Problem with creating client representation for the request", e.getMessage());
         }
         httpRequest.setEntity(entity);
     }
@@ -421,7 +429,8 @@ public class KeycloakManager {
         clientRepresentation.setName(String.format(CLIENT_NAME
                 , null != apikeyDetails.getAppName() ? apikeyDetails.getAppName() : newApiKey
                 , null != apikeyDetails.getCompany() ? apikeyDetails.getCompany() : ""));
-        clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyDetails.getFirstName(), apikeyDetails.getLastName(), apikeyDetails.getEmail()));
+        clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION, apikeyDetails.getFirstName(), apikeyDetails.getLastName(),
+                apikeyDetails.getEmail()));
         clientRepresentation.setDirectAccessGrantsEnabled(false);
         clientRepresentation.setServiceAccountsEnabled(true);
         return clientRepresentation;
@@ -484,7 +493,9 @@ public class KeycloakManager {
      */
     private List<ClientRepresentation> getClients(HttpGet httpGet) throws ApikeyException {
         try {
+            LOG.debug("Sending getClients to Keycloak...");
             CloseableHttpResponse response = httpClient.execute(httpGet);
+            LOG.debug("Received getClients from Keycloak");
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 InputStream is = response.getEntity().getContent();
                 CollectionType mapCollectionType = mapper.getTypeFactory()
@@ -494,7 +505,7 @@ public class KeycloakManager {
             throw new ApikeyException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
         } catch (IOException e) {
             LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-            throw new ApikeyException(500, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
+            throw new ApikeyException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
         }
     }
 

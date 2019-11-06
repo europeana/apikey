@@ -55,6 +55,7 @@ public class CaptchaManager {
      */
     public boolean verifyCaptchaToken(String captchaToken) throws ApikeyException {
         String verificationResponse = getVerificationResponse(captchaToken);
+        LOG.debug("Captcha verification response = {} ", verificationResponse);
         if (verificationResponse != null) {
             JSONObject jsonObject = new JSONObject(verificationResponse);
             if (!jsonObject.getBoolean("success")) {
@@ -76,7 +77,9 @@ public class CaptchaManager {
         CloseableHttpResponse response = null;
         try {
             HttpPost httpPost = new HttpPost(getVerificationURI(captchaToken));
+            LOG.debug("Sending captcha verification...");
             response = httpClient.execute(httpPost);
+            LOG.debug("Received captcha verification");
             if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
                 return IOUtils.toString(response.getEntity().getContent(), "UTF-8");
             }
