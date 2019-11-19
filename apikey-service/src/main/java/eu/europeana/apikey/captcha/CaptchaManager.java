@@ -1,6 +1,7 @@
 package eu.europeana.apikey.captcha;
 
-import eu.europeana.apikey.domain.ApikeyException;
+import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.apikey.exception.CaptchaException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,16 +52,16 @@ public class CaptchaManager {
      *
      * @param captchaToken Token to be verified.
      * @return true when verification successful, false when there was problem with verification response
-     * @throws ApikeyException when there was false response, exception contains error code
+     * @throws ApiKeyException when there was false response, exception contains error code
      */
-    public boolean verifyCaptchaToken(String captchaToken) throws ApikeyException {
+    public boolean verifyCaptchaToken(String captchaToken) throws ApiKeyException {
         String verificationResponse = getVerificationResponse(captchaToken);
         LOG.debug("Captcha verification response = {} ", verificationResponse);
         if (verificationResponse != null) {
             JSONObject jsonObject = new JSONObject(verificationResponse);
             if (!jsonObject.getBoolean("success")) {
                 JSONArray jsonArray = jsonObject.getJSONArray("error-codes");
-                throw new ApikeyException(HttpStatus.SC_FORBIDDEN, jsonArray.get(0).toString());
+                throw new CaptchaException(jsonArray.get(0).toString());
             }
             return true;
         }
@@ -74,11 +75,8 @@ public class CaptchaManager {
      * @return JSON response from the verification URL or null in case of any exception
      */
     private String getVerificationResponse(String captchaToken) {
-        CloseableHttpResponse response = null;
-        try {
-            HttpPost httpPost = new HttpPost(getVerificationURI(captchaToken));
-            LOG.debug("Sending captcha verification...");
-            response = httpClient.execute(httpPost);
+        LOG.debug("Sending captcha verification...");
+        try (CloseableHttpResponse response = httpClient.execute(new HttpPost(getVerificationURI(captchaToken)))) {
             LOG.debug("Received captcha verification");
             if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
                 return IOUtils.toString(response.getEntity().getContent(), "UTF-8");
@@ -87,14 +85,6 @@ public class CaptchaManager {
             LOG.error("Wrong URI syntax.", e);
         } catch (IOException e) {
             LOG.error("Captcha verification request failed.", e);
-        } finally {
-            if (response != null) {
-                try {
-                    response.close();
-                } catch (IOException e) {
-                    LOG.error("Close response for captcha verification failed.", e);
-                }
-            }
         }
         return null;
     }

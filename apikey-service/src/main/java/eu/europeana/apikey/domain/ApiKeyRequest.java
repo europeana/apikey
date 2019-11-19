@@ -17,6 +17,10 @@ public class ApiKeyRequest implements ApikeyAction {
     private String sector;
     private String website;
 
+    public ApiKeyRequest() {
+        // empty constructor required for deserializing
+    }
+
     /**
      * Constructor with all required fields
      */

@@ -21,6 +21,7 @@ import static eu.europeana.apikey.util.Tools.nvl;
 @Entity
 @Table(name = "apikey")
 public class Apikey {
+
 	@Id
 	@Column(name = "apikey")
 	@JsonProperty("apikey")

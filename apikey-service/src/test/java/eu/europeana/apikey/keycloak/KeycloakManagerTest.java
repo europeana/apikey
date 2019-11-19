@@ -1,7 +1,7 @@
 package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApikeyException;
+import eu.europeana.apikey.exception.ApiKeyException;
 import eu.europeana.apikey.domain.FullApikey;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -207,7 +207,7 @@ public class KeycloakManagerTest {
 
 
     @Test
-    public void createClient() throws ApikeyException, IOException {
+    public void createClient() throws ApiKeyException, IOException {
         ApiKeyRequest apikeyCreate = prepareApikeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
@@ -403,8 +403,8 @@ public class KeycloakManagerTest {
         Assert.assertFalse(authorized);
     }
 
-    @Test(expected = ApikeyException.class)
-    public void updateClientWhenClientMissing() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void updateClientWhenClientMissing() throws IOException, ApiKeyException {
         ApiKeyRequest apikeyDetails = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
@@ -412,7 +412,7 @@ public class KeycloakManagerTest {
     }
 
     @Test
-    public void updateClientWhenClientExists() throws IOException, ApikeyException {
+    public void updateClientWhenClientExists() throws IOException, ApiKeyException {
         ApiKeyRequest apikeyUpdate = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
@@ -471,37 +471,37 @@ public class KeycloakManagerTest {
     }
 
 
-    @Test(expected = ApikeyException.class)
-    public void invalidateClientWhenClientMissing() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
         keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
     }
 
     @Test
-    public void invalidateClientWhenClientExists() throws IOException, ApikeyException {
+    public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
         keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
     }
 
 
-    @Test(expected = ApikeyException.class)
-    public void reenableClientWhenClientMissing() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
         keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
     }
 
     @Test
-    public void reenableClientWhenClientExists() throws IOException, ApikeyException {
+    public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
 
         keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
     }
 
     @Test
-    public void reenableClientWithUpdateWhenClientExists() throws IOException, ApikeyException {
+    public void reenableClientWithUpdateWhenClientExists() throws IOException, ApiKeyException {
         ApiKeyRequest apikeyDetails = prepareApikeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
 
