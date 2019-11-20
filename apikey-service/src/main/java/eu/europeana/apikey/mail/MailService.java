@@ -37,8 +37,9 @@ public class MailService {
 
             emailSender.send(message);
         } catch (MailException e) {
-            LOG.error("Exception occurred sending email message {} ", e.getMessage());
-            throw new SendMailException(e.getMessage(), to, subject);
+            LOG.error("Exception occurred sending a confirmation '{}' email to {}", subject, to, e);
+            throw new SendMailException(e.getMessage(),
+                    String.format("A problem prevented sending a confirmation '%s' email to %s", subject, to));
         }
     }
 
@@ -48,28 +49,5 @@ public class MailService {
                                                String... templateArgs) throws SendMailException {
         String messageBody = String.format(template.getText(), (String[]) templateArgs);
         sendSimpleMessage(template.getFrom(), to, subject, messageBody);
-    }
-
-    public void sendMessageWithAttachment(String to,
-                                          String subject,
-                                          String messageBody,
-                                          String pathToAttachment) {
-        LOG.debug("send email with attachment ...");
-        try {
-            MimeMessage message = emailSender.createMimeMessage();
-            // pass 'true' to the constructor to create a multipart message
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(messageBody);
-
-            FileSystemResource file = new FileSystemResource(new File(pathToAttachment));
-            helper.addAttachment("Invoice", file);
-
-            emailSender.send(message);
-        } catch (MessagingException e) {
-            LOG.error("Exception occurred sending email message with attachment {} ", e.getMessage());
-        }
     }
 }
