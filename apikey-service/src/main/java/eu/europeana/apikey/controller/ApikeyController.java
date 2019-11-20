@@ -8,7 +8,7 @@ import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import eu.europeana.apikey.keycloak.KeycloakAuthenticationToken;
 import eu.europeana.apikey.keycloak.KeycloakManager;
 import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
-import eu.europeana.apikey.mail.MailServiceImpl;
+import eu.europeana.apikey.mail.MailService;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -69,7 +69,7 @@ public class ApikeyController {
 
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
 
-    private final MailServiceImpl emailService;
+    private final MailService emailService;
 
     private final SimpleMailMessage apikeyCreatedMail;
 
@@ -77,7 +77,7 @@ public class ApikeyController {
 
     @Autowired
     public ApikeyController(ApikeyRepo apikeyRepo, CaptchaManager captchaManager, CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
-                            MailServiceImpl emailService, SimpleMailMessage apikeyCreatedMail, KeycloakManager keycloakManager) {
+                            MailService emailService, SimpleMailMessage apikeyCreatedMail, KeycloakManager keycloakManager) {
         this.apikeyRepo = apikeyRepo;
         this.captchaManager = captchaManager;
         this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
