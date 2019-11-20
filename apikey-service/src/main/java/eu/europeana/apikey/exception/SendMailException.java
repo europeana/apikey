@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 public class SendMailException extends ApiKeyException {
 
-    public SendMailException(String error, String message) {
-        super(error, message);
+    public SendMailException(String message, Throwable t) {
+        super(message, t);
     }
 }

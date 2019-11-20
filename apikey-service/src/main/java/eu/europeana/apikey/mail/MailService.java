@@ -4,16 +4,10 @@ import eu.europeana.apikey.exception.SendMailException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
-
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import java.io.File;
 
 
 /**
@@ -37,9 +31,8 @@ public class MailService {
 
             emailSender.send(message);
         } catch (MailException e) {
-            LOG.error("Exception occurred sending a confirmation '{}' email to {}", subject, to, e);
-            throw new SendMailException(e.getMessage(),
-                    String.format("A problem prevented sending a confirmation '%s' email to %s", subject, to));
+            throw new SendMailException(
+                    String.format("A problem prevented sending a confirmation '%s' email to %s", subject, to), e);
         }
     }
 
@@ -47,7 +40,7 @@ public class MailService {
                                                String subject,
                                                SimpleMailMessage template,
                                                String... templateArgs) throws SendMailException {
-        String messageBody = String.format(template.getText(), (String[]) templateArgs);
+        String messageBody = String.format(template.getText(), templateArgs);
         sendSimpleMessage(template.getFrom(), to, subject, messageBody);
     }
 }
