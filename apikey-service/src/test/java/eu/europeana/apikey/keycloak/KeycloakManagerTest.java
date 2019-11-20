@@ -474,37 +474,26 @@ public class KeycloakManagerTest {
     @Test(expected = ApiKeyException.class)
     public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-
-        keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
+        keycloakManager.disableClient( CLIENT_ID, securityContext);
     }
 
     @Test
     public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
-
-        keycloakManager.enableClient(false, CLIENT_ID, null, securityContext);
+        keycloakManager.disableClient(CLIENT_ID, securityContext);
     }
 
 
     @Test(expected = ApiKeyException.class)
     public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-
-        keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
+        keycloakManager.enableClient(CLIENT_ID, securityContext);
     }
 
     @Test
     public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
-
-        keycloakManager.enableClient(true, CLIENT_ID, null, securityContext);
+        keycloakManager.enableClient(CLIENT_ID, securityContext);
     }
 
-    @Test
-    public void reenableClientWithUpdateWhenClientExists() throws IOException, ApiKeyException {
-        ApiKeyRequest apikeyDetails = prepareApikeyUpdate();
-        KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
-
-        keycloakManager.enableClient(true, CLIENT_ID, apikeyDetails, securityContext);
-    }
 }

@@ -315,16 +315,15 @@ public class ApikeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{id}/disable")
-    public ResponseEntity<Object> disable(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity disable(@PathVariable("id") String id) throws ApiKeyException {
         LOG.debug("Disabling API key {}...", id);
 
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         Apikey apikey = checkKeyExists(id);
-
         checkKeyDeprecated(apikey);
 
         if (!isRequestFromKeycloak(kcAuthToken)) {
-            keycloakManager.enableClient(false, id, null, (KeycloakSecurityContext) kcAuthToken.getCredentials());
+            keycloakManager.disableClient(id, (KeycloakSecurityContext) kcAuthToken.getCredentials());
         }
         apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
         this.apikeyRepo.save(apikey);
@@ -353,15 +352,13 @@ public class ApikeyController {
 
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         Apikey key = checkKeyExists(id);
-
         if (key.getDeprecationDate() == null) {
             throw new ApiKeyNotDeprecatedException(id);
         }
 
         if (!isRequestFromKeycloak(kcAuthToken)) {
             // call Keycloak update only when this request does not come from Keycloak
-            keycloakManager.enableClient(true, id,  null, //apikeyUpdate,
-                    (KeycloakSecurityContext) kcAuthToken.getCredentials());
+            keycloakManager.enableClient(id, (KeycloakSecurityContext) kcAuthToken.getCredentials());
         }
 
         // remove deprecationdate: this enables the key again
@@ -394,7 +391,9 @@ public class ApikeyController {
         if (apikey == null) {
             throw new ApiKeyNotFoundException(id);
         }
-        return deleteCompletely(apikey.getApikey(), kcAuthToken);
+
+        keycloakManager.deleteClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), id);
+        return deleteApiKey(apikey.getApikey(), kcAuthToken);
     }
 
     /**
@@ -414,18 +413,16 @@ public class ApikeyController {
 
         Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(keycloakId);
         if (optionalApikey.isPresent()) {
-            return deleteCompletely(optionalApikey.get().getApikey(), kcAuthToken);
+            return deleteApiKey(optionalApikey.get().getApikey(), kcAuthToken);
         }
         return new ResponseEntity(HttpStatus.NOT_FOUND);
     }
 
-    private ResponseEntity deleteCompletely(String id, KeycloakAuthenticationToken kcAuthenticationToken) {
-        LOG.info("Permanently deleting API key {}. User is {} ...", id, kcAuthenticationToken.getPrincipal()) ;
+    private ResponseEntity deleteApiKey(String id, KeycloakAuthenticationToken kcAuthenticationToken) {
+        LOG.info("User {} is permanently deleting API key {}...", kcAuthenticationToken.getPrincipal(), id) ;
         this.apikeyRepo.delete(id);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
-
-
 
     /**
      * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the

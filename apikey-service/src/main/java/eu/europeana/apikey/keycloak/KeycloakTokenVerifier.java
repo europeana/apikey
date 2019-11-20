@@ -16,11 +16,12 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 /**
- * Class used for verifiying token signature. It uses the realm public key from properties.
+ * Class used for verifying token signature. It uses the realm public key from properties.
  *
  */
 @Component
 public class KeycloakTokenVerifier {
+
     @Value("${keycloak.realm-public-key}")
     private String realmPublicKey;
 
