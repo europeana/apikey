@@ -6,7 +6,7 @@ You can use docker to quickly setup an API key test environment. The docker envi
 We assume you have Docker already installed on your computer. You need docker-compose version 1.8.0 or later to 
 be able to run it ([installation instructions here](https://github.com/docker/compose/releases)).
 
-Remember to configure the apikey-service/src/main/resources/application.yml to point to your postgresql database 
+Remember to configure the apikey/src/main/resources/application.yml to point to your postgresql database 
 
 ##Starting docker
 - Go to the docker folder and execute the command: `docker-compose up`

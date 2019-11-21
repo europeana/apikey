@@ -27,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -387,7 +388,7 @@ public class ApikeyController {
     public ResponseEntity<String> delete(@PathVariable("id") String id) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
-        Apikey apikey = this.apikeyRepo.findOne(id);
+        Optional<Apikey> apikey = this.apikeyRepo.findOne(id);
         if (apikey == null) {
             throw new ApiKeyNotFoundException(id);
         }

@@ -4,7 +4,7 @@ services:
 
   apikey-pgdatabase:
     build:
-      context: ./postgresql
+      context: postgresql
     image: apikey-postgresql-database
     ports:
     - "5432:5432"
@@ -15,7 +15,7 @@ services:
 
   apikey-appserver:
     build:
-      context: ./tomcat
+      context: tomcat
     image: apikey-tomcat-server
     environment:
       #Memory monitoring
@@ -37,7 +37,7 @@ services:
 
     #   Mount point for application in tomcat (the target folder on your workspace is directly mounted to the tomcat container)
     volumes:
-      - ../target/apikey-service:/tomcat/webapps/apikey
+      - ../target/apikey:/tomcat/webapps/apikey
     # Map ports from tomcat container to the local machine
     ports:
     #local:container

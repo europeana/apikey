@@ -5,7 +5,7 @@
 **/application.user.yml
 **/application-user.yml
 
-/apikey-service/target/
+/target/
 .idea
 *.iml
 
