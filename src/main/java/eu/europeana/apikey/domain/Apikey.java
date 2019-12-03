@@ -114,6 +114,9 @@ public class Apikey {
 		// default constructor required by JPA/Hibernate for deserialization
 	}
 
+	public Apikey(String apikey) {
+		this.apikey = apikey;
+	}
 	/**
 	 * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
 	 * an appName or company

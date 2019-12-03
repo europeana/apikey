@@ -18,6 +18,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Example;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,7 +28,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * Handles all incoming requests
  * Authentication is done using Keycloak authentication, but additional constraints my be checked (for example if the
  * account is a manager account)
- *
+ * <p>
  * Created by luthien on 18/04/2017.
  * Major refactoring by M. Helinski and Patrick Ehlert in September-November 2019
  */
@@ -47,18 +47,23 @@ import java.util.regex.Pattern;
 @RequestMapping("/apikey")
 public class ApikeyController {
 
-    private static final Logger LOG   = LogManager.getLogger(ApikeyController.class);
+    private static final Logger LOG = LogManager.getLogger(ApikeyController.class);
 
-    private static final String MISSING_PARAMETER = "missing parameter";
-    private static final String BAD_EMAIL_FORMAT = "Email is not properly formatted.";
-    private static final String APIKEY_NOT_REGISTERED = "API key %s is not registered";
-    private static final String APIKEY_MISSING = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
-    private static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
-    private static final String CAPTCHA_PATTERN = "Bearer\\s+([^\\s]+)";
-    private static final String CAPTCHA_MISSING = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
+    private static final String MISSING_PARAMETER           = "missing parameter";
+    private static final String BAD_EMAIL_FORMAT            = "Email is not properly formatted.";
+    private static final String APIKEY_NOT_REGISTERED       = "API key %s is not registered";
+    private static final String APIKEY_MISSING              = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
+    private static final String APIKEY_PATTERN              = "APIKEY\\s+([^\\s]+)";
+    private static final String CAPTCHA_PATTERN             = "Bearer\\s+([^\\s]+)";
+    private static final String CAPTCHA_MISSING             = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
     private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
 
     private final ApikeyRepo apikeyRepo;
+    private final CaptchaManager                       captchaManager;
+    private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
+    private final MailServiceImpl                      emailService;
+    private final SimpleMailMessage                    apikeyCreatedMail;
+    private final KeycloakManager                      keycloakManager;
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -66,27 +71,20 @@ public class ApikeyController {
     @Value("${keycloak.manager-client-secret}")
     private String managerClientSecret;
 
-    private final CaptchaManager captchaManager;
-
-    private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
-
-    private final MailServiceImpl emailService;
-
-    private final SimpleMailMessage apikeyCreatedMail;
-
-    private final KeycloakManager keycloakManager;
-
     @Autowired
-    public ApikeyController(ApikeyRepo apikeyRepo, CaptchaManager captchaManager, CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
-                            MailServiceImpl emailService, SimpleMailMessage apikeyCreatedMail, KeycloakManager keycloakManager) {
-        this.apikeyRepo = apikeyRepo;
-        this.captchaManager = captchaManager;
+    public ApikeyController(ApikeyRepo apikeyRepo,
+                            CaptchaManager captchaManager,
+                            CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
+                            MailServiceImpl emailService,
+                            SimpleMailMessage apikeyCreatedMail,
+                            KeycloakManager keycloakManager) {
+        this.apikeyRepo                           = apikeyRepo;
+        this.captchaManager                       = captchaManager;
         this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
-        this.emailService = emailService;
-        this.apikeyCreatedMail = apikeyCreatedMail;
-        this.keycloakManager = keycloakManager;
+        this.emailService                         = emailService;
+        this.apikeyCreatedMail                    = apikeyCreatedMail;
+        this.keycloakManager                      = keycloakManager;
     }
-
 
     /**
      * Create a new Apikey with the following mandatory values supplied in a JSON request body:
@@ -95,28 +93,27 @@ public class ApikeyController {
      * - email
      * - appName
      * - company
-     *
+     * <p>
      * The following fields are optional:
      * - website
      * - sector
-     *
+     * <p>
      * The Apikey and Privatekey fields are generated: Apikey is a unique and random 'readable' lowercase string,
      * 8 to 12 characters long, e.g. 'rhossindri', 'viancones' or 'ebobrent'. Privatekey is a regular random string
      * mix of upper- and lowercase characters and numbers, eg. 'mh8Hvi6uXR' or 'Kts8H5ResV'.
-     *
+     * <p>
      * Upon successful execution, the code will send an email message containing the Apikey and Privatekey to the
      * email address supplied in the request.
      *
-     * @param   newKeyRequest requestbody containing supplied values
-     *
-     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *          HTTP 201 upon successful Apikey creation
-     *          HTTP 400 when a required parameter is missing or has an invalid value
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 406 if a response MIME type other than application/JSON was requested
-     *          HTTP 415 if the submitted request does not contain a valid JSON body
-     *          HTTP 400 if apikey already exist for <email,appName>
+     * @param newKeyRequest requestbody containing supplied values
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     * HTTP 201 upon successful Apikey creation
+     * HTTP 400 when a required parameter is missing or has an invalid value
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 415 if the submitted request does not contain a valid JSON body
+     * HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -135,32 +132,34 @@ public class ApikeyController {
      * - email
      * - appName
      * - company
-     *
+     * <p>
      * The following fields are optional:
      * - website
      * - sector
-     *
+     * <p>
      * The Apikey field is generated: Apikey is a unique and random 'readable' lowercase string,
      * 8 to 12 characters long, e.g. 'rhossindri', 'viancones' or 'ebobrent'. The method is protected with
      * captcha token supplied in the Authorization header.
-     *
+     * <p>
      * Upon successful execution, the code will send an email message containing the Apikey and secret generated
      * by Kyecloak to the email address supplied in the request.
      *
-     * @param   newKeyRequest requestbody containing supplied values
-     *
-     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *          HTTP 201 upon successful Apikey creation
-     *          HTTP 400 when a required parameter is missing or has an invalid value
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 406 if a response MIME type other than application/JSON was requested
-     *          HTTP 415 if the submitted request does not contain a valid JSON body
-     *          HTTP 400 if apikey already exist for <email,appName>
+     * @param newKeyRequest requestbody containing supplied values
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     * HTTP 201 upon successful Apikey creation
+     * HTTP 400 when a required parameter is missing or has an invalid value
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 415 if the submitted request does not contain a valid JSON body
+     * HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
-    @PostMapping(path = "/captcha", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest, @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+    @PostMapping(path = "/captcha",
+                 produces = MediaType.APPLICATION_JSON_VALUE,
+                 consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest,
+                                        @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key secured by captcha...");
         // instead of checking manager credentials we check captcha token, but we do this once we validated the input (checked mandatory fields)
         checkMandatoryFields(newKeyRequest);
@@ -177,8 +176,8 @@ public class ApikeyController {
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
         // authenticate manager client to get the access token
-        KeycloakAuthenticationToken authenticationToken =
-                (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticate(managerClientId, managerClientSecret);
+        KeycloakAuthenticationToken authenticationToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider
+                .authenticate(managerClientId, managerClientSecret);
         if (authenticationToken == null) {
             throw new ForbiddenException();
         }
@@ -191,23 +190,24 @@ public class ApikeyController {
      * Keycloak. When this succeeds the client information is save in the local database and sent to the supplied
      * email.
      *
-     * @param apikeyCreate details to be used for the created client
+     * @param apikeyCreate    details to be used for the created client
      * @param securityContext security context neede for authorization in Keycloak
      * @return response with created Apikey details
      */
-    private ResponseEntity<Object>  createClient(ApiKeyRequest apikeyCreate, KeycloakSecurityContext securityContext) throws ApiKeyException {
+    private ResponseEntity<Object> createClient(ApiKeyRequest apikeyCreate,
+                                                KeycloakSecurityContext securityContext) throws ApiKeyException {
         LOG.debug("Creating new keycloak client...");
         FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
         this.apikeyRepo.save(new Apikey(apikey));
         LOG.debug("API key {} created", apikey.getApikey());
 
         emailService.sendSimpleMessageUsingTemplate(apikey.getEmail(),
-                "Your Europeana API keys",
-                apikeyCreatedMail,
-                apikey.getFirstName(),
-                apikey.getLastName(),
-                apikey.getApikey(),
-                apikey.getClientSecret());
+                                                    "Your Europeana API keys",
+                                                    apikeyCreatedMail,
+                                                    apikey.getFirstName(),
+                                                    apikey.getLastName(),
+                                                    apikey.getApikey(),
+                                                    apikey.getClientSecret());
         return new ResponseEntity<>(apikey, HttpStatus.CREATED);
     }
 
@@ -215,7 +215,7 @@ public class ApikeyController {
      * Get value from the Authorization header of the given request based on the supplied pattern.
      *
      * @param httpServletRequest request with the header
-     * @param valuePattern pattern of the Authorization header to retrieve the value
+     * @param valuePattern       pattern of the Authorization header to retrieve the value
      * @return value of the Authorization header
      */
     private String getAuthorizationHeader(HttpServletRequest httpServletRequest, String valuePattern) {
@@ -238,29 +238,26 @@ public class ApikeyController {
     /**
      * Retrieves the details associated with the registration of a given Apikey
      *
-     * @param   id the apikey to retrieve
-     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *          HTTP 200 upon successful execution
-     *          HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
-     *          HTTP 404 when the requested Apikey is not found in the database
-     *          HTTP 406 if a MIME type other than application/JSON was requested
+     * @param id the apikey to retrieve
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     * HTTP 200 upon successful execution
+     * HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
+     * HTTP 404 when the requested Apikey is not found in the database
+     * HTTP 406 if a MIME type other than application/JSON was requested
      */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Apikey read(@PathVariable("id") String id) throws ApiKeyException {
         LOG.debug("Retrieving details for API key {}...", id);
-
         checkManagerOrOwnerCredentials(id);
-        Apikey key = checkKeyExists(id);
-
-        return key;
+        return checkKeyExists(id);
     }
 
     /**
      * Changes the registration details of an existing API key for the following public and non-generated values,
      * if they are supplied in the JSON request body:
-     *
+     * <p>
      * - firstName
      * - lastName
      * - email
@@ -268,21 +265,24 @@ public class ApikeyController {
      * - appName
      * - sector
      *
-     * @param   id PathParam containing api key to be updated
-     * @param   apikeyUpdate RequestBody containing supplied values
-     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *          HTTP 200 upon successful Apikey update
-     *          HTTP 400 when a required parameter is missing
-     *          HTTP 401 in case of an unauthorized request (client credential authentication fails)
-     *          HTTP 403 if the request is unauthorised (when the client is not a manager)
-     *          HTTP 404 if the apikey is not found
-     *          HTTP 406 if a response MIME type other than application/JSON was requested
-     *          HTTP 410 if the apikey is invalidated / deprecated
-     *          HTTP 415 if the submitted request does not contain a valid JSON body
+     * @param id           PathParam containing api key to be updated
+     * @param apikeyUpdate RequestBody containing supplied values
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     * HTTP 200 upon successful Apikey update
+     * HTTP 400 when a required parameter is missing
+     * HTTP 401 in case of an unauthorized request (client credential authentication fails)
+     * HTTP 403 if the request is unauthorised (when the client is not a manager)
+     * HTTP 404 if the apikey is not found
+     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 410 if the apikey is invalidated / deprecated
+     * HTTP 415 if the submitted request does not contain a valid JSON body
      */
     @CrossOrigin(maxAge = 600)
-    @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Apikey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apikeyUpdate) throws ApiKeyException {
+    @PutMapping(value = "/{id}",
+                produces = MediaType.APPLICATION_JSON_VALUE,
+                consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Apikey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apikeyUpdate) throws
+                                                                                                 ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         checkMandatoryFields(apikeyUpdate);
@@ -297,20 +297,17 @@ public class ApikeyController {
         return key;
     }
 
-
-
-
     /**
      * Disabling/deprecating a given Apikey. This is done by setting the deprecationdate column to the current time; the data
      * remain available in the database
      *
-     * @param   id the apikey to invalidate
-     * @return  HTTP 204 upon successful execution
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 404 when the requested Apikey is not found in the database
-     *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
-     *
+     * @param id the apikey to invalidate
+     * @return HTTP 204 upon successful execution
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 404 when the requested Apikey is not found in the database
+     * HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
+     * <p>
      * Addionally, the field 'Apikey-not-found' containing the string "apikey-not-found" will be available in the
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
      */
@@ -320,10 +317,10 @@ public class ApikeyController {
         LOG.debug("Disabling API key {}...", id);
 
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        Apikey apikey = checkKeyExists(id);
+        Apikey                      apikey      = checkKeyExists(id);
         checkKeyDeprecated(apikey);
 
-        if (!isRequestFromKeycloak(kcAuthToken)) {
+        if (isNoKeycloakRequest(kcAuthToken)) {
             keycloakManager.disableClient(id, (KeycloakSecurityContext) kcAuthToken.getCredentials());
         }
         apikey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
@@ -336,15 +333,15 @@ public class ApikeyController {
      * NOTE that for now the code does not check if the key is really deprecated; it merely executes the update (if any)
      * in such cases.
      *
-     * @param   id the apikey to re-enable
-     * @return  JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
-     *          HTTP 200 upon successful Apikey update
-     *          HTTP 400 when a required parameter is missing or has an invalid value
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 404 if the apikey is not found
-     *          HTTP 406 if a response MIME type other than application/JSON was requested
-     *          HTTP 415 if the submitted request does not contain a valid JSON body
+     * @param id the apikey to re-enable
+     * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in apikey.java
+     * HTTP 200 upon successful Apikey update
+     * HTTP 400 when a required parameter is missing or has an invalid value
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 404 if the apikey is not found
+     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 415 if the submitted request does not contain a valid JSON body
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{id}/enable")
@@ -352,12 +349,12 @@ public class ApikeyController {
         LOG.debug("Enabling API key {}...", id);
 
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        Apikey key = checkKeyExists(id);
+        Apikey                      key         = checkKeyExists(id);
         if (key.getDeprecationDate() == null) {
             throw new ApiKeyNotDeprecatedException(id);
         }
 
-        if (!isRequestFromKeycloak(kcAuthToken)) {
+        if (isNoKeycloakRequest(kcAuthToken)) {
             // call Keycloak update only when this request does not come from Keycloak
             keycloakManager.enableClient(id, (KeycloakSecurityContext) kcAuthToken.getCredentials());
         }
@@ -368,33 +365,34 @@ public class ApikeyController {
         return key;
     }
 
-    private boolean isRequestFromKeycloak(KeycloakAuthenticationToken keycloakAuthenticationToken) {
+    private boolean isNoKeycloakRequest(KeycloakAuthenticationToken keycloakAuthenticationToken) {
         return keycloakAuthenticationToken.getAuthorities()
-                .stream()
-                .anyMatch(grantedAuthority -> "synchronize".equals(grantedAuthority.getAuthority()));
+                                          .stream()
+                                          .noneMatch(grantedAuthority -> "synchronize".equals(grantedAuthority.getAuthority()));
     }
-
 
     /**
      * For deleting an apikey based on the key/id itself
-     * @param id
-     * @return  HTTP 204 upon successful execution
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 404 when the requested keycloak identifier is not found in the database
+     *
+     * @param id identifying Apikey string
+     * @return HTTP 204 upon successful execution
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 404 when the requested keycloak identifier is not found in the database
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity delete(@PathVariable("id") String id) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
-        Optional<Apikey> apikey = this.apikeyRepo.findOne(id);
-        if (apikey == null) {
+        Optional<Apikey> optionalApikey = apikeyRepo.findOne(Example.of(new Apikey(id)));
+
+        if (optionalApikey.isEmpty()) {
             throw new ApiKeyNotFoundException(id);
         }
 
         keycloakManager.deleteClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), id);
-        return deleteApiKey(apikey.getApikey(), kcAuthToken);
+        return deleteApiKey(optionalApikey.get(), kcAuthToken);
     }
 
     /**
@@ -402,26 +400,24 @@ public class ApikeyController {
      * It may be executed only by the privileged client during the synchronization procedure in Keycloak.
      *
      * @param keycloakId api key identifier from Keycloak
-     * @return  HTTP 204 upon successful execution
-     *          HTTP 401 in case of an invalid request
-     *          HTTP 403 if the request is unauthorised
-     *          HTTP 404 when the requested keycloak identifier is not found in the database
+     * @return HTTP 204 upon successful execution
+     * HTTP 401 in case of an invalid request
+     * HTTP 403 if the request is unauthorised
+     * HTTP 404 when the requested keycloak identifier is not found in the database
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/synchronize/{keycloakid}")
-    public ResponseEntity<String> deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws ForbiddenException {
+    public ResponseEntity deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws ForbiddenException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
         Optional<Apikey> optionalApikey = this.apikeyRepo.findByKeycloakId(keycloakId);
-        if (optionalApikey.isPresent()) {
-            return deleteApiKey(optionalApikey.get().getApikey(), kcAuthToken);
-        }
-        return new ResponseEntity(HttpStatus.NOT_FOUND);
+        return optionalApikey.map(value -> deleteApiKey(value, kcAuthToken))
+                             .orElseGet(() -> new ResponseEntity(HttpStatus.NOT_FOUND));
     }
 
-    private ResponseEntity deleteApiKey(String id, KeycloakAuthenticationToken kcAuthenticationToken) {
-        LOG.info("User {} is permanently deleting API key {}...", kcAuthenticationToken.getPrincipal(), id) ;
-        this.apikeyRepo.delete(id);
+    private ResponseEntity deleteApiKey(Apikey apikey, KeycloakAuthenticationToken kcAuthenticationToken) {
+        LOG.info("User {} is permanently deleting API key {}...", kcAuthenticationToken.getPrincipal(), apikey.getApikey());
+        this.apikeyRepo.delete(apikey);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
@@ -429,46 +425,47 @@ public class ApikeyController {
      * Validates a given Apikey. Sets last access date and activation date (if not set, ie. first access) with the
      * current date and +1 increments the usage count of this Apikey.
      *
-     * @param   httpServletRequest     request
-     *
-     * @return  HTTP 204 upon successful validation
-     *          HTTP 400 bad request when header does not contain api key
-     *          HTTP 401 in case of an unregistered api key
-     *          HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
+     * @param httpServletRequest request
+     * @return HTTP 204 upon successful validation
+     * HTTP 400 bad request when header does not contain api key
+     * HTTP 401 in case of an unregistered api key
+     * HTTP 410 when the requested Apikey is deprecated (i.e. has a past deprecationdate)
      */
     @PostMapping(path = "/validate")
-    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
+    public ResponseEntity validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
         // When no apikey was supplied return 400
         String id = getAuthorizationHeader(httpServletRequest, APIKEY_PATTERN);
-        if (id == null) {
+        if (StringUtils.isBlank(id)) {
             throw new MissingKeyException(APIKEY_MISSING);
         }
 
         LOG.debug("Validating API key {}...", id);
+
         // retrieve apikey & check if available
-        Apikey apikey = this.apikeyRepo.findOne(id);
-        if (null == apikey) {
+        Optional<Apikey> optionalApikey = apikeyRepo.findOne(Example.of(new Apikey(id)));
+
+        if (optionalApikey.isEmpty()) {
             String reason = String.format(APIKEY_NOT_REGISTERED, id);
             LOG.debug(reason);
             // TODO make sure returned message is json!
             return new ResponseEntity(reason, HttpStatus.UNAUTHORIZED);
         }
 
-        checkKeyDeprecated(apikey);
+        checkKeyDeprecated(optionalApikey.get());
 
         // set activationDate if this wasn't set before
         Date now = new DateTime(DateTimeZone.UTC).toDate();
-        if (null == apikey.getActivationDate()) {
-            apikey.setActivationDate(now);
+        if (null == optionalApikey.get().getActivationDate()) {
+            optionalApikey.get().setActivationDate(now);
         }
-        // set lastAccessDate
-        apikey.setLastAccessDate(now);
-        this.apikeyRepo.save(apikey);
 
+        // set lastAccessDate
+        optionalApikey.get().setLastAccessDate(now);
+        this.apikeyRepo.save(optionalApikey.get());
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    private Apikey copyUpdateValues(Apikey apikey, ApiKeyRequest keyRequest) {
+    private void copyUpdateValues(Apikey apikey, ApiKeyRequest keyRequest) {
         if (null != keyRequest.getFirstName()) {
             apikey.setFirstName(keyRequest.getFirstName());
         }
@@ -490,27 +487,27 @@ public class ApikeyController {
         if (null != keyRequest.getSector()) {
             apikey.setSector(keyRequest.getSector());
         }
-        return apikey;
     }
 
     private KeycloakAuthenticationToken checkManagerCredentials() throws ForbiddenException {
-        KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
+                                                                                               .getAuthentication();
         if (!keycloakManager.isManagerClientAuthorized(token)) {
             throw new ForbiddenException();
         }
         return token;
     }
 
-    private KeycloakAuthenticationToken checkManagerOrOwnerCredentials(String id) throws ForbiddenException {
-        KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+    private void checkManagerOrOwnerCredentials(String id) throws ForbiddenException {
+        KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
+                                                                                               .getAuthentication();
         if (!keycloakManager.isManagerClientAuthorized(token) && !keycloakManager.isOwner(id, token)) {
             throw new ForbiddenException();
         }
-        return token;
     }
 
     private void checkMandatoryFields(ApikeyAction apikeyUpdate) throws MissingDataException {
-        String retval = "Required parameter(s): ";
+        String            retval      = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
         if (StringUtils.isBlank(apikeyUpdate.getFirstName())) {
             missingList.add("'firstName'");
@@ -524,7 +521,7 @@ public class ApikeyController {
         if (StringUtils.isBlank(apikeyUpdate.getAppName())) {
             missingList.add("'appName'");
         }
-        if (StringUtils.isBlank(apikeyUpdate.getCompany())){
+        if (StringUtils.isBlank(apikeyUpdate.getCompany())) {
             missingList.add("'company'");
         }
 
@@ -537,11 +534,11 @@ public class ApikeyController {
     }
 
     private Apikey checkKeyExists(String id) throws ApiKeyNotFoundException {
-        Apikey key = this.apikeyRepo.findOne(id);
-        if (key == null) {
+        Optional<Apikey> optionalApikey = apikeyRepo.findOne(Example.of(new Apikey(id)));
+        if (optionalApikey.isEmpty()) {
             throw new ApiKeyNotFoundException(id);
         }
-        return key;
+        return optionalApikey.get();
     }
 
     private void checkKeyDeprecated(Apikey key) throws ApiKeyDeprecatedException {
@@ -552,7 +549,7 @@ public class ApikeyController {
 
     private void checkKeyEmailAppNameExist(String email, String appName) throws ApiKeyExistsException {
         List<Apikey> apikeyList = this.apikeyRepo.findByEmailAndAppName(email, appName);
-        if (apikeyList.size() > 0) {
+        if (apikeyList.isEmpty()) {
             throw new ApiKeyExistsException(email, appName);
         }
     }
