@@ -8,7 +8,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  * API-key object as it is defined for incoming requests (e.g. register new key, update a key)
  */
 @JsonInclude(NON_EMPTY)
-public class ApiKeyRequest implements ApikeyAction {
+public class ApiKeyRequest {
     private String firstName;
     private String lastName;
     private String email;

@@ -1,8 +1,6 @@
 package eu.europeana.apikey.config;
 
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
-import eu.europeana.apikey.keycloak.KeycloakManager;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -29,21 +27,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
+    static class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
+
+        private CustomKeycloakAuthenticationProvider authenticationProvider;
+
+        public WebSecurityConfiguration(CustomKeycloakAuthenticationProvider authenticationProvider) {
+            this.authenticationProvider = authenticationProvider;
+        }
 
         @Override
-        public void init(AuthenticationManagerBuilder auth) throws Exception {
-            auth.authenticationProvider(getCustomKeycloakAuthenticationProvider());
-        }
-
-        @Bean
-        public CustomKeycloakAuthenticationProvider getCustomKeycloakAuthenticationProvider() {
-            return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
-        }
-
-        @Bean
-        public KeycloakManager getKeycloakManager() {
-            return new KeycloakManager();
+        public void init(AuthenticationManagerBuilder auth) {
+            auth.authenticationProvider(this.authenticationProvider);
         }
     }
 

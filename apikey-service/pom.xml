@@ -54,11 +54,6 @@
             <version>3.4</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.flywaydb</groupId>-->
-            <!--<artifactId>flyway-core</artifactId>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
@@ -84,11 +79,11 @@
         </dependency>
 
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>problem-spring-web</artifactId>
-            <version>0.22.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.zalando</groupId>-->
+<!--            <artifactId>problem-spring-web</artifactId>-->
+<!--            <version>0.22.2</version>-->
+<!--        </dependency>-->
 
         <!-- Test Dependencies -->
         <dependency>

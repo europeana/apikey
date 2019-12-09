@@ -27,15 +27,19 @@ public class KeycloakSecurityContextTest {
     @Mock
     private AccessToken accessToken;
 
+    @Mock
+    private KeycloakTokenVerifier keycloakTokenVerifier;
+
     private static final String ACCESS_TOKEN_STRING = "token1";
 
     private static final String ACCESS_TOKEN_STRING_REFRESHED = "token2";
 
     private KeycloakSecurityContext securityContext;
 
+
     @Before
     public void prepareForTests() {
-        securityContext = new KeycloakSecurityContext(keycloak, accessToken, ACCESS_TOKEN_STRING);
+        securityContext = new KeycloakSecurityContext(keycloak, accessToken, ACCESS_TOKEN_STRING, keycloakTokenVerifier);
     }
 
     @PrepareForTest(KeycloakTokenVerifier.class)
@@ -89,7 +93,7 @@ public class KeycloakSecurityContextTest {
         Mockito.when(tokenManager.getAccessToken()).thenReturn(tokenResponse);
         Mockito.when(tokenResponse.getToken()).thenReturn(ACCESS_TOKEN_STRING_REFRESHED);
         PowerMockito.mockStatic(KeycloakTokenVerifier.class);
-        Mockito.when(KeycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(refreshedToken);
+        Mockito.when(keycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(refreshedToken);
         return refreshedToken;
     }
 }

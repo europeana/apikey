@@ -1,6 +1,7 @@
 package eu.europeana.apikey.keycloak;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.keycloak.representations.AccessToken;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RunWith(SpringJUnit4ClassRunner.class)
+@Ignore
 public class CustomKeycloakAuthenticationProviderTest {
 
     private static final String MANAGER_CLIENT_ID = "manager";

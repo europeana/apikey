@@ -8,16 +8,20 @@ import org.keycloak.representations.AccessToken;
 import java.io.Serializable;
 
 public class KeycloakSecurityContext implements Serializable {
-    private transient Keycloak keycloak;
 
+    private static final long serialVersionUID = 6611924880256064860L;
+
+    private transient Keycloak keycloak;
     private transient AccessToken accessToken;
+    private transient KeycloakTokenVerifier keycloakTokenVerifier;
 
     private String accessTokenString;
 
-    KeycloakSecurityContext(Keycloak keycloak, AccessToken accessToken, String accessTokenString) {
+    KeycloakSecurityContext(Keycloak keycloak, AccessToken accessToken, String accessTokenString, KeycloakTokenVerifier keycloakTokenVerifier) {
         this.keycloak = keycloak;
         this.accessToken = accessToken;
         this.accessTokenString = accessTokenString;
+        this.keycloakTokenVerifier = keycloakTokenVerifier;
     }
 
     AccessToken getAccessToken() {
@@ -28,7 +32,7 @@ public class KeycloakSecurityContext implements Serializable {
     private void refreshToken() {
         if (accessToken.isExpired()) {
             try {
-                accessToken = KeycloakTokenVerifier.verifyToken(keycloak.tokenManager().getAccessToken().getToken());
+                accessToken = keycloakTokenVerifier.verifyToken(keycloak.tokenManager().getAccessToken().getToken());
                 accessTokenString = keycloak.tokenManager().getAccessToken().getToken();
             } catch (VerificationException e) {
                 throw new KeycloakAuthenticationException("Access token verification failed...", e);
