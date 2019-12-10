@@ -19,7 +19,7 @@ import static eu.europeana.apikey.util.Tools.nvl;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
-@Table(name = "apikey")
+@Table(name = "newapikey")
 public class Apikey {
 
 	@Id
