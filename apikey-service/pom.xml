@@ -54,11 +54,6 @@
             <version>3.4</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.flywaydb</groupId>-->
-            <!--<artifactId>flyway-core</artifactId>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
@@ -84,11 +79,11 @@
         </dependency>
 
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>problem-spring-web</artifactId>
-            <version>0.22.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.zalando</groupId>-->
+<!--            <artifactId>problem-spring-web</artifactId>-->
+<!--            <version>0.22.2</version>-->
+<!--        </dependency>-->
 
         <!-- Test Dependencies -->
         <dependency>
@@ -170,6 +165,21 @@
                     <execution>
                         <goals>
                             <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- This will be active when running the verify or install goal
+                 To skip (e.g. during debugging) use 'mvn clean package')-->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>5.2.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>

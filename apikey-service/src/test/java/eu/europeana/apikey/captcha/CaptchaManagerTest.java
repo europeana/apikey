@@ -1,11 +1,9 @@
 package eu.europeana.apikey.captcha;
 
-import eu.europeana.apikey.domain.ApikeyException;
-import eu.europeana.apikey.keycloak.KeycloakManager;
+import eu.europeana.apikey.exception.ApiKeyException;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Assert;
@@ -20,14 +18,11 @@ import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-
-import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(JUnit4.class)
@@ -57,21 +52,21 @@ public class CaptchaManagerTest {
     }
 
     @Test
-    public void verifyCaptchaTokenWhenOK() throws IOException, ApikeyException {
+    public void verifyCaptchaTokenWhenOK() throws IOException, ApiKeyException {
         prepareForTest(true);
 
         Assert.assertTrue(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));
     }
 
-    @Test(expected = ApikeyException.class)
-    public void verifyCaptchaTokenWhenFalse() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void verifyCaptchaTokenWhenFalse() throws IOException, ApiKeyException {
         prepareForTest(false);
 
         captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN);
     }
 
     @Test
-    public void verifyCaptchaTokenWhenNull() throws IOException, ApikeyException {
+    public void verifyCaptchaTokenWhenNull() throws IOException, ApiKeyException {
         prepareForNullVerificationResponse();
 
         Assert.assertFalse(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));

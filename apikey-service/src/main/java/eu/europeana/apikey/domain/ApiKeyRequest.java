@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
+/**
+ * API-key object as it is defined for incoming requests (e.g. register new key, update a key)
+ */
 @JsonInclude(NON_EMPTY)
-public class ApikeyDetails implements ApikeyAction {
+public class ApiKeyRequest {
     private String firstName;
     private String lastName;
     private String email;
@@ -14,25 +17,32 @@ public class ApikeyDetails implements ApikeyAction {
     private String sector;
     private String website;
 
-    //empty constructor needed to facilitate integration testing
-    public ApikeyDetails(){}
+    public ApiKeyRequest() {
+        // empty constructor required for deserializing
+    }
 
-    public ApikeyDetails(String firstName, String lastName, String email){
+    /**
+     * Constructor with all required fields
+     */
+    public ApiKeyRequest(String firstName, String lastName, String email, String appName, String company){
         this.firstName  = firstName;
         this.lastName   = lastName;
         this.email      = email;
-    }
-
-    public ApikeyDetails(String firstName,
-                        String lastName,
-                        String email,
-                        String appName,
-                        String company,
-                        String sector,
-                        String website) {
-        this(firstName, lastName, email);
         this.appName    = appName;
         this.company    = company;
+    }
+
+    /**
+     * Constructor with all supported fields
+     */
+    public ApiKeyRequest(String firstName,
+                         String lastName,
+                         String email,
+                         String appName,
+                         String company,
+                         String sector,
+                         String website) {
+        this(firstName, lastName, email, appName, company);
         this.sector     = sector;
         this.website    = website;
     }

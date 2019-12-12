@@ -1,23 +1,19 @@
 package eu.europeana.apikey.keycloak;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.security.Principal;
 import java.util.Collection;
 
-public class KeycloakAuthenticationToken
-        extends AbstractAuthenticationToken
-        implements Authentication {
+public final class KeycloakAuthenticationToken extends AbstractAuthenticationToken {
 
-    private Principal principal;
+    private static final long serialVersionUID = 6378042438184913288L;
+
+    private transient Principal principal;
 
     public KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> principal) {
-        super((Collection) null);
+        super(null);
         this.principal = principal;
     }
 
