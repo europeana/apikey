@@ -5,9 +5,18 @@
 **/application.user.yml
 **/application-user.yml
 
-/apikey-service/target/
-.idea
-*.iml
 
 console.log
 
+#IntelliJ project files
+.idea
+*.iml
+
+# Maven
+*/target/**
+target/**
+
+# Temp files
+*~
+*.bak
+.DS_Store
