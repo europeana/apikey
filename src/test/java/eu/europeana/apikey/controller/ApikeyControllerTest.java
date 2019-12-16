@@ -66,7 +66,7 @@ public class ApikeyControllerTest {
         }
 
         // post validate request
-        mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(post("/apikey/validate").secure(true).header(HttpHeaders.AUTHORIZATION,
                                                     "APIKEY " + optionalExistingApikey.get().getApikey())
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
@@ -77,7 +77,7 @@ public class ApikeyControllerTest {
     @Test
     public void validateWhenApikeyNotSupplied() throws Exception {
         // post validate request
-        mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION, "APIKEY ")
+        mvc.perform(post("/apikey/validate").secure(true).header(HttpHeaders.AUTHORIZATION, "APIKEY ")
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -87,7 +87,7 @@ public class ApikeyControllerTest {
     @Test
     public void validateUnregisteredApikey() throws Exception {
         // post validate request
-        mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION, "APIKEY " + UNREGISTERED_API_KEY)
+        mvc.perform(post("/apikey/validate").secure(true).header(HttpHeaders.AUTHORIZATION, "APIKEY " + UNREGISTERED_API_KEY)
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -102,7 +102,7 @@ public class ApikeyControllerTest {
         }
 
         // post validate request
-        mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(post("/apikey/validate").secure(true).header(HttpHeaders.AUTHORIZATION,
                                                     "APIKEY " + optionalDeprecatedApikey.get().getApikey())
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
