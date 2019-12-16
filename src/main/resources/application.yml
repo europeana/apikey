@@ -1,12 +1,6 @@
 ---
 server:
-  port: 8443
-  ssl:
-    enabled: true
-    key-store-type: REMOVED
-    key-store: REMOVED
-    key-store-password: REMOVED
-    key-alias: REMOVED
+  port: 8081
 
 spring:
   profiles:
