@@ -19,18 +19,18 @@ import static eu.europeana.apikey.util.Tools.nvl;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
-@Table(name = "apikey")
-public class ApiKey {
+@Table(name = "newapikey")
+public class Apikey {
 
 	@Id
 	@Column(name = "apikey")
-	@JsonProperty("apiKey")
+	@JsonProperty("apikey")
 	@JsonView(View.Public.class)
-	private String apikeyId;
+	private String apikey;
 
 	@NotNull
 	@Column(name = "keycloakid")
-	@JsonProperty("keycloakId")
+	@JsonProperty("keycloakid")
 	@JsonIgnore
 	private String keycloakId;
 
@@ -110,30 +110,35 @@ public class ApiKey {
 	@JsonView(View.Public.class)
 	private Date lastAccessDate;
 
-	public ApiKey() {
+	public Apikey() {
 		// default constructor required by JPA/Hibernate for deserialization
+	}
+
+	public Apikey(String apikey) {
+		this.apikey = apikey;
+		this.keycloakId = "";
 	}
 
 	/**
 	 * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
 	 * an appName or company
 	 */
-	public ApiKey(String apikey, String firstName, String lastName, String email, String appName, String company) {
-		this.apikeyId = apikey;
+	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
+		this.apikey = apikey;
+		this.keycloakId = "";
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
 		this.appName = appName;
 		this.company = company;
 		this.registrationDate = new Date();
-		this.keycloakId = "";
 	}
 
 	/**
 	 * Constructor with all fields
 	 */
-	public ApiKey(ApiKey copy) {
-		this.apikeyId = copy.apikeyId;
+	public Apikey(Apikey copy) {
+		this.apikey = copy.apikey;
 		this.keycloakId = copy.keycloakId;
 		this.registrationDate = copy.registrationDate;
 		this.website = copy.website;
@@ -148,12 +153,12 @@ public class ApiKey {
 		this.lastAccessDate = copy.lastAccessDate;
 	}
 
-	public String getApikeyId() {
-		return apikeyId;
+	public String getApikey() {
+		return apikey;
 	}
 
-	public void setApikeyId(String apikeyId) {
-		this.apikeyId = apikeyId;
+	public void setApikey(String apikey) {
+		this.apikey = apikey;
 	}
 
 	@JsonIgnore
@@ -257,7 +262,7 @@ public class ApiKey {
 	@Override
 	public String toString() {
 		return "Apikey {" +
-				" apiKey = " + apikeyId +
+				" apiKey = " + apikey +
 				", keycloakId = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +

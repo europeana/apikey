@@ -1,7 +1,7 @@
 package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
+import eu.europeana.apikey.domain.ApikeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -218,7 +218,7 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
 
-        ApiKeySecret apikey = keycloakManager.createClient(securityContext, apikeyCreate);
+        ApikeySecret apikey = keycloakManager.createClient(securityContext, apikeyCreate);
 
         Assert.assertNotNull(apikey);
         Assert.assertEquals(apikeyCreate.getFirstName(), apikey.getFirstName());

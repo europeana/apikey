@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.europeana.apikey.config.ApiKeyConfiguration;
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
+import eu.europeana.apikey.domain.ApikeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
 import eu.europeana.apikey.exception.MissingKCClientException;
 import eu.europeana.apikey.util.PassGenerator;
@@ -29,7 +29,6 @@ import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -163,10 +162,10 @@ public class KeycloakManager {
      *
      * @param securityContext security context with access token
      * @param apikeyCreate    object containing registration data from the original request
-     * @return new ApiKey object with all necessary fields, including the privateKey
+     * @return new Apikey object with all necessary fields, including the privateKey
      * @throws ApiKeyException when there is a failure
      */
-    public ApiKeySecret createClient(KeycloakSecurityContext securityContext, ApiKeyRequest apikeyCreate) throws ApiKeyException {
+    public ApikeySecret createClient(KeycloakSecurityContext securityContext, ApiKeyRequest apikeyCreate) throws ApiKeyException {
         // ClientId must be unique
         String newApiKey = generateClientId(securityContext);
 
@@ -180,13 +179,13 @@ public class KeycloakManager {
         ClientRepresentation createdClient = getClientSecret(newApiKey, securityContext);
 
         // create DB entity
-        ApiKeySecret apikey = new ApiKeySecret(newApiKey,
-                apikeyCreate.getFirstName(),
-                apikeyCreate.getLastName(),
-                apikeyCreate.getEmail(),
-                apikeyCreate.getAppName(),
-                apikeyCreate.getCompany(),
-                createdClient.getSecret());
+        ApikeySecret apikey = new ApikeySecret(newApiKey,
+                                               apikeyCreate.getFirstName(),
+                                               apikeyCreate.getLastName(),
+                                               apikeyCreate.getEmail(),
+                                               apikeyCreate.getAppName(),
+                                               apikeyCreate.getCompany(),
+                                               createdClient.getSecret());
         apikey.setKeycloakId(createdClient.getId());
         if (null != apikeyCreate.getWebsite()) {
             apikey.setWebsite(apikeyCreate.getWebsite());

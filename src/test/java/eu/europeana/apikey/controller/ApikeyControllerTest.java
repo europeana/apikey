@@ -1,7 +1,7 @@
 package eu.europeana.apikey.controller;
 
 import eu.europeana.apikey.ApiKeyApplication;
-import eu.europeana.apikey.domain.ApiKey;
+import eu.europeana.apikey.domain.Apikey;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -48,13 +48,13 @@ public class ApikeyControllerTest {
 
     @Before
     public void setup()throws Exception {
-        ApiKey apikey = new ApiKey(EXISTING_API_KEY, "edward",
-                "potts", "potts@mail.com","appNme", "company");
+        Apikey apikey = new Apikey(EXISTING_API_KEY, "edward",
+                                   "potts", "potts@mail.com", "appNme", "company");
         apikey.setKeycloakId(EXISTING_API_KEY);
         apikeyRepo.saveAndFlush(apikey);
 
-        apikey = new ApiKey(DEPRECATED_API_KEY, "frank",
-                "sinatra", "sinatra@mail.com","appName", "company");
+        apikey = new Apikey(DEPRECATED_API_KEY, "frank",
+                            "sinatra", "sinatra@mail.com", "appName", "company");
         apikey.setKeycloakId(DEPRECATED_API_KEY);
         apikey.setDeprecationDate(new Date());
         apikeyRepo.saveAndFlush(apikey);
@@ -62,7 +62,7 @@ public class ApikeyControllerTest {
 
     @Test
     public void validateExistingApikey() throws Exception {
-        ApiKey existing = apikeyRepo.findOne(EXISTING_API_KEY);
+        Apikey existing = apikeyRepo.findOne(EXISTING_API_KEY);
 
         if (existing == null) {
             fail();
@@ -70,7 +70,7 @@ public class ApikeyControllerTest {
 
         // post validate request
         mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION
-                , "APIKEY " + existing.getApikeyId())
+                , "APIKEY " + existing.getApikey())
                 .contentType(MediaType.APPLICATION_JSON).with(csrf()))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
@@ -98,7 +98,7 @@ public class ApikeyControllerTest {
 
     @Test
     public void validateDeprecatedApikey() throws Exception {
-        ApiKey deprecated = apikeyRepo.findOne(DEPRECATED_API_KEY);
+        Apikey deprecated = apikeyRepo.findOne(DEPRECATED_API_KEY);
 
         if (deprecated == null) {
             fail();
@@ -106,7 +106,7 @@ public class ApikeyControllerTest {
 
         // post validate request
         mvc.perform(post("/apikey/validate").header(HttpHeaders.AUTHORIZATION
-                , "APIKEY " + deprecated.getApikeyId())
+                , "APIKEY " + deprecated.getApikey())
                 .contentType(MediaType.APPLICATION_JSON).with(csrf()))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isGone());
