@@ -7,14 +7,14 @@ import org.springframework.security.core.GrantedAuthority;
 import java.security.Principal;
 import java.util.Collection;
 
-public class KeycloakAuthenticationToken
-        extends AbstractAuthenticationToken
-        implements Authentication {
+public final class KeycloakAuthenticationToken extends AbstractAuthenticationToken {
 
-    private Principal principal;
+    private static final long serialVersionUID = 6378042438184913288L;
+
+    private transient Principal principal;
 
     public KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> principal) {
-        super((Collection) null);
+        super(null);
         this.principal = principal;
     }
 

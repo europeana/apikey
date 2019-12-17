@@ -9,19 +9,19 @@ import java.security.Principal;
  *
  * @param <T> KeycloakSecurityContext class used for context field.
  */
-public class KeycloakPrincipal<T extends KeycloakSecurityContext>
-        implements Principal, Serializable {
+public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Principal, Serializable {
+
+    private static final long serialVersionUID = 6491038532248885544L;
 
     protected final String name;
-
     protected final T context;
 
-    public KeycloakPrincipal(String name, T context) {
+    KeycloakPrincipal(String name, T context) {
         this.name = name;
         this.context = context;
     }
 
-    public T getKeycloakSecurityContext() {
+    T getKeycloakSecurityContext() {
         return this.context;
     }
 

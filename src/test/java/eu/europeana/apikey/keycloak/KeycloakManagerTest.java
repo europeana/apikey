@@ -2,7 +2,7 @@ package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.exception.ApiKeyException;
-import eu.europeana.apikey.domain.FullApikey;
+import eu.europeana.apikey.domain.ApikeySecret;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -29,9 +29,6 @@ import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //import org.powermock.modules.junit4.PowerMockRunnerDelegate;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.api.mockito.PowerMockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
@@ -220,7 +217,7 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
 
-        FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
+        ApikeySecret apikey = keycloakManager.createClient(securityContext, apikeyCreate);
 
         Assert.assertNotNull(apikey);
         Assert.assertEquals(apikeyCreate.getFirstName(), apikey.getFirstName());

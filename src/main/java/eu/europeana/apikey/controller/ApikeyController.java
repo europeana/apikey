@@ -8,7 +8,7 @@ import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import eu.europeana.apikey.keycloak.KeycloakAuthenticationToken;
 import eu.europeana.apikey.keycloak.KeycloakManager;
 import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
-import eu.europeana.apikey.mail.MailServiceImpl;
+import eu.europeana.apikey.mail.MailService;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -61,7 +61,7 @@ public class ApikeyController {
     private final ApikeyRepo                           apikeyRepo;
     private final CaptchaManager                       captchaManager;
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
-    private final MailServiceImpl                      emailService;
+    private final MailService                          emailService;
     private final SimpleMailMessage                    apikeyCreatedMail;
     private final KeycloakManager                      keycloakManager;
 
@@ -75,7 +75,7 @@ public class ApikeyController {
     public ApikeyController(ApikeyRepo apikeyRepo,
                             CaptchaManager captchaManager,
                             CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
-                            MailServiceImpl emailService,
+                            MailService emailService,
                             SimpleMailMessage apikeyCreatedMail,
                             KeycloakManager keycloakManager) {
         this.apikeyRepo                           = apikeyRepo;
@@ -197,7 +197,7 @@ public class ApikeyController {
     private ResponseEntity<Object> createClient(ApiKeyRequest apikeyCreate,
                                                 KeycloakSecurityContext securityContext) throws ApiKeyException {
         LOG.debug("Creating new keycloak client...");
-        FullApikey apikey = keycloakManager.createClient(securityContext, apikeyCreate);
+        ApikeySecret apikey = keycloakManager.createClient(securityContext, apikeyCreate);
         this.apikeyRepo.save(new Apikey(apikey));
         LOG.debug("API key {} created", apikey.getApikey());
 

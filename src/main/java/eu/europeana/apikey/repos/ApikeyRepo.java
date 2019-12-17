@@ -14,7 +14,4 @@ public interface ApikeyRepo extends JpaRepository<Apikey, String> {
     Optional<Apikey> findByKeycloakId(String keycloakId);
     List<Apikey> findAll();
     List<Apikey> findByEmailAndAppName(String email, String appName);
-
-//    Optional<Apikey> findOne(String apikey);
-
 }
