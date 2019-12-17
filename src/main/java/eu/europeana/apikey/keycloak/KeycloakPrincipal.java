@@ -16,12 +16,12 @@ public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Pri
     protected final String name;
     protected final T context;
 
-    public KeycloakPrincipal(String name, T context) {
+    KeycloakPrincipal(String name, T context) {
         this.name = name;
         this.context = context;
     }
 
-    public T getKeycloakSecurityContext() {
+    T getKeycloakSecurityContext() {
         return this.context;
     }
 
