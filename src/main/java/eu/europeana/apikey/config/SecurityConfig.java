@@ -21,7 +21,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.requiresChannel()
             .requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
             .requiresSecure().and()
-//            http.requiresChannel().anyRequest().requiresSecure().and()
             .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll().and()
@@ -36,19 +35,26 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     static class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
         @Override
-        public void init(AuthenticationManagerBuilder auth) throws Exception {
-            auth.authenticationProvider(getCustomKeycloakAuthenticationProvider());
+        public void init(AuthenticationManagerBuilder auth) {
+//            auth.authenticationProvider(getCustomKeycloakAuthenticationProvider());
+            auth.authenticationProvider(this.authenticationProvider);
         }
 
-        @Bean
-        public CustomKeycloakAuthenticationProvider getCustomKeycloakAuthenticationProvider() {
-            return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
+        private CustomKeycloakAuthenticationProvider authenticationProvider;
+
+        public WebSecurityConfiguration(CustomKeycloakAuthenticationProvider authenticationProvider) {
+            this.authenticationProvider = authenticationProvider;
         }
 
-        @Bean
-        public KeycloakManager getKeycloakManager() {
-            return new KeycloakManager();
-        }
+//        @Bean
+//        public CustomKeycloakAuthenticationProvider getCustomKeycloakAuthenticationProvider() {
+//            return new CustomKeycloakAuthenticationProvider(getKeycloakManager());
+//        }
+//
+//        @Bean
+//        public KeycloakManager getKeycloakManager() {
+//            return new KeycloakManager();
+//        }
     }
 
 }

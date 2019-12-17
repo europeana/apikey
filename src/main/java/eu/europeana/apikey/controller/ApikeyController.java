@@ -58,7 +58,7 @@ public class ApikeyController {
     private static final String CAPTCHA_MISSING             = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
     private static final String CAPTCHA_VERIFICATION_FAILED = "Captcha verification failed.";
 
-    private final ApikeyRepo apikeyRepo;
+    private final ApikeyRepo                           apikeyRepo;
     private final CaptchaManager                       captchaManager;
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
     private final MailServiceImpl                      emailService;
