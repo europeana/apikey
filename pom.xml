@@ -18,7 +18,6 @@
 
 
     <properties>
-<!--        <spring-boot.version>1.5.22.RELEASE</spring-boot.version>-->
         <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
         <java.version>11</java.version>
         <keycloak.version>4.8.3.Final</keycloak.version>
@@ -180,11 +179,6 @@
 
         <!-- Others-->
         <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>problem-spring-web</artifactId>
-            <version>${problem-spring-web.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
             <version>${commons-validator.version}</version>
@@ -235,6 +229,12 @@
             <artifactId>jaxb-runtime</artifactId>
             <version>2.4.0-b180830.0438</version>
         </dependency>
+        <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.zalando</groupId>-->
+        <!--            <artifactId>problem-spring-web</artifactId>-->
+        <!--            <version>${problem-spring-web.version}</version>-->
+        <!--        </dependency>-->
 
     </dependencies>
 
@@ -255,139 +255,22 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- This will be active when running the verify or install goal
+                 To skip (e.g. during debugging) use 'mvn clean package')-->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>5.2.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-
-<!--    <build>-->
-<!--        <finalName>apikey-service</finalName>-->
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-release-plugin</artifactId>-->
-<!--                <version>2.5.3</version>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
-
-<!--        <pluginManagement>-->
-<!--            <plugins>-->
-<!--                <plugin>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                    <artifactId>spring-boot-maven-plugin</artifactId>-->
-<!--                    <version>${spring-boot.version}</version>-->
-<!--                </plugin>-->
-<!--            </plugins>-->
-<!--        </pluginManagement>-->
-<!--    </build>-->
-
-<!--    <profiles>-->
-<!--        <profile>-->
-<!--            <id>default</id>-->
-<!--            <activation>-->
-<!--                <activeByDefault>true</activeByDefault>-->
-<!--            </activation>-->
-<!--            <build>-->
-<!--                <plugins>-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.codehaus.mojo</groupId>-->
-<!--                        <artifactId>buildnumber-maven-plugin</artifactId>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <phase>validate</phase>-->
-<!--                                <goals>-->
-<!--                                    <goal>create</goal>-->
-<!--                                </goals>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-<!--                </plugins>-->
-<!--            </build>-->
-<!--        </profile>-->
-
-<!--        <profile>-->
-<!--            <id>release</id>-->
-<!--            <build>-->
-<!--                <plugins>-->
-
-<!--                    <plugin>-->
-<!--                        <groupId>org.apache.maven.plugins</groupId>-->
-<!--                        <artifactId>maven-enforcer-plugin</artifactId>-->
-<!--                        <version>1.4.1</version>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <id>enforce-no-snapshots</id>-->
-<!--                                <goals>-->
-<!--                                    <goal>enforce</goal>-->
-<!--                                </goals>-->
-<!--                                <configuration>-->
-<!--                                    <rules>-->
-<!--                                        <requireReleaseDeps>-->
-<!--                                            &lt;!&ndash; for now we allow snapshots, but this should be removed soon! &ndash;&gt;-->
-<!--                                            <failWhenParentIsSnapshot>false</failWhenParentIsSnapshot>-->
-<!--                                            <message>No SNAPSHOT dependencies allowed!</message>-->
-<!--                                        </requireReleaseDeps>-->
-<!--                                    </rules>-->
-<!--                                    <fail>true</fail>-->
-<!--                                </configuration>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-
-<!--                    <plugin>-->
-<!--                        <groupId>org.codehaus.mojo</groupId>-->
-<!--                        <artifactId>buildnumber-maven-plugin</artifactId>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <phase>validate</phase>-->
-<!--                                <goals>-->
-<!--                                    <goal>create</goal>-->
-<!--                                </goals>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-
-<!--                    &lt;!&ndash; include sources when releasing &ndash;&gt;-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.apache.maven.plugins</groupId>-->
-<!--                        <artifactId>maven-source-plugin</artifactId>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <id>attach-sources</id>-->
-<!--                                <goals>-->
-<!--                                    <goal>jar</goal>-->
-<!--                                </goals>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-
-<!--                    &lt;!&ndash; generate maven site when releasing &ndash;&gt;-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.apache.maven.plugins</groupId>-->
-<!--                        <artifactId>maven-site-plugin</artifactId>-->
-<!--                    </plugin>-->
-
-<!--                </plugins>-->
-<!--            </build>-->
-<!--        </profile>-->
-<!--    </profiles>-->
-
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>artifactory.eanadev.org</id>-->
-<!--            <name>artifactory.eanadev.org-releases</name>-->
-<!--            <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>-->
-<!--        </repository>-->
-<!--        <snapshotRepository>-->
-<!--            <id>artifactory.eanadev.org</id>-->
-<!--            <name>artifactory.eanadev.org-snapshots</name>-->
-<!--            <url>http://artifactory.eanadev.org/artifactory/libs-snapshot-local</url>-->
-<!--        </snapshotRepository>-->
-<!--    </distributionManagement>-->
-
-<!--    <scm>-->
-<!--        <connection>scm:git:git@github.com:europeana/europeana-apikey.git</connection>-->
-<!--        <developerConnection>scm:git:git@github.com:europeana/europeana-apikey.git</developerConnection>-->
-<!--        <url>https://github.com/europeana/europeana-apikey</url>-->
-<!--        <tag>HEAD</tag>-->
-<!--    </scm>-->
 
 </project>
