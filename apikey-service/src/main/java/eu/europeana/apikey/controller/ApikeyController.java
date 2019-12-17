@@ -161,8 +161,11 @@ public class ApikeyController {
     @PostMapping(path = "/captcha", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest, @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key secured by captcha...");
-        // instead of checking manager credentials we check captcha token, but we do this once we validated the input (checked mandatory fields)
+
+        // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we should do this after
+        // we validated the input
         checkMandatoryFields(newKeyRequest);
+        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
         // When no captcha token was supplied return 401
         String captchaToken = getAuthorizationHeader(httpServletRequest, CAPTCHA_PATTERN);
@@ -173,15 +176,13 @@ public class ApikeyController {
         if (!captchaManager.verifyCaptchaToken(captchaToken)) {
             throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
         }
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
-        // authenticate manager client to get the access token
+        // retrieve access token for the manager client so we can use that the create a new client
         KeycloakAuthenticationToken authenticationToken =
                 (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticate(managerClientId, managerClientSecret);
         if (authenticationToken == null) {
             throw new ForbiddenException();
         }
-
         return createClient(newKeyRequest, (KeycloakSecurityContext) authenticationToken.getCredentials());
     }
 
