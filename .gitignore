@@ -5,18 +5,11 @@
 **/application.user.yml
 **/application-user.yml
 
-
-console.log
-
-#IntelliJ project files
+/target/
 .idea
 *.iml
 
-# Maven
-*/target/**
-target/**
+console.log
 
 # Temp files
-*~
 *.bak
-.DS_Store
