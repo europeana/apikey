@@ -1,8 +1,6 @@
 package eu.europeana.apikey.config;
 
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
-import eu.europeana.apikey.keycloak.KeycloakManager;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;

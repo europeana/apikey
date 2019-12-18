@@ -14,10 +14,10 @@ public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Pri
     private static final long serialVersionUID = 6491038532248885544L;
 
     protected final String name;
-    protected final T context;
+    protected final T      context;
 
     KeycloakPrincipal(String name, T context) {
-        this.name = name;
+        this.name    = name;
         this.context = context;
     }
 
@@ -33,7 +33,7 @@ public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Pri
         if (this == o) {
             return true;
         } else if (o != null && this.getClass() == o.getClass()) {
-            KeycloakPrincipal that = (KeycloakPrincipal)o;
+            KeycloakPrincipal that = (KeycloakPrincipal) o;
             return this.name.equals(that.name);
         } else {
             return false;

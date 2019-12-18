@@ -60,20 +60,20 @@ public class Apikey {
 	@Column(name = "appname")
 	@JsonProperty("appName")
 	@JsonView(View.Public.class)
-	protected String appName;
+	private String appName;
 
 	@NotNull
 	@Size(max = 100)
 	@Column(name = "company")
 	@JsonProperty("company")
 	@JsonView(View.Public.class)
-	protected String company;
+	private String company;
 
 	@Size(max = 255)
 	@Column(name = "sector")
 	@JsonProperty("sector")
 	@JsonView(View.Public.class)
-	protected String sector;
+	private String sector;
 
 	@NotNull
 	@Size(max = 100)
@@ -87,14 +87,14 @@ public class Apikey {
 	@Column(name = "firstname")
 	@JsonProperty("firstName")
 	@JsonView(View.Public.class)
-	protected String firstName;
+	private String firstName;
 
 	@NotNull
 	@Size(max = 50)
 	@Column(name = "lastname")
 	@JsonProperty("lastName")
 	@JsonView(View.Public.class)
-	protected String lastName;
+	private String lastName;
 
 	@Column(name = "deprecationdate")
 	@JsonProperty("deprecationDate")

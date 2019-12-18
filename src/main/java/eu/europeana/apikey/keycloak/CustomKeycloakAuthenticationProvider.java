@@ -18,10 +18,13 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
     }
 
     public Authentication authenticate(String clientId, String clientSecret) {
-        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(clientId, clientSecret);
+        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(clientId,
+                                                                                                  clientSecret);
 
         if (principal != null) {
-            return new KeycloakAuthenticationToken(principal, keycloakManager.getAuthorities(principal.getKeycloakSecurityContext().getAccessToken()));
+            return new KeycloakAuthenticationToken(principal,
+                                                   keycloakManager.getAuthorities(principal.getKeycloakSecurityContext()
+                                                                                           .getAccessToken()));
         }
 
         return null;

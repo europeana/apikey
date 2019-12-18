@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.token.TokenManager;
 import org.keycloak.common.VerificationException;
@@ -15,40 +14,38 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
+import org.springframework.boot.test.context.SpringBootTest;
+
+//import org.junit.runners.JUnit4;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockRunnerDelegate(JUnit4.class)
+@PrepareForTest(KeycloakTokenVerifier.class)
+@SpringBootTest(classes = {KeycloakTokenVerifier.class})
 public class KeycloakSecurityContextTest {
 
+    private static final String ACCESS_TOKEN_STRING           = "token1";
+    private static final String ACCESS_TOKEN_STRING_REFRESHED = "token2";
     @Mock
     private Keycloak keycloak;
-
     @Mock
     private AccessToken accessToken;
-
     @Mock
     private KeycloakTokenVerifier keycloakTokenVerifier;
-
-    private static final String ACCESS_TOKEN_STRING = "token1";
-
-    private static final String ACCESS_TOKEN_STRING_REFRESHED = "token2";
-
     private KeycloakSecurityContext securityContext;
-
 
     @Before
     public void prepareForTests() {
-        securityContext = new KeycloakSecurityContext(keycloak, accessToken, ACCESS_TOKEN_STRING, keycloakTokenVerifier);
+        securityContext = new KeycloakSecurityContext(keycloak,
+                                                      accessToken,
+                                                      ACCESS_TOKEN_STRING,
+                                                      keycloakTokenVerifier);
     }
 
     @PrepareForTest(KeycloakTokenVerifier.class)
     @Test
     public void getAccessTokenWhenExpired() throws VerificationException {
         AccessToken refreshedToken = prepareForExpired();
-
-        AccessToken token = securityContext.getAccessToken();
-
+        AccessToken token          = securityContext.getAccessToken();
         Assert.assertNotNull(token);
         Assert.assertEquals(refreshedToken, token);
     }
@@ -56,9 +53,7 @@ public class KeycloakSecurityContextTest {
     @Test
     public void getAccessTokenWhenValid() {
         Mockito.when(accessToken.isExpired()).thenReturn(false);
-
         AccessToken token = securityContext.getAccessToken();
-
         Assert.assertNotNull(token);
         Assert.assertEquals(accessToken, token);
     }
@@ -67,9 +62,7 @@ public class KeycloakSecurityContextTest {
     @Test
     public void getAccessTokenStringWhenExpired() throws VerificationException {
         prepareForExpired();
-
         String tokenString = securityContext.getAccessTokenString();
-
         Assert.assertNotNull(tokenString);
         Assert.assertEquals(ACCESS_TOKEN_STRING_REFRESHED, tokenString);
     }
@@ -77,9 +70,7 @@ public class KeycloakSecurityContextTest {
     @Test
     public void getAccessTokenStringWhenValid() throws VerificationException {
         Mockito.when(accessToken.isExpired()).thenReturn(false);
-
         String tokenString = securityContext.getAccessTokenString();
-
         Assert.assertNotNull(tokenString);
         Assert.assertEquals(ACCESS_TOKEN_STRING, tokenString);
     }

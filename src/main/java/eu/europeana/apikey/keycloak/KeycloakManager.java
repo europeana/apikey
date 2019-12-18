@@ -29,6 +29,8 @@ import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -81,7 +83,18 @@ public class KeycloakManager {
 
     private static final String ERROR_COMMUNICATING_WITH_KEYCLOAK = "Error communicating with Keycloak";
 
-    private ApikeyConfiguration config;
+
+    @Value("${keycloak.auth-server-url}")
+    private String authServerUrl;
+    
+    @Value("${keycloak.realm}")
+    private String realm;
+
+    @Value("${keycloak.use-resource-role-mappings}")
+    private boolean useResourceRoleMappings;
+
+    @Value("${keycloak.realm-public-key}")
+    private String realmPublicKey;
 
     /**
      * Http client used for communicating with Keycloak where Keycloak admin client is not appropriate
@@ -95,9 +108,8 @@ public class KeycloakManager {
 
     private KeycloakTokenVerifier keycloakTokenVerifier;
 
-    public KeycloakManager(ApikeyConfiguration config) {
-        this.config = config;
-        this.keycloakTokenVerifier = new KeycloakTokenVerifier(config.getRealmPublicKey());
+    public KeycloakManager() {
+        this.keycloakTokenVerifier = new KeycloakTokenVerifier(realmPublicKey);
     }
 
     @PostConstruct
@@ -125,12 +137,12 @@ public class KeycloakManager {
      */
     KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
         Keycloak keycloak = KeycloakBuilder.builder()
-                .realm(config.getRealm())
-                .serverUrl(config.getAuthServerUrl())
-                .clientId(clientId)
-                .clientSecret(clientSecret)
-                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .build();
+                                           .realm(realm)
+                                           .serverUrl(authServerUrl)
+                                           .clientId(clientId)
+                                           .clientSecret(clientSecret)
+                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                                           .build();
 
         AccessTokenResponse token;
         try {
@@ -146,7 +158,11 @@ public class KeycloakManager {
         try {
             AccessToken accessToken = keycloakTokenVerifier.verifyToken(token.getToken());
             if (accessToken != null) {
-                return new KeycloakPrincipal<>(clientId, new KeycloakSecurityContext(keycloak, accessToken, token.getToken(), keycloakTokenVerifier));
+                return new KeycloakPrincipal<>(clientId,
+                                               new KeycloakSecurityContext(keycloak,
+                                                                           accessToken,
+                                                                           token.getToken(),
+                                                                           keycloakTokenVerifier));
             }
         } catch (VerificationException e) {
             throw new KeycloakAuthenticationException("Authentication failed for client " + clientId, e);
@@ -162,7 +178,7 @@ public class KeycloakManager {
      *
      * @param securityContext security context with access token
      * @param apikeyCreate    object containing registration data from the original request
-     * @return new Apikey object with all necessary fields, including the privateKey
+     * @return new Apikey object with all necessary fields, including the Keycloak ID aka "privateKey"
      * @throws ApikeyException when there is a failure
      */
     public ApikeySecret createClient(KeycloakSecurityContext securityContext, ApikeyRequest apikeyCreate) throws
@@ -173,8 +189,8 @@ public class KeycloakManager {
         // create client in Keycloak
         ClientRepresentation clientRepresentation = createClientRepresentation(newApikey, apikeyCreate);
         HttpPost httpPost = new HttpPost(KeycloakUriBuilder.fromUri(String.format(CLIENTS_ENDPOINT,
-                                                                                  config.getAuthServerUrl(),
-                                                                                  config.getRealm())).build());
+                                                                                  authServerUrl,
+                                                                                  realm)).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPost);
         addRequestEntity(clientRepresentation, httpPost);
         sendRequestToKeycloak(httpPost, HttpStatus.SC_CREATED, clientRepresentation);
@@ -220,15 +236,16 @@ public class KeycloakManager {
 
     /**
      * Deletes a client from Keycloak
+     *
      * @param securityContext security context with access token
-     * @param clientId the id of the client that is to be deleted
+     * @param clientId        the id of the client that is to be deleted
      * @throws ApikeyException when trouble strikes
      */
     public void deleteClient(KeycloakSecurityContext securityContext, String clientId) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
         HttpDelete httpDelete = new HttpDelete(KeycloakUriBuilder.fromUri(String.format(CLIENTS_UPDATE_ENDPOINT,
-                                                                                        config.getAuthServerUrl(),
-                                                                                        config.getRealm(),
+                                                                                        authServerUrl,
+                                                                                        realm,
                                                                                         clientRepresentation.getId()))
                                                                  .build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpDelete);
@@ -269,8 +286,8 @@ public class KeycloakManager {
     private void updateClient(ClientRepresentation clientRepresentation, KeycloakSecurityContext securityContext) throws
                                                                                                                   ApikeyException {
         HttpPut httpPut = new HttpPut(KeycloakUriBuilder.fromUri(String.format(CLIENTS_UPDATE_ENDPOINT,
-                                                                               config.getAuthServerUrl(),
-                                                                               config.getRealm(),
+                                                                               authServerUrl,
+                                                                               realm,
                                                                                clientRepresentation.getId())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPut);
         addRequestEntity(clientRepresentation, httpPut);
@@ -291,8 +308,8 @@ public class KeycloakManager {
         ClientRepresentation representation = getClientRepresentation(clientId, securityContext);
 
         HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(String.format(CLIENT_SECRET_ENDPOINT,
-                                                                               config.getAuthServerUrl(),
-                                                                               config.getRealm(),
+                                                                               authServerUrl,
+                                                                               realm,
                                                                                representation.getId())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpGet);
 
@@ -379,7 +396,7 @@ public class KeycloakManager {
      * @throws ApikeyException when error occurs during check for existing clients
      */
     private String generateClientId(KeycloakSecurityContext securityContext) throws ApikeyException {
-        String newApikey;
+        String        newApikey;
         PassGenerator pg = new PassGenerator();
         do {
             newApikey = pg.generate(RandomUtils.nextInt(8, 13));
@@ -424,7 +441,7 @@ public class KeycloakManager {
      */
     Collection<GrantedAuthority> getAuthorities(AccessToken token) {
         List<GrantedAuthority> result = new ArrayList<>();
-        if (config.isUseResourceRoleMappings()) {
+        if (useResourceRoleMappings) {
             token.getResourceAccess().forEach((s, access) -> {
                 if (access != null) {
                     access.getRoles().forEach(role -> result.add(new KeycloakRole(role)));
@@ -486,8 +503,8 @@ public class KeycloakManager {
      */
     private HttpGet prepareGetClientRequest(String newApikey, String accessToken) {
         HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(String.format(CLIENTS_ENDPOINT,
-                                                                               config.getAuthServerUrl(),
-                                                                               config.getRealm()))
+                                                                               authServerUrl,
+                                                                               realm))
                                                         .queryParam("clientId", newApikey)
                                                         .build());
 

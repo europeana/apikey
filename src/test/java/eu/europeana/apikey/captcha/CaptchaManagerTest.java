@@ -10,30 +10,23 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockRunnerDelegate(JUnit4.class)
-@PowerMockIgnore("javax.management.*")
+@RunWith(SpringJUnit4ClassRunner.class)
 public class CaptchaManagerTest {
 
-    private static final String UNSUCCESSFUL_RESPONSE =
-            "{\"success\": false,\"error-codes\": [\"invalid-input-response\"]}";
+    private static final String UNSUCCESSFUL_RESPONSE = "{\"success\": false,\"error-codes\": [\"invalid-input-response\"]}";
 
-    private static final String SUCCESSFUL_RESPONSE =
-            "{\"success\": true,\"error-codes\": []}";
+    private static final String SUCCESSFUL_RESPONSE = "{\"success\": true,\"error-codes\": []}";
 
     private static final String CAPTCHA_TOKEN = "token";
 
@@ -73,45 +66,41 @@ public class CaptchaManagerTest {
     }
 
     private void prepareForNullVerificationResponse() throws IOException {
-        CloseableHttpResponse postResponse = Mockito.mock(CloseableHttpResponse.class);
-        StatusLine postStatusLine = Mockito.mock(StatusLine.class);
+        CloseableHttpResponse postResponse   = Mockito.mock(CloseableHttpResponse.class);
+        StatusLine            postStatusLine = Mockito.mock(StatusLine.class);
         Mockito.when(postResponse.getStatusLine()).thenReturn(postStatusLine);
         Mockito.when(postStatusLine.getStatusCode()).thenReturn(400);
-        Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(
-                invocation -> {
-                    Object argument = invocation.getArguments()[0];
-                    if (argument instanceof HttpPost) {
-                        return postResponse;
-                    }
-                    throw new InvalidUseOfMatchersException(
-                            String.format("Argument %s does not match", argument)
-                    );
-                });
+        Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(invocation -> {
+            Object argument = invocation.getArguments()[0];
+            if (argument instanceof HttpPost) {
+                return postResponse;
+            }
+            throw new InvalidUseOfMatchersException(String.format("Argument %s does not match", argument));
+        });
 
     }
 
     private void prepareForTest(boolean success) throws IOException {
-        CloseableHttpResponse postResponse = Mockito.mock(CloseableHttpResponse.class);
-        StatusLine postStatusLine = Mockito.mock(StatusLine.class);
+        CloseableHttpResponse postResponse   = Mockito.mock(CloseableHttpResponse.class);
+        StatusLine            postStatusLine = Mockito.mock(StatusLine.class);
         Mockito.when(postResponse.getStatusLine()).thenReturn(postStatusLine);
         Mockito.when(postStatusLine.getStatusCode()).thenReturn(200);
         HttpEntity postEntity = Mockito.mock(HttpEntity.class);
         Mockito.when(postResponse.getEntity()).thenReturn(postEntity);
         if (success) {
-            Mockito.when(postEntity.getContent()).thenReturn(new ByteArrayInputStream(SUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
+            Mockito.when(postEntity.getContent())
+                   .thenReturn(new ByteArrayInputStream(SUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
         } else {
-            Mockito.when(postEntity.getContent()).thenReturn(new ByteArrayInputStream(UNSUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
+            Mockito.when(postEntity.getContent())
+                   .thenReturn(new ByteArrayInputStream(UNSUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
         }
-        Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(
-                invocation -> {
-                    Object argument = invocation.getArguments()[0];
-                    if (argument instanceof HttpPost) {
-                        return postResponse;
-                    }
-                    throw new InvalidUseOfMatchersException(
-                            String.format("Argument %s does not match", argument)
-                    );
-                });
+        Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(invocation -> {
+            Object argument = invocation.getArguments()[0];
+            if (argument instanceof HttpPost) {
+                return postResponse;
+            }
+            throw new InvalidUseOfMatchersException(String.format("Argument %s does not match", argument));
+        });
 
     }
 }

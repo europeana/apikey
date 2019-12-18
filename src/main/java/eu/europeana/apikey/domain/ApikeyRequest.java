@@ -24,12 +24,12 @@ public class ApikeyRequest {
     /**
      * Constructor with all required fields
      */
-    public ApikeyRequest(String firstName, String lastName, String email, String appName, String company){
-        this.firstName  = firstName;
-        this.lastName   = lastName;
-        this.email      = email;
-        this.appName    = appName;
-        this.company    = company;
+    public ApikeyRequest(String firstName, String lastName, String email, String appName, String company) {
+        this.firstName = firstName;
+        this.lastName  = lastName;
+        this.email     = email;
+        this.appName   = appName;
+        this.company   = company;
     }
 
     /**
@@ -43,8 +43,8 @@ public class ApikeyRequest {
                          String sector,
                          String website) {
         this(firstName, lastName, email, appName, company);
-        this.sector     = sector;
-        this.website    = website;
+        this.sector  = sector;
+        this.website = website;
     }
 
     public String getFirstName() {

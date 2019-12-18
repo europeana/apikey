@@ -14,11 +14,12 @@ import java.util.Base64;
 
 /**
  * Class used for verifying token signature. It uses the realm public key from the application's configuration.
- *
  */
 public class KeycloakTokenVerifier {
 
-    /** Public key of the realm that is used to verify the token signature */
+    /**
+     * Public key of the realm that is used to verify the token signature
+     */
     private PublicKey publicKey;
 
     protected KeycloakTokenVerifier(String realmPublicKey) {
@@ -30,9 +31,9 @@ public class KeycloakTokenVerifier {
      */
     private void generatePublicKey(String realmPublicKey) {
         try {
-            byte[] publicBytes = Base64.getDecoder().decode(realmPublicKey);
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            byte[]             publicBytes = Base64.getDecoder().decode(realmPublicKey);
+            X509EncodedKeySpec keySpec     = new X509EncodedKeySpec(publicBytes);
+            KeyFactory         keyFactory  = KeyFactory.getInstance("RSA");
             this.publicKey = keyFactory.generatePublic(keySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new BeanInitializationException("Public key could not be prepared", e);
@@ -41,6 +42,7 @@ public class KeycloakTokenVerifier {
 
     /**
      * Return the realm public key
+     *
      * @return public key of the realm
      */
     public PublicKey getPublicKey() {
@@ -49,6 +51,7 @@ public class KeycloakTokenVerifier {
 
     /**
      * Verify JWT token with the realm public key. Return an AccessToken that can be used to authorize further requests.
+     *
      * @param token base64 encoded JWT token
      * @return access token object
      * @throws VerificationException
