@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
  * Central location where all (or most) configuration settings are loaded.
  */
 @Service
-public class ApiKeyConfiguration {
+public class ApikeyConfiguration {
 
     @Value("${keycloak.auth-server-url}")
     private String authServerUrl;

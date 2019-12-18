@@ -1,7 +1,7 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.domain.ApiKeyRequest;
+import eu.europeana.apikey.domain.ApikeyRequest;
 import eu.europeana.apikey.repos.ApikeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import org.joda.time.DateTime;
@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = ApiKeyApplication.class)
+        classes = ApikeyApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class ApikeyFullIntegration {
@@ -58,14 +58,14 @@ public class ApikeyFullIntegration {
     private static final String fifisSector         = "n/a";
     private static final String fifisWebsite        = "http://fifisbikerepairshop.nl";
     private static final String phypheysFirstName   = "Phyphey";
-    private static final String phypheysLastName    = "Phyenoopheye, P. P.";
-    private static final String phypheysEmail       = "phyphey@phyenoopheye.org";
-    private static final String phypheysAppName     = "Incrowding Assistent";
-    private static final String phypheysCompany     = "Smug, Spoiled, Stupid & Arrogant Inc.";
-    private static final String phypheysSector      = "The Terminally Hip";
-    private static final String phypheysWebsite     = "http://sssa4u.biz";
-    private static final ApiKeyRequest fifisApikeyCreate = new ApiKeyRequest(fifisFirstName, fifisLastName, fifisEmail, fifisAppName, fifisCompany);
-    private static final String READ  = "read";
+    private static final String        phypheysLastName  = "Phyenoopheye, P. P.";
+    private static final String        phypheysEmail     = "phyphey@phyenoopheye.org";
+    private static final String        phypheysAppName   = "Incrowding Assistent";
+    private static final String        phypheysCompany   = "Smug, Spoiled, Stupid & Arrogant Inc.";
+    private static final String        phypheysSector    = "The Terminally Hip";
+    private static final String        phypheysWebsite   = "http://sssa4u.biz";
+    private static final ApikeyRequest fifisApikeyCreate = new ApikeyRequest(fifisFirstName, fifisLastName, fifisEmail, fifisAppName, fifisCompany);
+    private static final String        READ              = "read";
 
 
     @Autowired
@@ -76,9 +76,9 @@ public class ApikeyFullIntegration {
 
     @Before
     public void setup()throws Exception {
-        Apikey adminKey = new Apikey("ApiKey1", "luthien",
+        Apikey adminKey = new Apikey("Apikey1", "luthien",
                                      "inedhil", "luthien@parendili.org", "appName", "company");
-        adminKey.setKeycloakId("ApiKey1");
+        adminKey.setKeycloakId("Apikey1");
         apikeyRepo.saveAndFlush(adminKey);
     }
 
@@ -88,7 +88,7 @@ public class ApikeyFullIntegration {
     public void aCreateApikey() throws Exception {
         // post one apikeyCreate
         mvc.perform(post("/apikey").header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                 .contentType(MediaType.APPLICATION_JSON).content(JsonUtil.toJson(fifisApikeyCreate)).with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isCreated());
@@ -107,11 +107,11 @@ public class ApikeyFullIntegration {
     public void bUpdateApikey() throws Exception {
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
 
-        ApiKeyRequest phypheysApikeyUpdate = new ApiKeyRequest(phypheysFirstName, phypheysLastName
+        ApikeyRequest phypheysApikeyUpdate = new ApikeyRequest(phypheysFirstName, phypheysLastName
                 , phypheysEmail, phypheysAppName, phypheysCompany, phypheysSector, phypheysWebsite);
 
         mvc.perform(put("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                 .contentType(MediaType.APPLICATION_JSON).content(JsonUtil.toJson(phypheysApikeyUpdate)).with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isOk());
@@ -135,7 +135,7 @@ public class ApikeyFullIntegration {
         String phypheysApikey = phypheysKey.getApikey();
 
         mvc.perform(delete("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION,
-                    "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                    "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
            .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isNoContent());
@@ -146,7 +146,7 @@ public class ApikeyFullIntegration {
 
         // let's check if she really can't get it any longer - Deprecation date is set to now by the controller
         mvc.perform(post("/apikey/" + phypheysApikey + "/validate")
-                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                             .param("api", ApiName.SEARCH.toString())
                             .param("method", READ)
                             .with(csrf()))
@@ -159,7 +159,7 @@ public class ApikeyFullIntegration {
         phypheysKey.setDeprecationDate(nextWeek);
         apikeyRepo.saveAndFlush(phypheysKey);
         mvc.perform(post("/apikey/" + phypheysApikey + "/validate")
-                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                             .param("api", ApiName.SEARCH.toString())
                             .param("method", READ)
                             .with(csrf()))
@@ -174,11 +174,11 @@ public class ApikeyFullIntegration {
     @Test
     public void dReenableeApikey() throws Exception {
         String phypheysApikey = apikeyRepo.findByEmail(phypheysEmail).get().getApikey();
-        ApiKeyRequest fifisApikeyUpdate = new ApiKeyRequest(fifisFirstName, fifisLastName
+        ApikeyRequest fifisApikeyUpdate = new ApikeyRequest(fifisFirstName, fifisLastName
                 , fifisEmail, fifisAppName, fifisCompany, fifisSector, fifisWebsite);
 
         mvc.perform(post("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                 .contentType(MediaType.APPLICATION_JSON).content(JsonUtil.toJson(fifisApikeyUpdate))
            .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -207,7 +207,7 @@ public class ApikeyFullIntegration {
                                               Charset.forName("utf8"));
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
         mvc.perform(get("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                 .with(csrf()))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(contentType))
@@ -221,13 +221,13 @@ public class ApikeyFullIntegration {
 
         // test HTTP 404 response for nonexisting key
         mvc.perform(get("/apikey/nezcasse").header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes())))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes())))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isNotFound());
 
         // test HTTP 406 when wrongfully being requested an unspeakable Mimetype
         mvc.perform(get("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION
-                , "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                , "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                                                  .header(HttpHeaders.ACCEPT, MediaType.IMAGE_JPEG))
            .andExpect(MockMvcResultMatchers.status().isNotAcceptable());
     }
@@ -239,7 +239,7 @@ public class ApikeyFullIntegration {
     public void fValidateApikey() throws Exception {
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
         mvc.perform(post("/apikey/" + fifisApikey + "/validate")
-                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                             .with(csrf())
                             .param("api", ApiName.SEARCH.toString())
                             .param("method", READ))
@@ -254,7 +254,7 @@ public class ApikeyFullIntegration {
     public void geeLetsForgetParameters() throws Exception {
         String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
         mvc.perform(post("/apikey/" + fifisApikey + "/validate")
-                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
+                            .header(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
                             .with(csrf())
                             .param("method", READ))
            .andExpect(MockMvcResultMatchers.status().isBadRequest());

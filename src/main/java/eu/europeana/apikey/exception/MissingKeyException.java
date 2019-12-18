@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class MissingKeyException extends ApiKeyException {
+public class MissingKeyException extends ApikeyException {
 
     public MissingKeyException(String details) {
         super("No API key in header", details);

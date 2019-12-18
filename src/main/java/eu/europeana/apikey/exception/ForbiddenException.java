@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class ForbiddenException extends ApiKeyException {
+public class ForbiddenException extends ApikeyException {
 
     public ForbiddenException() {
         super("Forbidden", "Operation is not allowed by this user");

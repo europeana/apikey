@@ -262,7 +262,7 @@ public class Apikey {
 	@Override
 	public String toString() {
 		return "Apikey {" +
-				" apiKey = " + apikey +
+				" apikey = " + apikey +
 				", keycloakId = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +

@@ -1,6 +1,8 @@
 package eu.europeana.apikey.config;
 
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
+import eu.europeana.apikey.keycloak.KeycloakManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,14 +21,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.requiresChannel()
             .requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
             .requiresSecure().and()
-            .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
-            .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
-            .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
-            .and().authorizeRequests().antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated()
-            .and().authorizeRequests().antMatchers("/apikey/**").authenticated()
-            .and().httpBasic()
-            .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and().csrf().disable();
+            .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll().and()
+            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll().and()
+            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll().and()
+            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated().and()
+            .authorizeRequests().antMatchers("/apikey/**").authenticated().and()
+            .httpBasic().and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+            .csrf().disable();
     }
 
     @Configuration

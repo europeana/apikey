@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class ApiKeyNotFoundException extends ApiKeyException {
+public class ApikeyNotFoundException extends ApikeyException {
 
-    public ApiKeyNotFoundException(String id) {
+    public ApikeyNotFoundException(String id) {
         super("Not found", "API key " + id + " does not exist.");
     }
 

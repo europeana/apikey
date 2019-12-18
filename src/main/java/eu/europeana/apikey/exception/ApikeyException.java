@@ -10,7 +10,7 @@ import eu.europeana.apikey.domain.View;
  * Created by luthien on 01/08/2017.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiKeyException extends Exception {
+public class ApikeyException extends Exception {
 
     @JsonView(View.Public.class)
     @JsonProperty("timestamp")
@@ -33,20 +33,20 @@ public class ApiKeyException extends Exception {
     private String additionalInfo;
 
 
-    public ApiKeyException(Throwable ex) {
+    public ApikeyException(Throwable ex) {
         this.initCause(ex);
     }
 
-    public ApiKeyException(String error) {
+    public ApikeyException(String error) {
         this.error = error;
     }
 
-    public ApiKeyException(String error, String message) {
+    public ApikeyException(String error, String message) {
         this(error);
         this.message = message;
     }
 
-    public ApiKeyException(String message, Throwable ex) {
+    public ApikeyException(String message, Throwable ex) {
         this.message = message;
         this.initCause(ex);
     }
