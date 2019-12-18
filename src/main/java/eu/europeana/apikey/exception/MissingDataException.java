@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class MissingDataException extends ApiKeyException {
+public class MissingDataException extends ApikeyException {
 
     public MissingDataException(String error, String details) {
         super(error, details);

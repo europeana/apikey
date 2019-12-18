@@ -5,7 +5,7 @@ This i̶s̶  was a Spring Boot based skeleton for connecting to a Postgresql dat
 ## DEMO time! 
 Local only for now, CF will follow shortly.
 
-1: have Postgres installed with the ApiKey table present and filled with at least one record
+1: have Postgres installed with the Apikey table present and filled with at least one record
 2: check this thing out
 3: navigate to the apikey directory
 4: type 

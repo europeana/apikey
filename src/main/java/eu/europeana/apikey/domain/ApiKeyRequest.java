@@ -8,7 +8,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  * API-key object as it is defined for incoming requests (e.g. register new key, update a key)
  */
 @JsonInclude(NON_EMPTY)
-public class ApiKeyRequest implements ApikeyAction {
+public class ApikeyRequest implements ApikeyAction {
     private String firstName;
     private String lastName;
     private String email;
@@ -17,14 +17,14 @@ public class ApiKeyRequest implements ApikeyAction {
     private String sector;
     private String website;
 
-    public ApiKeyRequest() {
+    public ApikeyRequest() {
         // empty constructor required for deserializing
     }
 
     /**
      * Constructor with all required fields
      */
-    public ApiKeyRequest(String firstName, String lastName, String email, String appName, String company){
+    public ApikeyRequest(String firstName, String lastName, String email, String appName, String company){
         this.firstName  = firstName;
         this.lastName   = lastName;
         this.email      = email;
@@ -35,7 +35,7 @@ public class ApiKeyRequest implements ApikeyAction {
     /**
      * Constructor with all supported fields
      */
-    public ApiKeyRequest(String firstName,
+    public ApikeyRequest(String firstName,
                          String lastName,
                          String email,
                          String appName,

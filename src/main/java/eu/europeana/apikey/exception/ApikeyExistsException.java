@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class ApiKeyExistsException extends ApiKeyException {
+public class ApikeyExistsException extends ApikeyException {
 
-    public ApiKeyExistsException(String email, String appName) {
+    public ApikeyExistsException(String email, String appName) {
         super("Key already exists", "There already is an API key registered with application name " + appName + " and email " + email+ ".");
     }
 
