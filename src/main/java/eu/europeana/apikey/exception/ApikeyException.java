@@ -46,8 +46,8 @@ public class ApikeyException extends Exception {
         this.message = message;
     }
 
-    public ApikeyException(String error, Throwable ex) {
-        this.error = error;
+    public ApikeyException(String message, Throwable ex) {
+        this.message = message;
         this.initCause(ex);
     }
 

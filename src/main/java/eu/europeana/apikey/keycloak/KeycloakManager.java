@@ -31,7 +31,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,7 +45,7 @@ import java.util.Optional;
 /**
  * Class for working with Keycloak
  */
-@Component
+@Service
 public class KeycloakManager {
     private static final Logger LOG = LogManager.getLogger(KeycloakManager.class);
 
@@ -162,7 +162,7 @@ public class KeycloakManager {
      *
      * @param securityContext security context with access token
      * @param apikeyCreate    object containing registration data from the original request
-     * @return new Apikey object with all necessary fields.
+     * @return new Apikey object with all necessary fields, including the Keycloak ID aka "privateKey"
      * @throws ApikeyException when there is a failure
      */
     public ApikeySecret createClient(KeycloakSecurityContext securityContext, ApikeyRequest apikeyCreate) throws
@@ -222,7 +222,7 @@ public class KeycloakManager {
      * Deletes a client from Keycloak
      * @param securityContext security context with access token
      * @param clientId the id of the client that is to be deleted
-     * @throws ApikeyException
+     * @throws ApikeyException when trouble strikes
      */
     public void deleteClient(KeycloakSecurityContext securityContext, String clientId) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
@@ -264,7 +264,7 @@ public class KeycloakManager {
      *
      * @param clientRepresentation client representation that will be sent as request body
      * @param securityContext      security context with the access token
-     * @throws ApikeyException
+     * @throws ApikeyException     if keycloak isn't home
      */
     private void updateClient(ClientRepresentation clientRepresentation, KeycloakSecurityContext securityContext) throws
                                                                                                                   ApikeyException {
@@ -296,7 +296,7 @@ public class KeycloakManager {
                                                                                representation.getId())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpGet);
 
-        String secret = null;
+        String secret;
         LOG.debug("Sending getClientSecret to Keycloak...");
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received getClientSecret from Keycloak");
@@ -357,7 +357,7 @@ public class KeycloakManager {
      *
      * @param clientRepresentation representation of the clinet to be sent to Keycloak
      * @param httpRequest          request to which the body will be attached
-     * @throws ApikeyException
+     * @throws ApikeyException     if problems arise while the client is created
      */
     private void addRequestEntity(ClientRepresentation clientRepresentation,
                                   HttpEntityEnclosingRequestBase httpRequest) throws ApikeyException {
@@ -410,6 +410,9 @@ public class KeycloakManager {
                                                           apikeyDetails.getEmail()));
         clientRepresentation.setDirectAccessGrantsEnabled(false);
         clientRepresentation.setServiceAccountsEnabled(true);
+        ArrayList redirectUris = new ArrayList();
+        redirectUris.add("*");
+        clientRepresentation.setRedirectUris(redirectUris);
         return clientRepresentation;
     }
 
@@ -442,7 +445,7 @@ public class KeycloakManager {
      * @param newApikey   api key to use as client-id
      * @param accessToken access token to authorize the request
      * @return true when client-id belongs to a valid client
-     * @throws ApikeyException
+     * @throws ApikeyException if this goes not as intended
      */
     private boolean clientExists(String newApikey, String accessToken) throws ApikeyException {
         HttpGet                    httpGet = prepareGetClientRequest(newApikey, accessToken);
@@ -455,7 +458,7 @@ public class KeycloakManager {
      *
      * @param httpGet get request
      * @return a list of retrieved clients
-     * @throws ApikeyException
+     * @throws ApikeyException in case keycloak refuses to communicate
      */
     private List<ClientRepresentation> getClients(HttpGet httpGet) throws ApikeyException {
         LOG.debug("Sending getClients to Keycloak...");
@@ -551,7 +554,7 @@ public class KeycloakManager {
      */
     public void enableClient(String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
-        if (!clientRepresentation.isEnabled()) {
+        if (Boolean.FALSE.equals(clientRepresentation.isEnabled())) {
             clientRepresentation.setEnabled(true);
             updateClient(clientRepresentation, securityContext);
         } else {
@@ -570,7 +573,7 @@ public class KeycloakManager {
      */
     public void disableClient(String clientId, KeycloakSecurityContext securityContext) throws ApikeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
-        if (clientRepresentation.isEnabled()) {
+        if (Boolean.TRUE.equals(clientRepresentation.isEnabled())) {
             clientRepresentation.setEnabled(false);
             updateClient(clientRepresentation, securityContext);
         } else {

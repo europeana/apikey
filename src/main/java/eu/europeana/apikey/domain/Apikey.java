@@ -116,6 +116,7 @@ public class Apikey {
 
 	public Apikey(String apikey) {
 		this.apikey = apikey;
+		this.keycloakId = "";
 	}
 	/**
 	 * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
@@ -123,6 +124,7 @@ public class Apikey {
 	 */
 	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
 		this.apikey = apikey;
+		this.keycloakId = "";
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
@@ -260,7 +262,7 @@ public class Apikey {
 	public String toString() {
 		return "Apikey {" +
 				" apikey = " + apikey +
-				", keycloakid = " + keycloakId +
+				", keycloakId = " + keycloakId +
 				", firstName = " + nvl(firstName) +
 				", lastName = " + nvl(lastName) +
 				", email = " + nvl(email) +

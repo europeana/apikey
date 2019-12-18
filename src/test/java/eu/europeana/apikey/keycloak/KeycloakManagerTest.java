@@ -171,8 +171,11 @@ public class KeycloakManagerTest {
     @Mock
     private CloseableHttpClient httpClient;
 
+    @Mock
+    private KeycloakTokenVerifier keycloakTokenVerifier;
+
     @InjectMocks
-    private KeycloakManager keycloakManager = new KeycloakManager();
+    private KeycloakManager keycloakManager = new KeycloakManager(null);
 
     // TODO temporarily disabled because I could not get this test working under Java 11 & Powermock
     // TODO within reasonable time
@@ -207,7 +210,7 @@ public class KeycloakManagerTest {
         Mockito.when(tokenManager.getAccessToken()).thenReturn(tokenResponse);
         Mockito.when(tokenResponse.getToken()).thenReturn(ACCESS_TOKEN_STRING);
 //        PowerMockito.mockStatic(KeycloakTokenVerifier.class);
-        Mockito.when(KeycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
+        Mockito.when(keycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
     }
 
 
@@ -348,10 +351,10 @@ public class KeycloakManagerTest {
     }
 
     private AccessToken prepareVerifier() throws VerificationException {
-        KeycloakTokenVerifier verifier = new KeycloakTokenVerifier();
+        KeycloakTokenVerifier verifier = new KeycloakTokenVerifier(null);
         ReflectionTestUtils.setField(verifier, "realmPublicKey", REALM_PUBLIC_KEY);
         ReflectionTestUtils.invokeMethod(verifier, "init");
-        return KeycloakTokenVerifier.verifyToken(TOKEN);
+        return keycloakTokenVerifier.verifyToken(TOKEN);
     }
 
     @Test

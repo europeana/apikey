@@ -16,7 +16,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 /**
- * Class used for verifying token signature. It uses the realm public key from properties.
+ * Class used for verifying token signature. It uses the realm public key from the application's configuration.
  *
  */
 public class KeycloakTokenVerifier {

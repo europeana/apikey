@@ -35,11 +35,15 @@
         <postgresql.version>42.0.0</postgresql.version>
         <json.version>20190722</json.version>
         <commons-validator.version>1.6</commons-validator.version>
+        <jaxb-api.version>2.3.1</jaxb-api.version>
+        <javassist.version>3.23.1-GA</javassist.version>
+        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <javadoc.opts>-Xdoclint:none</javadoc.opts>
     </properties>
 
     <dependencyManagement>
@@ -217,17 +221,17 @@
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
-            <version>2.3.1</version>
+            <version>${jaxb-api.version}</version>
         </dependency>
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
-            <version>3.23.1-GA</version>
+            <version>${javassist.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>2.4.0-b180830.0438</version>
+            <version>${jaxb-runtime.version}</version>
         </dependency>
         <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
         <!--        <dependency>-->
