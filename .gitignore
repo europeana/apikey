@@ -2,6 +2,7 @@
 **/apikey.user.properties
 **/apikey.user.yml
 **/application.user.properties
+**/application-user.properties
 **/application.user.yml
 **/application-user.yml
 

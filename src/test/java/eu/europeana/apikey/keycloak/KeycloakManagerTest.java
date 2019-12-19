@@ -1,5 +1,6 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.config.ApikeyConfiguration;
 import eu.europeana.apikey.domain.ApikeyRequest;
 import eu.europeana.apikey.domain.ApikeySecret;
 import eu.europeana.apikey.exception.ApikeyException;
@@ -27,6 +28,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -159,8 +161,17 @@ public class KeycloakManagerTest {
     private static final String EMAIL                        = "name.surname@mail.com";
 
 
-    @Value("${keycloak.auth-server-url}")
+    @Value(value = "${keycloak.auth-server-url}")
     private String authServerUrl;
+
+    @Value(value = "${keycloak.realm}")
+    private String realm;
+
+    @Value(value = "${keycloak.use-resource-role-mappings}")
+    private boolean useResourceRoleMappings;
+
+    @Value(value = "${keycloak.realm-public-key}")
+    private String realmPublicKey;
 
     @Mock
     private AccessToken accessToken;
@@ -172,7 +183,7 @@ public class KeycloakManagerTest {
     private KeycloakTokenVerifier keycloakTokenVerifier;
 
     @InjectMocks
-    private KeycloakManager keycloakManager = new KeycloakManager(); //keycloakTokenVerifier);
+    private KeycloakManager keycloakManager = new KeycloakManager(new ApikeyConfiguration()); //keycloakTokenVerifier);
 
     @PrepareForTest({KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakAuthenticationToken.class})
     @Test
