@@ -12,6 +12,8 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @PropertySource(value = "classpath:application.properties")
 @PropertySource(value = "classpath:application-user.properties", ignoreResourceNotFound = true)
+
+//@EnableConfigurationProperties(KeyCloakProperties.class)
 @SpringBootApplication
 public class ApikeyApplication extends SpringBootServletInitializer {
 
