@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @PropertySource("classpath:application.properties")
-@PropertySource("classpath:application-user.properties")
-//@PropertySource(value = "classpath:application-user.properties", ignoreResourceNotFound = true)
+@PropertySource(value = "classpath:application-user.properties", ignoreResourceNotFound = true)
 @ConfigurationProperties(prefix = "keycloak")
 public class KeycloakProperties {
 
