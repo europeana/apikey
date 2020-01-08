@@ -1,9 +1,9 @@
 package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.config.KeycloakProperties;
-import eu.europeana.apikey.domain.ApikeyRequest;
-import eu.europeana.apikey.domain.ApikeySecret;
-import eu.europeana.apikey.exception.ApikeyException;
+import eu.europeana.apikey.domain.ApiKeyRequest;
+import eu.europeana.apikey.domain.ApiKeySecret;
+import eu.europeana.apikey.exception.ApiKeyException;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -204,17 +204,17 @@ public class KeycloakManagerTest {
     }
 
     @Test
-    public void createClient() throws ApikeyException, IOException {
-        ApikeyRequest           apikeyCreate    = prepareApikeyCreate();
+    public void createClient() throws ApiKeyException, IOException {
+        ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
-        ApikeySecret apikey = keycloakManager.createClient(securityContext, apikeyCreate);
+        ApiKeySecret apiKey = keycloakManager.createClient(securityContext, apiKeyCreate);
 
-        Assert.assertNotNull(apikey);
-        Assert.assertEquals(apikeyCreate.getFirstName(), apikey.getFirstName());
-        Assert.assertEquals(apikeyCreate.getLastName(), apikey.getLastName());
-        Assert.assertEquals(apikeyCreate.getEmail(), apikey.getEmail());
-        Assert.assertEquals(NEW_CLIENT_SECRET, apikey.getClientSecret());
+        Assert.assertNotNull(apiKey);
+        Assert.assertEquals(apiKeyCreate.getFirstName(), apiKey.getFirstName());
+        Assert.assertEquals(apiKeyCreate.getLastName(), apiKey.getLastName());
+        Assert.assertEquals(apiKeyCreate.getEmail(), apiKey.getEmail());
+        Assert.assertEquals(NEW_CLIENT_SECRET, apiKey.getClientSecret());
     }
 
     private KeycloakSecurityContext prepareForCreateClient() throws IOException {
@@ -275,8 +275,8 @@ public class KeycloakManagerTest {
         return securityContext;
     }
 
-    private ApikeyRequest prepareApikeyCreate() {
-        return new ApikeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY);
+    private ApiKeyRequest prepareApiKeyCreate() {
+        return new ApiKeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY);
     }
 
 //    @Test
@@ -395,20 +395,20 @@ public class KeycloakManagerTest {
         Assert.assertFalse(authorized);
     }
 
-    @Test(expected = ApikeyException.class)
-    public void updateClientWhenClientMissing() throws IOException, ApikeyException {
-        ApikeyRequest           apikeyDetails   = prepareApikeyUpdate();
+    @Test(expected = ApiKeyException.class)
+    public void updateClientWhenClientMissing() throws IOException, ApiKeyException {
+        ApiKeyRequest           apiKeyDetails   = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
-        keycloakManager.updateClient(securityContext, apikeyDetails, CLIENT_ID);
+        keycloakManager.updateClient(securityContext, apiKeyDetails, CLIENT_ID);
     }
 
     @Test
-    public void updateClientWhenClientExists() throws IOException, ApikeyException {
-        ApikeyRequest           apikeyUpdate    = prepareApikeyUpdate();
+    public void updateClientWhenClientExists() throws IOException, ApiKeyException {
+        ApiKeyRequest           apiKeyUpdate    = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
-        keycloakManager.updateClient(securityContext, apikeyUpdate, CLIENT_ID);
+        keycloakManager.updateClient(securityContext, apiKeyUpdate, CLIENT_ID);
     }
 
     private KeycloakSecurityContext prepareForUpdateClient(boolean existing, boolean enabled) throws IOException {
@@ -455,30 +455,30 @@ public class KeycloakManagerTest {
         return securityContext;
     }
 
-    private ApikeyRequest prepareApikeyUpdate() {
-        return new ApikeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
+    private ApiKeyRequest prepareApiKeyUpdate() {
+        return new ApiKeyRequest(FIRST_NAME, LAST_NAME, EMAIL, APP_NAME, COMPANY, SECTOR, WEBSITE);
     }
 
-    @Test(expected = ApikeyException.class)
-    public void invalidateClientWhenClientMissing() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
         keycloakManager.disableClient(CLIENT_ID, securityContext);
     }
 
     @Test
-    public void invalidateClientWhenClientExists() throws IOException, ApikeyException {
+    public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
         keycloakManager.disableClient(CLIENT_ID, securityContext);
     }
 
-    @Test(expected = ApikeyException.class)
-    public void reenableClientWhenClientMissing() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
         keycloakManager.enableClient(CLIENT_ID, securityContext);
     }
 
     @Test
-    public void reenableClientWhenClientExists() throws IOException, ApikeyException {
+    public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
         keycloakManager.enableClient(CLIENT_ID, securityContext);
     }

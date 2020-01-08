@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
-public class CaptchaException extends ApikeyException {
+public class CaptchaException extends ApiKeyException {
 
     public CaptchaException(String message) {
         super("Error validating captcha", message);

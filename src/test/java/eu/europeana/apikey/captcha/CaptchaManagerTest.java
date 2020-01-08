@@ -1,6 +1,6 @@
 package eu.europeana.apikey.captcha;
 
-import eu.europeana.apikey.exception.ApikeyException;
+import eu.europeana.apikey.exception.ApiKeyException;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -45,21 +45,21 @@ public class CaptchaManagerTest {
     }
 
     @Test
-    public void verifyCaptchaTokenWhenOK() throws IOException, ApikeyException {
+    public void verifyCaptchaTokenWhenOK() throws IOException, ApiKeyException {
         prepareForTest(true);
 
         Assert.assertTrue(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));
     }
 
-    @Test(expected = ApikeyException.class)
-    public void verifyCaptchaTokenWhenFalse() throws IOException, ApikeyException {
+    @Test(expected = ApiKeyException.class)
+    public void verifyCaptchaTokenWhenFalse() throws IOException, ApiKeyException {
         prepareForTest(false);
 
         captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN);
     }
 
     @Test
-    public void verifyCaptchaTokenWhenNull() throws IOException, ApikeyException {
+    public void verifyCaptchaTokenWhenNull() throws IOException, ApiKeyException {
         prepareForNullVerificationResponse();
 
         Assert.assertFalse(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));

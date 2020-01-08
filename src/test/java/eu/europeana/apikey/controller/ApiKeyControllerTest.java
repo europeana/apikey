@@ -1,8 +1,8 @@
 package eu.europeana.apikey.controller;
 
-import eu.europeana.apikey.ApikeyApplication;
-import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.repos.ApikeyRepo;
+import eu.europeana.apikey.ApiKeyApplication;
+import eu.europeana.apikey.domain.ApiKey;
+import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -13,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -28,10 +27,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @RunWith(SpringRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApikeyApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiKeyApplication.class)
 @AutoConfigureMockMvc
 //@TestPropertySource(locations = "classpath:application-test.properties") <= NOT NEEDED
-public class ApikeyControllerTest {
+public class ApiKeyControllerTest {
 
     private static final String EXISTING_API_KEY        = "apikey1";
     private static final String UNREGISTERED_API_KEY    = "apikey2";
@@ -41,31 +40,31 @@ public class ApikeyControllerTest {
     private MockMvc mvc;
 
     @Autowired
-    private ApikeyRepo apikeyRepo;
+    private ApiKeyRepo apiKeyRepo;
 
     @Before
     public void setup() {
-        Apikey apikey = new Apikey(EXISTING_API_KEY, "edward", "potts", "potts@mail.com", "appNme", "company");
-        apikey.setKeycloakId(EXISTING_API_KEY);
-        apikeyRepo.saveAndFlush(apikey);
+        ApiKey apiKey = new ApiKey(EXISTING_API_KEY, "edward", "potts", "potts@mail.com", "appNme", "company");
+        apiKey.setKeycloakId(EXISTING_API_KEY);
+        apiKeyRepo.saveAndFlush(apiKey);
 
-        apikey = new Apikey(DEPRECATED_API_KEY, "frank", "sinatra", "sinatra@mail.com", "appName", "company");
-        apikey.setKeycloakId(DEPRECATED_API_KEY);
-        apikey.setDeprecationDate(new Date());
-        apikeyRepo.saveAndFlush(apikey);
+        apiKey = new ApiKey(DEPRECATED_API_KEY, "frank", "sinatra", "sinatra@mail.com", "appName", "company");
+        apiKey.setKeycloakId(DEPRECATED_API_KEY);
+        apiKey.setDeprecationDate(new Date());
+        apiKeyRepo.saveAndFlush(apiKey);
     }
 
     @Test
-    public void validateExistingApikey() throws Exception {
-        Optional<Apikey> optionalExistingApikey = apikeyRepo.findById(EXISTING_API_KEY);
-        if (optionalExistingApikey.isEmpty()) {
+    public void validateExistingApiKey() throws Exception {
+        Optional<ApiKey> optionalExistingApiKey = apiKeyRepo.findById(EXISTING_API_KEY);
+        if (optionalExistingApiKey.isEmpty()) {
             fail();
         }
 
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
                                             .header(HttpHeaders.AUTHORIZATION,
-                                                    "APIKEY " + optionalExistingApikey.get().getApikey())
+                                                    "APIKEY " + optionalExistingApiKey.get().getApiKey())
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -73,7 +72,7 @@ public class ApikeyControllerTest {
     }
 
     @Test
-    public void validateWhenApikeyNotSupplied() throws Exception {
+    public void validateWhenApiKeyNotSupplied() throws Exception {
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
                                             .header(HttpHeaders.AUTHORIZATION, "APIKEY ")
@@ -84,7 +83,7 @@ public class ApikeyControllerTest {
     }
 
     @Test
-    public void validateUnregisteredApikey() throws Exception {
+    public void validateUnregisteredApiKey() throws Exception {
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
                                             .header(HttpHeaders.AUTHORIZATION, "APIKEY " + UNREGISTERED_API_KEY)
@@ -95,16 +94,16 @@ public class ApikeyControllerTest {
     }
 
     @Test
-    public void validateDeprecatedApikey() throws Exception {
-        Optional<Apikey> optionalDeprecatedApikey = apikeyRepo.findById(DEPRECATED_API_KEY);
-        if (optionalDeprecatedApikey.isEmpty()) {
+    public void validateDeprecatedApiKey() throws Exception {
+        Optional<ApiKey> optionalDeprecatedApiKey = apiKeyRepo.findById(DEPRECATED_API_KEY);
+        if (optionalDeprecatedApiKey.isEmpty()) {
             fail();
         }
 
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
                                             .header(HttpHeaders.AUTHORIZATION,
-                                                    "APIKEY " + optionalDeprecatedApikey.get().getApikey())
+                                                    "APIKEY " + optionalDeprecatedApiKey.get().getApiKey())
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
            .andDo(MockMvcResultHandlers.print())

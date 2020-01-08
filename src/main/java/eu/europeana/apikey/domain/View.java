@@ -5,7 +5,7 @@ package eu.europeana.apikey.domain;
  */
 
 /**
- * This class supports using @Jsonview annotations, used to filter fields of the Apikey to be displayed
+ * This class supports using @Jsonview annotations, used to filter fields of the ApiKey to be displayed
  */
 
 public class View {

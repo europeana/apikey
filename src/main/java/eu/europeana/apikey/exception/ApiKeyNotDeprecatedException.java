@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Created on 18 nov 2019
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class ApikeyNotDeprecatedException extends ApikeyException {
+public class ApiKeyNotDeprecatedException extends ApiKeyException {
 
-    public ApikeyNotDeprecatedException(String id) {
+    public ApiKeyNotDeprecatedException(String id) {
         super("Bad request", "API key " + id + " is not deprecated!");
     }
 

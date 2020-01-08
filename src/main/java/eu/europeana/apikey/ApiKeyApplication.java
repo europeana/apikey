@@ -13,11 +13,11 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource(value = "classpath:application.properties")
 @PropertySource(value = "classpath:application-user.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
-public class ApikeyApplication extends SpringBootServletInitializer {
+public class ApiKeyApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder();
-        builder.sources(ApikeyApplication.class).run(args);
+        builder.sources(ApiKeyApplication.class).run(args);
     }
 
 }

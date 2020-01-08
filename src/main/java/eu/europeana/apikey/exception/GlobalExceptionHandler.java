@@ -20,10 +20,10 @@ public class GlobalExceptionHandler {
     /**
      * Checks if we should log an error (and its stacktrace) and rethrows it
      * @param e caught exception
-     * @throws ApikeyException rethrown exception
+     * @throws ApiKeyException rethrown exception
      */
-    @ExceptionHandler(ApikeyException.class)
-    public void handleApikeyException(HttpServletResponse response, ApikeyException e) throws ApikeyException {
+    @ExceptionHandler(ApiKeyException.class)
+    public void handleApiKeyException(HttpServletResponse response, ApiKeyException e) throws ApiKeyException {
         if (e.doLog()) {
             if (e.doLogStacktrace()) {
                 LOG.error("Caught exception", e);

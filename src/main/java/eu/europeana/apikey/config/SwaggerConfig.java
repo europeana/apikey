@@ -32,7 +32,7 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfo(
-                "Apikey Service",
+                "ApiKey Service",
                 "Europeana API-key service",
                 null,
                 null,

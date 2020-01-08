@@ -20,17 +20,17 @@ import static eu.europeana.apikey.util.Tools.nvl;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "newapikey")
-public class Apikey {
+public class ApiKey {
 
 	@Id
 	@Column(name = "apikey")
-	@JsonProperty("apikey")
+	@JsonProperty("apiKey")
 	@JsonView(View.Public.class)
-	private String apikey;
+	private String apiKey;
 
 	@NotNull
 	@Column(name = "keycloakid")
-	@JsonProperty("keycloakid")
+	@JsonProperty("keycloakId")
 	@JsonIgnore
 	private String keycloakId;
 
@@ -110,12 +110,12 @@ public class Apikey {
 	@JsonView(View.Public.class)
 	private Date lastAccessDate;
 
-	public Apikey() {
+	public ApiKey() {
 		// default constructor required by JPA/Hibernate for deserialization
 	}
 
-	public Apikey(String apikey) {
-		this.apikey = apikey;
+	public ApiKey(String apiKey) {
+		this.apiKey     = apiKey;
 		this.keycloakId = "";
 	}
 
@@ -123,42 +123,42 @@ public class Apikey {
 	 * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
 	 * an appName or company
 	 */
-	public Apikey(String apikey, String firstName, String lastName, String email, String appName, String company) {
-		this.apikey = apikey;
-		this.keycloakId = "";
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.email = email;
-		this.appName = appName;
-		this.company = company;
+	public ApiKey(String apiKey, String firstName, String lastName, String email, String appName, String company) {
+		this.apiKey           = apiKey;
+		this.keycloakId       = "";
+		this.firstName        = firstName;
+		this.lastName         = lastName;
+		this.email            = email;
+		this.appName          = appName;
+		this.company          = company;
 		this.registrationDate = new Date();
 	}
 
 	/**
 	 * Constructor with all fields
 	 */
-	public Apikey(Apikey copy) {
-		this.apikey = copy.apikey;
-		this.keycloakId = copy.keycloakId;
+	public ApiKey(ApiKey copy) {
+		this.apiKey           = copy.apiKey;
+		this.keycloakId       = copy.keycloakId;
 		this.registrationDate = copy.registrationDate;
-		this.website = copy.website;
-		this.activationDate = copy.activationDate;
-		this.appName = copy.appName;
-		this.company = copy.company;
-		this.sector = copy.sector;
-		this.email = copy.email;
-		this.firstName = copy.firstName;
-		this.lastName = copy.lastName;
-		this.deprecationDate = copy.deprecationDate;
-		this.lastAccessDate = copy.lastAccessDate;
+		this.website          = copy.website;
+		this.activationDate   = copy.activationDate;
+		this.appName          = copy.appName;
+		this.company          = copy.company;
+		this.sector           = copy.sector;
+		this.email            = copy.email;
+		this.firstName        = copy.firstName;
+		this.lastName         = copy.lastName;
+		this.deprecationDate  = copy.deprecationDate;
+		this.lastAccessDate   = copy.lastAccessDate;
 	}
 
-	public String getApikey() {
-		return apikey;
+	public String getApiKey() {
+		return apiKey;
 	}
 
-	public void setApikey(String apikey) {
-		this.apikey = apikey;
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
 	}
 
 	@JsonIgnore
@@ -261,20 +261,20 @@ public class Apikey {
 
 	@Override
 	public String toString() {
-		return "Apikey {" +
-				" apikey = " + apikey +
-				", keycloakId = " + keycloakId +
-				", firstName = " + nvl(firstName) +
-				", lastName = " + nvl(lastName) +
-				", email = " + nvl(email) +
-				", appName = " + nvl(appName) +
-				", website = " + nvl(website) +
-				", company = " + nvl(company) +
-				", sector = " + nvl(sector) +
-				", activationDate = " + nvl(activationDate) +
-				", registrationDate = " + nvl(registrationDate) +
-				", lastAccessDate = " + nvl(lastAccessDate) +
-				", deprecationDate = " + nvl(deprecationDate) +
-				" }";
+		return "ApiKey {" +
+			   " apikey = " + apiKey +
+			   ", keycloakId = " + keycloakId +
+			   ", firstName = " + nvl(firstName) +
+			   ", lastName = " + nvl(lastName) +
+			   ", email = " + nvl(email) +
+			   ", appName = " + nvl(appName) +
+			   ", website = " + nvl(website) +
+			   ", company = " + nvl(company) +
+			   ", sector = " + nvl(sector) +
+			   ", activationDate = " + nvl(activationDate) +
+			   ", registrationDate = " + nvl(registrationDate) +
+			   ", lastAccessDate = " + nvl(lastAccessDate) +
+			   ", deprecationDate = " + nvl(deprecationDate) +
+			   " }";
 	}
 }

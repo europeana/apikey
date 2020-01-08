@@ -1,5 +1,5 @@
 {
-  "apikey":"testApikey",
+  "apikey":"testApiKey",
   "privatekey":"testPrivateKey",
   "email": "knerpje@krentstra.org",
   "level": "TEST"

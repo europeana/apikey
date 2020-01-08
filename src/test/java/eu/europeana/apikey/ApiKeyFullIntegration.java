@@ -1,8 +1,8 @@
 package eu.europeana.apikey;
 
-import eu.europeana.apikey.domain.Apikey;
-import eu.europeana.apikey.domain.ApikeyRequest;
-import eu.europeana.apikey.repos.ApikeyRepo;
+import eu.europeana.apikey.domain.ApiKey;
+import eu.europeana.apikey.domain.ApiKeyRequest;
+import eu.europeana.apikey.repos.ApiKeyRepo;
 import eu.europeana.apikey.util.ApiName;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -42,10 +42,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApikeyApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiKeyApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class ApikeyFullIntegration {
+public class ApiKeyFullIntegration {
 
     private static final String        fifisFirstName    = "Fifi";
     private static final String        fifisLastName     = "Finufi";
@@ -61,7 +61,7 @@ public class ApikeyFullIntegration {
     private static final String        phypheysCompany   = "Smug, Spoiled, Stupid & Arrogant Inc.";
     private static final String        phypheysSector    = "The Terminally Hip";
     private static final String        phypheysWebsite   = "http://sssa4u.biz";
-    private static final ApikeyRequest fifisApikeyCreate = new ApikeyRequest(fifisFirstName,
+    private static final ApiKeyRequest fifisApiKeyCreate = new ApiKeyRequest(fifisFirstName,
                                                                              fifisLastName,
                                                                              fifisEmail,
                                                                              fifisAppName,
@@ -72,43 +72,43 @@ public class ApikeyFullIntegration {
     private MockMvc mvc;
 
     @Autowired
-    private ApikeyRepo apikeyRepo;
+    private ApiKeyRepo apiKeyRepo;
 
     @Before
     public void setup() throws Exception {
-        Apikey adminKey = new Apikey("Apikey1", "luthien", "inedhil", "luthien@parendili.org", "appName", "company");
-        adminKey.setKeycloakId("Apikey1");
-        apikeyRepo.saveAndFlush(adminKey);
+        ApiKey adminKey = new ApiKey("ApiKey1", "luthien", "inedhil", "luthien@parendili.org", "appName", "company");
+        adminKey.setKeycloakId("ApiKey1");
+        apiKeyRepo.saveAndFlush(adminKey);
     }
 
     // We create an apikey for user Fifi Finufi
     @Ignore
     @Test
-    public void aCreateApikey() throws Exception {
+    public void aCreateApiKey() throws Exception {
         // post one apikeyCreate
         mvc.perform(post("/apikey").header(HttpHeaders.AUTHORIZATION,
-                                           "Basic " + Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                           "Basic " + Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                    .contentType(MediaType.APPLICATION_JSON)
-                                   .content(JsonUtil.toJson(fifisApikeyCreate))
+                                   .content(JsonUtil.toJson(fifisApiKeyCreate))
                                    .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isCreated());
 
-        Optional<Apikey> fifi = apikeyRepo.findByEmail(fifisApikeyCreate.getEmail());
+        Optional<ApiKey> fifi = apiKeyRepo.findByEmail(fifisApiKeyCreate.getEmail());
 
         assertThat(fifi.isPresent(), equalTo(true));
-        assertThat(fifi.get().getFirstName(), equalTo(fifisApikeyCreate.getFirstName()));
-        assertThat(fifi.get().getLastName(), equalTo(fifisApikeyCreate.getLastName()));
-        assertThat(fifi.get().getEmail(), equalTo(fifisApikeyCreate.getEmail()));
+        assertThat(fifi.get().getFirstName(), equalTo(fifisApiKeyCreate.getFirstName()));
+        assertThat(fifi.get().getLastName(), equalTo(fifisApiKeyCreate.getLastName()));
+        assertThat(fifi.get().getEmail(), equalTo(fifisApiKeyCreate.getEmail()));
     }
 
     // Fifi needs her apikey data updated because she's in management now
     @Ignore
     @Test
-    public void bUpdateApikey() throws Exception {
-        String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
+    public void bUpdateApiKey() throws Exception {
+        String fifisApiKey = apiKeyRepo.findByEmail(fifisEmail).get().getApiKey();
 
-        ApikeyRequest phypheysApikeyUpdate = new ApikeyRequest(phypheysFirstName,
+        ApiKeyRequest phypheysApiKeyUpdate = new ApiKeyRequest(phypheysFirstName,
                                                                phypheysLastName,
                                                                phypheysEmail,
                                                                phypheysAppName,
@@ -116,16 +116,16 @@ public class ApikeyFullIntegration {
                                                                phypheysSector,
                                                                phypheysWebsite);
 
-        mvc.perform(put("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(put("/apikey/" + fifisApiKey).header(HttpHeaders.AUTHORIZATION,
                                                          "Basic " +
-                                                         Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                                         Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                                  .contentType(MediaType.APPLICATION_JSON)
-                                                 .content(JsonUtil.toJson(phypheysApikeyUpdate))
+                                                 .content(JsonUtil.toJson(phypheysApiKeyUpdate))
                                                  .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isOk());
 
-        Optional<Apikey> phyphey = apikeyRepo.findByEmail(phypheysEmail);
+        Optional<ApiKey> phyphey = apiKeyRepo.findByEmail(phypheysEmail);
         assertThat(phyphey.isPresent(), equalTo(true));
         assertThat(phyphey.get().getFirstName(), equalTo(phypheysFirstName));
         assertThat(phyphey.get().getLastName(), equalTo(phypheysLastName));
@@ -139,25 +139,25 @@ public class ApikeyFullIntegration {
     // Phyphey (formerly known as 'Fifi') has her apikey invalidated because of abuse of resources
     @Ignore
     @Test
-    public void cInvalidateApikey() throws Exception {
-        Apikey phypheysKey    = apikeyRepo.findByEmail(phypheysEmail).get();
-        String phypheysApikey = phypheysKey.getApikey();
+    public void cInvalidateApiKey() throws Exception {
+        ApiKey phypheysKey    = apiKeyRepo.findByEmail(phypheysEmail).get();
+        String phypheysApiKey = phypheysKey.getApiKey();
 
-        mvc.perform(delete("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(delete("/apikey/" + phypheysApiKey).header(HttpHeaders.AUTHORIZATION,
                                                                "Basic " +
-                                                               Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                                               Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                                        .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isNoContent());
 
-        Optional<Apikey> phyphey = apikeyRepo.findByEmail(phypheysEmail);
+        Optional<ApiKey> phyphey = apiKeyRepo.findByEmail(phypheysEmail);
         assertThat(phyphey.isPresent(), equalTo(true));
         assertNotNull(phyphey.get().getDeprecationDate());
 
         // let's check if she really can't get it any longer - Deprecation date is set to now by the controller
-        mvc.perform(post("/apikey/" + phypheysApikey + "/validate").header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(post("/apikey/" + phypheysApiKey + "/validate").header(HttpHeaders.AUTHORIZATION,
                                                                            "Basic " + Base64Utils.encodeToString(
-                                                                                   "Apikey1:PrivateKey1".getBytes()))
+                                                                                   "ApiKey1:PrivateKey1".getBytes()))
                                                                    .param("api", ApiName.SEARCH.toString())
                                                                    .param("method", READ)
                                                                    .with(csrf()))
@@ -168,10 +168,10 @@ public class ApikeyFullIntegration {
         // no need to change it back again, it will be deleted in the next test
         Date nextWeek = new DateTime(DateTimeZone.UTC).plusDays(7).toDate();
         phypheysKey.setDeprecationDate(nextWeek);
-        apikeyRepo.saveAndFlush(phypheysKey);
-        mvc.perform(post("/apikey/" + phypheysApikey + "/validate").header(HttpHeaders.AUTHORIZATION,
+        apiKeyRepo.saveAndFlush(phypheysKey);
+        mvc.perform(post("/apikey/" + phypheysApiKey + "/validate").header(HttpHeaders.AUTHORIZATION,
                                                                            "Basic " + Base64Utils.encodeToString(
-                                                                                   "Apikey1:PrivateKey1".getBytes()))
+                                                                                   "ApiKey1:PrivateKey1".getBytes()))
                                                                    .param("api", ApiName.SEARCH.toString())
                                                                    .param("method", READ)
                                                                    .with(csrf()))
@@ -184,9 +184,9 @@ public class ApikeyFullIntegration {
     // Spoiled & Arrogant Inc." and starts a bike repair shop
     @Ignore
     @Test
-    public void dReenableeApikey() throws Exception {
-        String phypheysApikey = apikeyRepo.findByEmail(phypheysEmail).get().getApikey();
-        ApikeyRequest fifisApikeyUpdate = new ApikeyRequest(fifisFirstName,
+    public void dReenableeApiKey() throws Exception {
+        String phypheysApiKey = apiKeyRepo.findByEmail(phypheysEmail).get().getApiKey();
+        ApiKeyRequest fifisApiKeyUpdate = new ApiKeyRequest(fifisFirstName,
                                                             fifisLastName,
                                                             fifisEmail,
                                                             fifisAppName,
@@ -194,16 +194,16 @@ public class ApikeyFullIntegration {
                                                             fifisSector,
                                                             fifisWebsite);
 
-        mvc.perform(post("/apikey/" + phypheysApikey).header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(post("/apikey/" + phypheysApiKey).header(HttpHeaders.AUTHORIZATION,
                                                              "Basic " +
-                                                             Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                                             Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                                      .contentType(MediaType.APPLICATION_JSON)
-                                                     .content(JsonUtil.toJson(fifisApikeyUpdate))
+                                                     .content(JsonUtil.toJson(fifisApiKeyUpdate))
                                                      .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isOk());
 
-        Optional<Apikey> fifi = apikeyRepo.findByEmail(fifisEmail);
+        Optional<ApiKey> fifi = apiKeyRepo.findByEmail(fifisEmail);
 
         assertThat(fifi.isPresent(), equalTo(true));
         assertThat(fifi.get().getFirstName(), equalTo(fifisFirstName));
@@ -223,10 +223,10 @@ public class ApikeyFullIntegration {
     public void eRetrieveDetails() throws Exception {
         MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
                                               MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
-        String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
-        mvc.perform(get("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION,
+        String fifisApiKey = apiKeyRepo.findByEmail(fifisEmail).get().getApiKey();
+        mvc.perform(get("/apikey/" + fifisApiKey).header(HttpHeaders.AUTHORIZATION,
                                                          "Basic " +
-                                                         Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                                         Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                                  .with(csrf()))
            .andExpect(MockMvcResultMatchers.status().isOk())
            .andExpect(MockMvcResultMatchers.content().contentType(contentType))
@@ -241,14 +241,14 @@ public class ApikeyFullIntegration {
         // test HTTP 404 response for nonexisting key
         mvc.perform(get("/apikey/nezcasse").header(HttpHeaders.AUTHORIZATION,
                                                    "Basic " +
-                                                   Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes())))
+                                                   Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes())))
            .andDo(MockMvcResultHandlers.print())
            .andExpect(MockMvcResultMatchers.status().isNotFound());
 
         // test HTTP 406 when wrongfully being requested an unspeakable Mimetype
-        mvc.perform(get("/apikey/" + fifisApikey).header(HttpHeaders.AUTHORIZATION,
+        mvc.perform(get("/apikey/" + fifisApiKey).header(HttpHeaders.AUTHORIZATION,
                                                          "Basic " +
-                                                         Base64Utils.encodeToString("Apikey1:PrivateKey1".getBytes()))
+                                                         Base64Utils.encodeToString("ApiKey1:PrivateKey1".getBytes()))
                                                  .header(HttpHeaders.ACCEPT, MediaType.IMAGE_JPEG))
            .andExpect(MockMvcResultMatchers.status().isNotAcceptable());
     }
@@ -257,11 +257,11 @@ public class ApikeyFullIntegration {
     // Test regular validation call with ample usage left, returning HTTP 204
     @Ignore
     @Test
-    public void fValidateApikey() throws Exception {
-        String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
-        mvc.perform(post("/apikey/" + fifisApikey + "/validate").header(HttpHeaders.AUTHORIZATION,
+    public void fValidateApiKey() throws Exception {
+        String fifisApiKey = apiKeyRepo.findByEmail(fifisEmail).get().getApiKey();
+        mvc.perform(post("/apikey/" + fifisApiKey + "/validate").header(HttpHeaders.AUTHORIZATION,
                                                                         "Basic " +
-                                                                        Base64Utils.encodeToString("Apikey1:PrivateKey1"
+                                                                        Base64Utils.encodeToString("ApiKey1:PrivateKey1"
                                                                                                            .getBytes()))
                                                                 .with(csrf())
                                                                 .param("api", ApiName.SEARCH.toString())
@@ -275,10 +275,10 @@ public class ApikeyFullIntegration {
     @Ignore
     @Test
     public void geeLetsForgetParameters() throws Exception {
-        String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
-        mvc.perform(post("/apikey/" + fifisApikey + "/validate").header(HttpHeaders.AUTHORIZATION,
+        String fifisApiKey = apiKeyRepo.findByEmail(fifisEmail).get().getApiKey();
+        mvc.perform(post("/apikey/" + fifisApiKey + "/validate").header(HttpHeaders.AUTHORIZATION,
                                                                         "Basic " +
-                                                                        Base64Utils.encodeToString("Apikey1:PrivateKey1"
+                                                                        Base64Utils.encodeToString("ApiKey1:PrivateKey1"
                                                                                                            .getBytes()))
                                                                 .with(csrf())
                                                                 .param("method", READ))
@@ -290,8 +290,8 @@ public class ApikeyFullIntegration {
     @Ignore
     @Test
     public void heySneakingPastSecurity() throws Exception {
-        String fifisApikey = apikeyRepo.findByEmail(fifisEmail).get().getApikey();
-        mvc.perform(post("/apikey/" + fifisApikey + "/validate").header(HttpHeaders.AUTHORIZATION,
+        String fifisApiKey = apiKeyRepo.findByEmail(fifisEmail).get().getApiKey();
+        mvc.perform(post("/apikey/" + fifisApiKey + "/validate").header(HttpHeaders.AUTHORIZATION,
                                                                         "Basic " + Base64Utils.encodeToString(
                                                                                 "SnorPipo5Soep:Blauwbek7".getBytes()))
                                                                 .with(csrf())

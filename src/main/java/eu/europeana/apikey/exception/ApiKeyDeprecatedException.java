@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Exception thrown when trying to perform an action on a deprecated API key
  */
 @ResponseStatus(HttpStatus.GONE)
-public class ApikeyDeprecatedException extends ApikeyException {
+public class ApiKeyDeprecatedException extends ApiKeyException {
 
-    public ApikeyDeprecatedException(String id) {
+    public ApiKeyDeprecatedException(String id) {
         super("API key is deprecated", "The API key " + id + " is deprecated!");
     }
 
