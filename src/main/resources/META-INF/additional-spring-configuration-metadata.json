@@ -1,0 +1,48 @@
+{
+  "properties": [
+    {
+      "name": "recaptcha.verification-url.scheme",
+      "type": "java.lang.String",
+      "description": "Description for recaptcha.verification-url.scheme."
+    },
+    {
+      "name": "recaptcha.verification-url.host",
+      "type": "java.lang.String",
+      "description": "Description for recaptcha.verification-url.host."
+    },
+    {
+      "name": "recaptcha.verification-url.path",
+      "type": "java.lang.String",
+      "description": "Description for recaptcha.verification-url.path."
+    },
+    {
+      "name": "recaptcha.secret",
+      "type": "java.lang.String",
+      "description": "Description for recaptcha.secret."
+    },
+    {
+      "name": "europeanamail.sent_from",
+      "type": "java.lang.String",
+      "description": "Description for europeanamail.sent_from."
+    },
+    {
+      "name": "keycloak.realm-public-key",
+      "type": "java.lang.String",
+      "description": "Description for keycloak.realm-public-key."
+    },
+    {
+      "name": "keycloak.manager-client-id",
+      "type": "java.lang.String",
+      "description": "Description for keycloak.manager-client-id."
+    },
+    {
+      "name": "keycloak.manager-client-secret",
+      "type": "java.lang.String",
+      "description": "Description for keycloak.manager-client-secret."
+    },
+    {
+      "name": "recaptcha.verification-url.secret",
+      "type": "java.lang.String",
+      "description": "Description for recaptcha.verification-url.secret."
+    }
+  ] }

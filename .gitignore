@@ -2,21 +2,15 @@
 **/apikey.user.properties
 **/apikey.user.yml
 **/application.user.properties
+**/application-user.properties
 **/application.user.yml
 **/application-user.yml
 
-
-console.log
-
-#IntelliJ project files
+/target/
 .idea
 *.iml
 
-# Maven
-*/target/**
-target/**
+console.log
 
 # Temp files
-*~
 *.bak
-.DS_Store
