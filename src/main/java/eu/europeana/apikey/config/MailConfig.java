@@ -1,5 +1,6 @@
 package eu.europeana.apikey.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,9 @@ class MailConfig extends WebMvcConfigurerAdapter {
 
     @Value("europeanamail.sentFrom")
     private String sentFrom;
+
+    @Value("europeanamail.copy_to")
+    private String copyTo;
 
     @Bean
     public SimpleMailMessage apikeyCreatedMail() {
@@ -42,6 +46,9 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "%n" +
                 "The Europeana API Team");
         message.setFrom(sentFrom);
+        if(StringUtils.isNotEmpty(copyTo)) {
+            message.setBcc(copyTo);
+        }
         return message;
     }
 }

@@ -26,6 +26,11 @@
       "description": "Description for europeanamail.sent_from."
     },
     {
+      "name": "europeanamail.copy_to",
+      "type": "java.lang.String",
+      "description": "Description for europeanamail.copy_to."
+    },
+    {
       "name": "keycloak.realm-public-key",
       "type": "java.lang.String",
       "description": "Description for keycloak.realm-public-key."
