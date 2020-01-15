@@ -15,7 +15,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
     @Value("europeanamail.sentFrom")
     private String sentFrom;
 
-    @Value("europeanamail.copy_to")
+    @Value("${europeanamail.copy_to}")
     private String copyTo;
 
     @Bean

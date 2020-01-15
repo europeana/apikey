@@ -566,7 +566,7 @@ public class ApiKeyController {
 
     private void checkKeyEmailAppNameExist(String email, String appName) throws ApiKeyExistsException {
         List<ApiKey> apiKeyList = this.apiKeyRepo.findByEmailAndAppName(email, appName);
-        if (apiKeyList.isEmpty()) {
+        if (!apiKeyList.isEmpty()) {
             throw new ApiKeyExistsException(email, appName);
         }
     }
