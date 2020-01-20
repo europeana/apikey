@@ -12,10 +12,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @EnableWebMvc
 class MailConfig extends WebMvcConfigurerAdapter {
 
-    @Value("europeanamail.sentFrom")
+    @Value("${europeanaMail.sentFrom}")
     private String sentFrom;
 
-    @Value("${europeanamail.copy_to}")
+    @Value("${europeanaMail.copyTo}")
     private String copyTo;
 
     @Bean
@@ -46,7 +46,7 @@ class MailConfig extends WebMvcConfigurerAdapter {
                 "%n" +
                 "The Europeana API Team");
         message.setFrom(sentFrom);
-        if(StringUtils.isNotEmpty(copyTo)) {
+        if (StringUtils.isNotEmpty(copyTo)) {
             message.setBcc(copyTo);
         }
         return message;

@@ -1,7 +1,6 @@
 package eu.europeana.apikey.mail;
 
 import eu.europeana.apikey.exception.SendMailException;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
