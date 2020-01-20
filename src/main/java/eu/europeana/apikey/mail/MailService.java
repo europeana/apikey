@@ -20,11 +20,12 @@ public class MailService {
     @Autowired
     public JavaMailSender emailSender;
 
-    private void sendSimpleMessage(String from, String to, String subject, String messageBody) throws SendMailException {
+    private void sendSimpleMessage(String from, String[] bcc, String to, String subject, String messageBody) throws SendMailException {
         LOG.debug("send email ...");
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(from);
+            message.setBcc(bcc);
             message.setTo(to);
             message.setSubject(subject);
             message.setText(messageBody);
@@ -41,6 +42,6 @@ public class MailService {
                                                SimpleMailMessage template,
                                                String... templateArgs) throws SendMailException {
         String messageBody = String.format(template.getText(), templateArgs);
-        sendSimpleMessage(template.getFrom(), to, subject, messageBody);
+        sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
     }
 }
