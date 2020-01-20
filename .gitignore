@@ -1,6 +1,6 @@
 
-**/apikey.user.properties
-**/apikey.user.yml
+**/apikey-user.properties
+**/apikey-user.yml
 **/application.user.properties
 **/application-user.properties
 **/application.user.yml
