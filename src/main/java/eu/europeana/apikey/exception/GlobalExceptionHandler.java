@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
             if (e.doLogStacktrace()) {
                 LOG.error("Caught exception", e);
             } else {
-                LOG.error("Caught exception: " + e.getMessage());
+                LOG.error("Caught exception: {}", e.getMessage());
             }
         }
 

@@ -21,7 +21,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Example;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,6 +49,9 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/apikey")
 public class ApiKeyController {
+
+    // keycloakId that indicates that a new keycloak client should be created (as part of old API key migration)
+    public static final String TO_MIGRATE_KEYCLOAKID = "to-migrate";
 
     private static final Logger LOG   = LogManager.getLogger(ApiKeyController.class);
 
@@ -299,7 +301,7 @@ public class ApiKeyController {
         checkKeyDeprecated(key);
 
         keycloakManager.updateClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKeyUpdate, id);
-        copyUpdateValues(key, apiKeyUpdate);
+        copyValuesToApiKey(key, apiKeyUpdate);
         this.apiKeyRepo.save(key);
 
         return key;
@@ -399,7 +401,7 @@ public class ApiKeyController {
     public ResponseEntity delete(@PathVariable("id") String id) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
-        Optional<ApiKey> optionalApiKey = apiKeyRepo.findOne(Example.of(new ApiKey(id)));
+        Optional<ApiKey> optionalApiKey = apiKeyRepo.findById(id);
 
         if (optionalApiKey.isEmpty()) {
             throw new ApiKeyNotFoundException(id);
@@ -422,8 +424,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/synchronize/{keycloakid}")
-    public ResponseEntity deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws
-                                                                                                   ForbiddenException {
+    public ResponseEntity deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws ForbiddenException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
         Optional<ApiKey> optionalApiKey = this.apiKeyRepo.findByKeycloakId(keycloakId);
@@ -436,6 +437,59 @@ public class ApiKeyController {
         this.apiKeyRepo.delete(apiKey);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
+
+    /**
+     * This method can be called by a system administrator to automatically create clients in Keycloak for all
+     * API keys that do not have a Keycloak client yet. This will be used during the migration from the old apikey
+     * database to a new one with Keycloak as backend.
+     */
+    @PostMapping(path="/synchronize/missingClient/all")
+    public ResponseEntity synchronizeAllMissingClients() throws ApiKeyException{
+        KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
+
+        List<ApiKey> keysToUpdate = apiKeyRepo.findAllKeysToMigrate();
+        LOG.info("Found {} API keys that have no keycloakId", keysToUpdate.size());
+
+        // TODO check what happens when token expires!? Probably an error occurs and we can resume by calling this again?
+        for (ApiKey keyToUpdate : keysToUpdate) {
+            synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), keyToUpdate.getApiKey());
+        }
+        LOG.info("Finished creating clients for API keys with missing keycloakId");
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * This method can be called by a system administrator to automatically create a client in Keycloak for the
+     * provided API key.
+     * WARNING: this will replace the existing client secret with a new one!
+     */
+    @PostMapping(path="/synchronize/missingClient/{apiKey}")
+    public ResponseEntity synchronizeMissingClient(@PathVariable String apiKey) throws ApiKeyException {
+        KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
+        return synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKey);
+    }
+
+    private ResponseEntity synchronizeMissingClient(KeycloakSecurityContext securityContext, String apiKey) throws ApiKeyException {
+        ApiKey apiClient = checkKeyExists(apiKey);
+        LOG.debug("Verified that API key {} exists in database!", apiKey);
+
+        // we only allow apikeys that do not have a keycloakId or one that is set to 'to-migrate'
+        if (StringUtils.isNotBlank(apiClient.getKeycloakId()) && !TO_MIGRATE_KEYCLOAKID.equals(apiClient.getKeycloakId())) {
+            throw new KCIdNotEmptyException(apiKey, apiClient.getKeycloakId());
+        }
+
+        ApiKeyRequest requestClient = copyValuesToNewApiKeyRequest(apiClient);
+        String keycloakId = keycloakManager.recreateClient(securityContext, apiKey, requestClient);
+        LOG.debug("API key {} has a new keycloak client with id {}", apiKey, keycloakId);
+
+        // update only keycloakId (and keep old registration, activation and deprecated dates!)
+        apiClient.setKeycloakId(keycloakId);
+        apiKeyRepo.save(apiClient);
+        LOG.info("API key {} was updated, keycloakId is {}", apiKey, apiClient.getKeycloakId());
+        return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+
 
     /**
      * Validates a given ApiKey. Sets last access date and activation date (if not set, ie. first access) with the
@@ -482,7 +536,7 @@ public class ApiKeyController {
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    private void copyUpdateValues(ApiKey apiKey, ApiKeyRequest keyRequest) {
+    private void copyValuesToApiKey(ApiKey apiKey, ApiKeyRequest keyRequest) {
         if (null != keyRequest.getFirstName()) {
             apiKey.setFirstName(keyRequest.getFirstName());
         }
@@ -504,6 +558,25 @@ public class ApiKeyController {
         if (null != keyRequest.getSector()) {
             apiKey.setSector(keyRequest.getSector());
         }
+    }
+
+    /**
+     * When we want to create a new Keycloak client (as part of missing-client-synchronization) we need to copy the
+     * existing apiKey values to an ApiKeyRequest because this is what KeyCloakManager expects
+     * @param apiKey apikey client that is copied
+     */
+    private ApiKeyRequest copyValuesToNewApiKeyRequest(ApiKey apiKey) {
+        return new ApiKeyRequest(
+                // make sure required fields are not null
+                (StringUtils.isBlank(apiKey.getFirstName()) ? "" : apiKey.getFirstName()),
+                (StringUtils.isBlank(apiKey.getLastName()) ? "" : apiKey.getLastName()),
+                (StringUtils.isBlank(apiKey.getEmail()) ? "" : apiKey.getEmail()),
+                (StringUtils.isBlank(apiKey.getAppName()) ? "" : apiKey.getAppName()),
+                (StringUtils.isBlank(apiKey.getCompany()) ? "" : apiKey.getCompany()),
+                // set optional fields to null if empty
+                (StringUtils.isBlank(apiKey.getSector()) ? null : apiKey.getSector()),
+                (StringUtils.isBlank(apiKey.getWebsite()) ? null : apiKey.getWebsite())
+        );
     }
 
     private KeycloakAuthenticationToken checkManagerCredentials() throws ForbiddenException {

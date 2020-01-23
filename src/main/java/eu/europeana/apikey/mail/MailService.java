@@ -21,7 +21,7 @@ public class MailService {
     public JavaMailSender emailSender;
 
     private void sendSimpleMessage(String from, String[] bcc, String to, String subject, String messageBody) throws SendMailException {
-        LOG.debug("send email ...");
+        LOG.debug("Sending email ...");
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(from);

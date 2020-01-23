@@ -15,6 +15,7 @@ public class MissingDataException extends ApiKeyException {
         super(error, details);
     }
 
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }

@@ -203,7 +203,7 @@ public class KeycloakManagerTest {
 //        Mockito.when(KeycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
     }
 
-    @Test
+    @Test(timeout = 2000)
     public void createClient() throws ApiKeyException, IOException {
         ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
@@ -221,12 +221,14 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext securityContext = Mockito.mock(KeycloakSecurityContext.class);
         Mockito.when(securityContext.getAccessTokenString()).thenReturn("TEST");
 
+        // check if apikey already exists
         CloseableHttpResponse getResponse   = Mockito.mock(CloseableHttpResponse.class);
         StatusLine            getStatusLine = Mockito.mock(StatusLine.class);
         Mockito.when(getResponse.getStatusLine()).thenReturn(getStatusLine);
         Mockito.when(getStatusLine.getStatusCode()).thenReturn(200);
         HttpEntity getEntity = Mockito.mock(HttpEntity.class);
 
+        // post new client data
         CloseableHttpResponse postResponse   = Mockito.mock(CloseableHttpResponse.class);
         StatusLine            postStatusLine = Mockito.mock(StatusLine.class);
         Mockito.when(postResponse.getStatusLine()).thenReturn(postStatusLine);
