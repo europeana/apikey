@@ -38,7 +38,7 @@ public class ApiKeyException extends Exception {
 
 
     public ApiKeyException(Throwable ex) {
-        this.initCause(ex);
+        super.initCause(ex);
     }
 
     public ApiKeyException(String message) {
@@ -51,8 +51,8 @@ public class ApiKeyException extends Exception {
     }
 
     public ApiKeyException(String message, Throwable ex) {
+        super.initCause(ex);
         this.message = message;
-        this.initCause(ex);
     }
 
     /**
