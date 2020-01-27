@@ -12,9 +12,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ForbiddenException extends ApiKeyException {
 
     public ForbiddenException() {
-        super("Forbidden", "Operation is not allowed by this user");
+        super("Operation is not allowed by this user");
     }
 
+    public ForbiddenException(String actionName) {
+        super("Operation " + actionName + " is not allowed by this user");
+    }
+
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }

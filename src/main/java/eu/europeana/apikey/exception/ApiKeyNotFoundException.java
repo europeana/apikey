@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ApiKeyNotFoundException extends ApiKeyException {
 
     public ApiKeyNotFoundException(String id) {
-        super("Not found", "API key " + id + " does not exist.");
+        super("API key " + id + " does not exist.");
     }
 
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }

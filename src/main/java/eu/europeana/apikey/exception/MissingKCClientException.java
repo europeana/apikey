@@ -11,10 +11,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 public class MissingKCClientException extends ApiKeyException {
 
-    public MissingKCClientException(String kcClientId) {
-        super("Error retrieving client information", "Client " + kcClientId + " was not found in Keycloak");
+    public MissingKCClientException(String apiKey) {
+        super("Error retrieving client information", "No keycloak client was found for API key " + apiKey);
     }
 
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }

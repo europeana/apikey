@@ -1,9 +1,12 @@
 package eu.europeana.apikey.exception;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import eu.europeana.apikey.domain.View;
+
+import java.util.Date;
 
 
 /**
@@ -14,7 +17,8 @@ public class ApiKeyException extends Exception {
 
     @JsonView(View.Public.class)
     @JsonProperty("timestamp")
-    private Long timestamp = System.currentTimeMillis() / 1000L;
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private final Date timestamp = new Date();
 
     @JsonView(View.Public.class)
     @JsonProperty("status")
@@ -37,12 +41,12 @@ public class ApiKeyException extends Exception {
         this.initCause(ex);
     }
 
-    public ApiKeyException(String error) {
-        this.error = error;
+    public ApiKeyException(String message) {
+        this.message = message;
     }
 
     public ApiKeyException(String error, String message) {
-        this(error);
+        this.error = error;
         this.message = message;
     }
 
@@ -66,7 +70,7 @@ public class ApiKeyException extends Exception {
         return true; // default we log all stacktraces
     }
 
-    public Long getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 

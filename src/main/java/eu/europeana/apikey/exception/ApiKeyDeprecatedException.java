@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ApiKeyDeprecatedException extends ApiKeyException {
 
     public ApiKeyDeprecatedException(String id) {
-        super("API key is deprecated", "The API key " + id + " is deprecated!");
+        super("The API key " + id + " is deprecated!");
     }
 
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }

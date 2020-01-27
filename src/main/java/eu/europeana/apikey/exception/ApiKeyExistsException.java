@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ApiKeyExistsException extends ApiKeyException {
 
     public ApiKeyExistsException(String email, String appName) {
-        super("Key already exists", "There already is an API key registered with application name " + appName + " and email " + email+ ".");
+        super("There already is an API key registered with application name " + appName + " and email " + email+ ".");
     }
 
+    @Override
     public boolean doLogStacktrace() {
         return false;
     }
