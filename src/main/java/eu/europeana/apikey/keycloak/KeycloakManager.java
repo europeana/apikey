@@ -39,21 +39,24 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * Class for working with Keycloak
+ * Class for working with Keycloak and it's
+ * <a href="https://www.keycloak.org/docs-api/6.0/rest-api/index.html">Rest Admin API</a>.<br/>
  *
  * Note that there are 2 client id's used by keycloak:
- *  1. ClientId which is the same as an apikey (string)
- *  2. Id which is an internal id (hash) of the client. This is called "id of client (not clientId)" in the keycloak
- *  documentation and saved as keycloakId in an apikey object.
+ * <ol>
+ *     <li>ClientId which is the same as an apikey (string)</li>
+ *     <li>id which is an internal id (hash) of the client. This is called "id of client (not clientId)" in the keycloak
+ *  *  documentation and saved as keycloakId in an apikey object.</li>
+ * </ol>
  *  In other words:
- *       apiKey.getId().equals(keycloakClient.getClientId());
- *       apiKey.getKeycloakId.equals(keycloakClient.getId());
+ *  <code>
+ *    apiKey.getId().equals(keycloakClient.getClientId());
+ *    apiKey.getKeycloakId.equals(keycloakClient.getId());
+ *  </code>
+
  */
 @Service
 public class KeycloakManager {
@@ -357,8 +360,9 @@ public class KeycloakManager {
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received getClientSecret for {} from Keycloak", clientId);
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK,
-                                          response.getStatusLine().getReasonPhrase());
+                throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK +
+                        "Received " + response.getStatusLine().getStatusCode() +
+                        " - " + response.getStatusLine().getReasonPhrase());
             }
             try (InputStream is = response.getEntity().getContent()) {
                 secret = mapper.readValue(is, CredentialRepresentation.class).getValue();
@@ -402,8 +406,9 @@ public class KeycloakManager {
         try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
             LOG.debug("Received response for client {} from Keycloak: {}", clientRep.getId(), response);
             if (response.getStatusLine().getStatusCode() != expectedHttpStatus) {
-                throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK,
-                                          response.getStatusLine().getReasonPhrase());
+                throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK +
+                        "Received " + response.getStatusLine().getStatusCode() +
+                        " - " + response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
             throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
@@ -502,7 +507,9 @@ public class KeycloakManager {
                         ClientRepresentation.class);
                 return mapper.readValue(is, mapCollectionType);
             }
-            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, response.getStatusLine().getReasonPhrase());
+            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK +
+                    "Received " + response.getStatusLine().getStatusCode() +
+                    " - " + response.getStatusLine().getReasonPhrase());
         } catch (IOException e) {
             throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
         }
