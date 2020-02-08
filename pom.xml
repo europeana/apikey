@@ -2,20 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>eu.europeana</groupId>
-    <artifactId>apikey</artifactId>
-    <version>0.2-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <name>ApiKey Authentication Service</name>
-    <description>Europeana-wide API key and Authentication service</description>
-
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>europeana-parent-pom</artifactId>
         <version>2.1</version>
     </parent>
 
+    <artifactId>apikey</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <name>ApiKey Authentication Service</name>
+    <description>Europeana-wide API key and Authentication service</description>
 
     <properties>
         <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
