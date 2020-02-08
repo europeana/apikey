@@ -399,10 +399,12 @@ public class KeycloakManager {
     private void sendRequestToKeycloak(HttpUriRequest httpRequest,
                                        int expectedHttpStatus,
                                        ClientRepresentation clientRep) throws ApiKeyException {
-        LOG.debug("Sending {} request for API key {} (client {}) to Keycloak...",
-                  httpRequest.getMethod(),
-                  clientRep.getClientId(),
-                  clientRep.getId());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Sending {} request for API key {} (client {}) to Keycloak...",
+                    httpRequest.getMethod() + " " + httpRequest.getURI().getPath(),
+                    clientRep.getClientId(),
+                    clientRep.getId());
+        }
         try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
             LOG.debug("Received response for client {} from Keycloak: {}", clientRep.getId(), response);
             if (response.getStatusLine().getStatusCode() != expectedHttpStatus) {
