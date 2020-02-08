@@ -4,10 +4,10 @@
 
     <groupId>eu.europeana</groupId>
     <artifactId>apikey</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <name>ApiKey Auth Service</name>
+    <name>ApiKey Authentication Service</name>
     <description>Europeana-wide API key and Authentication service</description>
 
     <parent>
@@ -150,6 +150,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>android-json</artifactId>
+                    <groupId>com.vaadin.external.google</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -232,13 +238,6 @@
             <artifactId>jaxb-runtime</artifactId>
             <version>${jaxb-runtime.version}</version>
         </dependency>
-        <!-- customise HTTP error response; see github.com/zalando/problem-spring-web/ -->
-        <!--        <dependency>-->
-        <!--            <groupId>org.zalando</groupId>-->
-        <!--            <artifactId>problem-spring-web</artifactId>-->
-        <!--            <version>${problem-spring-web.version}</version>-->
-        <!--        </dependency>-->
-
     </dependencies>
 
     <build>
