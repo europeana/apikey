@@ -10,7 +10,7 @@
 
     <groupId>eu.europeana.apikey</groupId>
     <artifactId>apikey</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <packaging>war</packaging>
 
     <name>ApiKey Authentication Service</name>
@@ -20,7 +20,7 @@
         <connection>scm:git:git@github.com:europeana/apikey.git</connection>
         <developerConnection>scm:git:git@github.com:europeana/apikey.git</developerConnection>
         <url>https://github.com/europeana/apikey</url>
-        <tag>HEAD</tag>
+        <tag>apikey-0.1</tag>
     </scm>
 
     <properties>
