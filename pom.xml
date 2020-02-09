@@ -16,6 +16,13 @@
     <name>ApiKey Authentication Service</name>
     <description>Europeana-wide API key and Authentication service</description>
 
+    <scm>
+        <connection>scm:git:git@github.com:europeana/apikey.git</connection>
+        <developerConnection>scm:git:git@github.com:europeana/apikey.git</developerConnection>
+        <url>https://github.com/europeana/apikey</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <properties>
         <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
         <java.version>11</java.version>
