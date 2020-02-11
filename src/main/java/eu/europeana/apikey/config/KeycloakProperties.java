@@ -1,8 +1,11 @@
 package eu.europeana.apikey.config;
 
+import org.apache.logging.log4j.LogManager;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * Central location where all (or most) configuration settings are loaded.
@@ -29,6 +32,11 @@ public class KeycloakProperties {
         this.realm = realm;
         this.useResourceRoleMappings = useResourceRoleMappings;
         this.realmPublicKey = realmPublicKey;
+    }
+
+    @PostConstruct()
+    private void logImportantSettings() {
+        LogManager.getLogger(KeycloakProperties.class).info("Keycloak server {}, realm {}", authServerUrl, realm);
     }
 
 

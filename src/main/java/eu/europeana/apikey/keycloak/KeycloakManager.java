@@ -146,16 +146,18 @@ public class KeycloakManager {
                                            .build();
         AccessTokenResponse token;
         try {
+            LOG.debug("Retrieving access token for client {}...", clientId);
             token = keycloak.tokenManager().getAccessToken();
             if (token == null) {
+                LOG.error("No access token retrieved for client {}!", clientId);
                 return null;
             }
         } catch (RuntimeException anyException) {
-            LOG.error("Retrieving access token failed", anyException);
-            throw new AuthenticationServiceException("Retrieving access token failed");
+            throw new AuthenticationServiceException("Retrieving access token failed for client "+clientId, anyException);
         }
 
         try {
+            LOG.debug("Verifying access token for client {}...", clientId);
             AccessToken accessToken = keycloakTokenVerifier.verifyToken(token.getToken());
             if (accessToken != null) {
                 return new KeycloakPrincipal<>(clientId,
@@ -164,6 +166,7 @@ public class KeycloakManager {
         } catch (VerificationException e) {
             throw new KeycloakAuthenticationException("Authentication failed for client " + clientId, e);
         }
+        LOG.error("Verifying access token failed for client {}!", clientId);
         return null;
     }
 
