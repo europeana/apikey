@@ -123,7 +123,8 @@ public class ApiKeyController {
      *          HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity create(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key...");
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
@@ -165,7 +166,7 @@ public class ApiKeyController {
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
                  produces = MediaType.APPLICATION_JSON_VALUE,
-                 consumes = MediaType.APPLICATION_JSON_VALUE)
+                 consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest,
                                         @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key secured by captcha...");
@@ -290,9 +291,9 @@ public class ApiKeyController {
     @CrossOrigin(maxAge = 600)
     @PutMapping(value = "/{id}",
                 produces = MediaType.APPLICATION_JSON_VALUE,
-                consumes = MediaType.APPLICATION_JSON_VALUE)
+                consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ApiKey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apiKeyUpdate) throws
-                                                                                                 ApiKeyException {
+                                                                                         ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         checkMandatoryFields(apiKeyUpdate);
