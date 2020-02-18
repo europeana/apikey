@@ -121,6 +121,7 @@ public class ApiKeyController {
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
      *          HTTP 400 if apikey already exist for <email,appName>
+     * @throws ApiKeyException if there is any any issue in creating the APIKey
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE,
@@ -162,6 +163,7 @@ public class ApiKeyController {
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
      *          HTTP 400 if apikey already exist for <email,appName>
+     * @throws ApiKeyException if there is any any issue in creating the APIKey with captcha
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
@@ -255,6 +257,7 @@ public class ApiKeyController {
      *          HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
      *          HTTP 404 when the requested ApiKey is not found in the database
      *          HTTP 406 if a MIME type other than application/JSON was requested
+     * @throws ApiKeyException if there is any any issue in reading the APIKey
      */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
@@ -287,6 +290,7 @@ public class ApiKeyController {
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 410 if the apikey is invalidated / deprecated
      *          HTTP 415 if the submitted request does not contain a valid JSON body
+     * @throws ApiKeyException if there is any any issue in updating the APIKey
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(value = "/{id}",
@@ -320,6 +324,7 @@ public class ApiKeyController {
      *          HTTP 403 if the request is unauthorised
      *          HTTP 404 when the requested ApiKey is not found in the database
      *          HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
+     * @throws ApiKeyException if there is any any issue in disabling the APIKey
      *
      * Addionally, the field 'ApiKey-not-found' containing the string "apikey-not-found" will be available in the
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
@@ -357,6 +362,7 @@ public class ApiKeyController {
      *          HTTP 404 if the apikey is not found
      *          HTTP 406 if a response MIME type other than application/JSON was requested
      *          HTTP 415 if the submitted request does not contain a valid JSON body
+     * @throws ApiKeyException if there is any any issue in enabling the APIKey
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{id}/enable")
@@ -396,6 +402,7 @@ public class ApiKeyController {
      *          HTTP 401 in case of an invalid request
      *          HTTP 403 if the request is unauthorised
      *          HTTP 404 when the requested keycloak identifier is not found in the database
+     * @throws ApiKeyException if there is any any issue in deleting the APIKey
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{id}")
@@ -422,6 +429,7 @@ public class ApiKeyController {
      *          HTTP 401 in case of an invalid request
      *          HTTP 403 if the request is unauthorised
      *          HTTP 404 when the requested keycloak identifier is not found in the database
+     * @throws ForbiddenException if user is not authorized to perform the action
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/synchronize/{keycloakid}")
@@ -502,6 +510,7 @@ public class ApiKeyController {
      *          HTTP 400 bad request when header does not contain api key
      *          HTTP 401 in case of an unregistered api key
      *          HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
+     * @throws ApiKeyException if there is any any issue in validating the APIKey
      */
     @PostMapping(path = "/validate")
     public ResponseEntity validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
