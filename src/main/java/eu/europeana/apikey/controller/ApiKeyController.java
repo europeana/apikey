@@ -14,7 +14,6 @@ import eu.europeana.apikey.keycloak.KeycloakSecurityContext;
 import eu.europeana.apikey.mail.MailService;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -27,10 +26,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -124,10 +123,10 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity create(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+    public ResponseEntity create(@Validated @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key...");
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        checkMandatoryFields(newKeyRequest);
+        newKeyRequest = trimWhiteSpaces(newKeyRequest);
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
         return createClient(newKeyRequest, (KeycloakSecurityContext) kcAuthToken.getCredentials());
     }
@@ -167,12 +166,12 @@ public class ApiKeyController {
                  produces = MediaType.APPLICATION_JSON_VALUE,
                  consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest,
-                                        @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+                                        @Validated @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key secured by captcha...");
 
         // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we should do this after
         // we validated the input
-        checkMandatoryFields(newKeyRequest);
+        trimWhiteSpaces(newKeyRequest);
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
         // When no captcha token was supplied return 401
@@ -291,11 +290,11 @@ public class ApiKeyController {
     @PutMapping(value = "/{id}",
                 produces = MediaType.APPLICATION_JSON_VALUE,
                 consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiKey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apiKeyUpdate) throws
+    public ApiKey update(@PathVariable("id") String id, @Validated @RequestBody ApiKeyRequest apiKeyUpdate) throws
                                                                                                  ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        checkMandatoryFields(apiKeyUpdate);
+        trimWhiteSpaces(apiKeyUpdate);
 
         ApiKey key = checkKeyExists(id);
         checkKeyDeprecated(key);
@@ -596,31 +595,16 @@ public class ApiKeyController {
         }
     }
 
-    private void checkMandatoryFields(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
-        String            retval      = "Required parameter(s): ";
-        ArrayList<String> missingList = new ArrayList<>();
-        if (StringUtils.isBlank(apiKeyUpdate.getFirstName())) {
-            missingList.add("'firstName'");
-        }
-        if (StringUtils.isBlank(apiKeyUpdate.getLastName())) {
-            missingList.add("'lastName'");
-        }
-        if (StringUtils.isBlank(apiKeyUpdate.getEmail())) {
-            missingList.add("'email'");
-        }
-        if (StringUtils.isBlank(apiKeyUpdate.getAppName())) {
-            missingList.add("'appName'");
-        }
-        if (StringUtils.isBlank(apiKeyUpdate.getCompany())) {
-            missingList.add("'company'");
-        }
+    private ApiKeyRequest trimWhiteSpaces( ApiKeyRequest apiKeyUpdate)  {
 
-        if (!missingList.isEmpty()) {
-            throw new MissingDataException(MISSING_PARAMETER, retval + missingList + " not provided");
-        }
-        if (!EmailValidator.getInstance().isValid(apiKeyUpdate.getEmail())) {
-            throw new MissingDataException(BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
-        }
+         apiKeyUpdate = new ApiKeyRequest(StringUtils.trim(apiKeyUpdate.getFirstName()),
+                                      StringUtils.trim(apiKeyUpdate.getLastName()),
+                                      StringUtils.trim(apiKeyUpdate.getEmail()),
+                                      StringUtils.trim(apiKeyUpdate.getAppName()),
+                                      StringUtils.trim(apiKeyUpdate.getCompany()),
+                                      StringUtils.trim(apiKeyUpdate.getSector()),
+                                      StringUtils.trim(apiKeyUpdate.getWebsite()));
+         return apiKeyUpdate;
     }
 
     private ApiKey checkKeyExists(String id) throws ApiKeyNotFoundException {

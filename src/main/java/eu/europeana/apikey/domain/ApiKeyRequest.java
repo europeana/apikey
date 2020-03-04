@@ -2,6 +2,9 @@ package eu.europeana.apikey.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
 /**
@@ -9,11 +12,23 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  */
 @JsonInclude(NON_EMPTY)
 public class ApiKeyRequest {
+
+    @NotBlank(message = "'firstName'")
     private String firstName;
+
+    @NotBlank(message = "'lastName'")
     private String lastName;
+
+    @NotBlank(message = "'email'")
+    @Email(message = "emailNotValid")
     private String email;
+
+    @NotBlank(message = "'appname'")
     private String appName;
+
+    @NotBlank
     private String company;
+
     private String sector;
     private String website;
 
