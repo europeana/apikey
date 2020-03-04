@@ -126,6 +126,7 @@ public class ApiKeyController {
     public ResponseEntity create(@Validated @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key...");
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
+        // we trim all the whitespace in the input
         newKeyRequest = trimWhiteSpaces(newKeyRequest);
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
         return createClient(newKeyRequest, (KeycloakSecurityContext) kcAuthToken.getCredentials());
@@ -170,8 +171,8 @@ public class ApiKeyController {
         LOG.debug("Creating new API key secured by captcha...");
 
         // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we should do this after
-        // we validated the input
-        trimWhiteSpaces(newKeyRequest);
+        // we trim all the whitespace in the input
+        newKeyRequest = trimWhiteSpaces(newKeyRequest);
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
         // When no captcha token was supplied return 401
@@ -294,8 +295,8 @@ public class ApiKeyController {
                                                                                                  ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        trimWhiteSpaces(apiKeyUpdate);
-
+        // we trim all the whitespace in the input
+        apiKeyUpdate = trimWhiteSpaces(apiKeyUpdate);
         ApiKey key = checkKeyExists(id);
         checkKeyDeprecated(key);
 
