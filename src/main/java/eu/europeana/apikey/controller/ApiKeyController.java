@@ -54,8 +54,6 @@ public class ApiKeyController {
 
     private static final Logger LOG   = LogManager.getLogger(ApiKeyController.class);
 
-    private static final String MISSING_PARAMETER           = "missing parameter";
-    private static final String BAD_EMAIL_FORMAT            = "Email is not properly formatted.";
     private static final String APIKEY_NOT_REGISTERED       = "API key %s is not registered";
     private static final String APIKEY_MISSING              = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
     private static final String APIKEY_PATTERN              = "APIKEY\\s+([^\\s]+)";

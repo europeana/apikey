@@ -23,8 +23,7 @@ import java.util.ArrayList;
  * Created on 18 nov 2019
  */
 @ControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler
- {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger LOG = LogManager.getLogger(GlobalExceptionHandler.class);
     private static final String MISSING_PARAMETER    = " Required parameter(s): ";
@@ -59,9 +58,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler
       * @return ErrorResponse
       */
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers, HttpStatus status, WebRequest request) {
         ArrayList<String> missingList = new ArrayList<>();
-        String message = new String() ;
+        String message = "";
         for(ObjectError error : ex.getBindingResult().getAllErrors()) {
             if(StringUtils.equalsIgnoreCase(error.getDefaultMessage(), EMAIL_FORMAT_ERROR)) {
                 message = BAD_EMAIL_FORMAT;
