@@ -469,6 +469,16 @@ public class ApiKeyController {
         return synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKey);
     }
 
+    @GetMapping(path="/ping")
+    public ResponseEntity ping() throws ApiKeyException {
+        KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
+        if (keycloakManager.pingClientEndPoint((KeycloakSecurityContext) kcAuthToken.getCredentials())){
+            return new ResponseEntity(HttpStatus.I_AM_A_TEAPOT);
+        } else {
+            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
     private ResponseEntity synchronizeMissingClient(KeycloakSecurityContext securityContext, String apiKey) throws ApiKeyException {
         ApiKey apiClient = checkKeyExists(apiKey);
         LOG.debug("Verified that API key {} exists in database!", apiKey);

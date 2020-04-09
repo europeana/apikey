@@ -34,20 +34,6 @@ public class ApiKey {
     @JsonIgnore
     private String keycloakId;
 
-    @NotNull
-    @Column(name = "registrationdate")
-    @JsonProperty("registrationDate")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    @JsonView(View.Public.class)
-    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
-    private Date registrationDate;
-
-    @Size(max = 100)
-    @Column(name = "website")
-    @JsonProperty("website")
-    @JsonView(View.Public.class)
-    private String website;
-
     @Column(name = "activationdate")
     @JsonProperty("activationDate")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -69,11 +55,12 @@ public class ApiKey {
     @JsonView(View.Public.class)
     private String company;
 
-    @Size(max = 255)
-    @Column(name = "sector")
-    @JsonProperty("sector")
+    @Column(name = "deprecationdate")
+    @JsonProperty("deprecationDate")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
     @JsonView(View.Public.class)
-    private String sector;
+    private Date deprecationDate;
 
     @NotNull
     @Size(max = 100)
@@ -89,6 +76,13 @@ public class ApiKey {
     @JsonView(View.Public.class)
     private String firstName;
 
+    @Column(name = "lastaccessdate")
+    @JsonProperty("lastAccessDate")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @JsonView(View.Public.class)
+    private Date lastAccessDate;
+
     @NotNull
     @Size(max = 50)
     @Column(name = "lastname")
@@ -96,19 +90,25 @@ public class ApiKey {
     @JsonView(View.Public.class)
     private String lastName;
 
-    @Column(name = "deprecationdate")
-    @JsonProperty("deprecationDate")
+    @NotNull
+    @Column(name = "registrationdate")
+    @JsonProperty("registrationDate")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
     @JsonView(View.Public.class)
-    private Date deprecationDate;
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private Date registrationDate;
 
-    @Column(name = "lastaccessdate")
-    @JsonProperty("lastAccessDate")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @Size(max = 255)
+    @Column(name = "sector")
+    @JsonProperty("sector")
     @JsonView(View.Public.class)
-    private Date lastAccessDate;
+    private String sector;
+
+    @Size(max = 100)
+    @Column(name = "website")
+    @JsonProperty("website")
+    @JsonView(View.Public.class)
+    private String website;
 
     public ApiKey() {
         // default constructor required by JPA/Hibernate for deserialization

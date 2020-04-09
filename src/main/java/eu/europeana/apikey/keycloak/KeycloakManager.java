@@ -227,6 +227,11 @@ public class KeycloakManager {
         return newClient.getId();
     }
 
+    public boolean pingClientEndPoint(KeycloakSecurityContext securityContext) throws ApiKeyException {
+        return listClients(securityContext.getAccessTokenString());
+    }
+
+
     private ClientRepresentation createClient(KeycloakSecurityContext securityContext, String apiKey,
                                               ApiKeyRequest requestClient) throws ApiKeyException {
         // create keycloak client object to save
@@ -481,6 +486,21 @@ public class KeycloakManager {
     /**
      * Check whether the client with a given clientId (apiKey) exists in Keycloak
      *
+     * @param accessToken access token to authorize the request
+     * @return true when apiKey belongs to a valid client
+     * @throws ApiKeyException if this goes not as intended
+     */
+    private boolean listClients(String accessToken) throws ApiKeyException {
+        HttpGet                    httpGet = prepareGetListClients(accessToken);
+        LOG.debug("Retrieving list of clients...");
+        List<ClientRepresentation> clients = getClients(httpGet);
+        boolean result = (clients != null && !clients.isEmpty());
+        return result;
+    }
+
+    /**
+     * Check whether the client with a given clientId (apiKey) exists in Keycloak
+     *
      * @param apiKey   api key to use as client-id
      * @param accessToken access token to authorize the request
      * @return true when apiKey belongs to a valid client
@@ -518,6 +538,21 @@ public class KeycloakManager {
         } catch (IOException e) {
             throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
         }
+    }
+
+    /**
+     * Configure get request for getting a specific client with client-id equal to new api key
+     *
+     * @param accessToken access token to authorize request
+     * @return configured get request
+     */
+    private HttpGet prepareGetListClients(String accessToken) {
+        HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(
+            String.format(CLIENTS_ENDPOINT, kcProperties.getAuthServerUrl(), kcProperties.getRealm()))
+            .queryParam("viewableOnly", "true")
+            .build());
+        addAuthorizationHeader(accessToken, httpGet);
+        return httpGet;
     }
 
     /**
