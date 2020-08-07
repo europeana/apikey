@@ -171,6 +171,40 @@ public class KeycloakManager {
     }
 
     /**
+     * Create a new Apikey only, but check it for uniqueness against the existing Clients in Keycloak.
+     * An ApiKeyDetails object created by a user is used to gather all the client registration data.
+     * Instead of a Keycloak ID, we will create a random type-4 UUID as secret key.
+     *
+     * @param securityContext security context with access token
+     * @param requestClient object containing registration data from the original request
+     * @return new ApiKey object with all necessary fields, including the Keycloak ID aka "privateKey"
+     * @throws ApiKeyException when there is a failure
+     */
+    public ApiKeySecret createApikey(KeycloakSecurityContext securityContext,
+                                     ApiKeyRequest requestClient) throws ApiKeyException {
+        // ClientId must be unique
+        String newApiKey = generateClientId(securityContext);
+
+        // gather all data to sent back to user (so also secret)
+        ApiKeySecret result = new ApiKeySecret(
+                newApiKey,
+                requestClient.getFirstName(),
+                requestClient.getLastName(),
+                requestClient.getEmail(),
+                requestClient.getAppName(),
+                requestClient.getCompany(),
+                UUID.randomUUID().toString());
+        // set optional fields
+        if (StringUtils.isNotEmpty(requestClient.getWebsite())) {
+            result.setWebsite(requestClient.getWebsite());
+        }
+        if (StringUtils.isNotEmpty(requestClient.getSector())) {
+            result.setSector(requestClient.getSector());
+        }
+        return result;
+    }
+
+    /**
      * Create a new client in Keycloak. An ApiKeyDetails object created by a user is used to gather all the client
      * registration data.
      * Keycloak security context will be used to authorize Keycloak requests with access token. When a client is successfully
