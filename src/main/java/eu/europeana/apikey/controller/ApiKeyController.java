@@ -464,7 +464,7 @@ public class ApiKeyController {
      * WARNING: this will replace the existing client secret with a new one!
      */
     @PostMapping(path="/synchronize/missingClient/{apiKey}")
-    public ResponseEntity synchronizeMissingClient(@PathVariable String apiKey) throws ApiKeyException {
+    public ResponseEntity synchronizeMissingClient(@PathVariable("apiKey") String apiKey) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         return synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKey);
     }

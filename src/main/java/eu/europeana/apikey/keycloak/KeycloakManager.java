@@ -136,7 +136,7 @@ public class KeycloakManager {
      * @param clientSecret client secret used to authenticate the client in Keycloak
      * @return security context with configured admin client together with access and refresh tokens
      */
-    KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
+    public KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
         Keycloak keycloak = KeycloakBuilder.builder()
                                            .realm(kcProperties.getRealm())
                                            .serverUrl(kcProperties.getAuthServerUrl())

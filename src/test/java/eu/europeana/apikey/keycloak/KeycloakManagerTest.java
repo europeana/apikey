@@ -25,9 +25,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
@@ -37,8 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-//@RunWith(SpringJUnit4ClassRunner.class)
-@RunWith(SpringRunner.class)
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.*", "com.sun.org.apache.xerces.*", "org.xml.*", "org.w3c.dom.*"})
 @SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
 public class KeycloakManagerTest {
 
@@ -167,21 +169,18 @@ public class KeycloakManagerTest {
     @InjectMocks
     private KeycloakManager keycloakManager = new KeycloakManager(kcProperties);
 
-    // TODO temporarily disabled because I could not get this test working under Java 11 & Powermock
-    // TODO within reasonable time
 
-//    @PrepareForTest({KeycloakBuilder.class, KeycloakTokenVerifier.class})
-//    @Test
-//    public void authenticateClient() throws VerificationException {
-//        prepareForAuthentication();
-//
-//        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(CLIENT_ID, CLIENT_SECRET);
-//
-//        Assert.assertNotNull(principal);
-//        Assert.assertNotNull(principal.getKeycloakSecurityContext());
-//        Assert.assertEquals(accessToken, principal.getKeycloakSecurityContext().getAccessToken());
-//        Assert.assertEquals(ACCESS_TOKEN_STRING, principal.getKeycloakSecurityContext().getAccessTokenString());
-//    }
+    @PrepareForTest({KeycloakBuilder.class, KeycloakTokenVerifier.class})
+    @Test
+    public void authenticateClient() throws VerificationException {
+        prepareForAuthentication();
+
+        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakManager.authenticateClient(CLIENT_ID, CLIENT_SECRET);
+        Assert.assertNotNull(principal);
+        Assert.assertNotNull(principal.getKeycloakSecurityContext());
+        Assert.assertEquals(accessToken, principal.getKeycloakSecurityContext().getAccessToken());
+        Assert.assertEquals(ACCESS_TOKEN_STRING, principal.getKeycloakSecurityContext().getAccessTokenString());
+    }
 
     private void prepareForAuthentication() throws VerificationException {
         KeycloakBuilder keycloakBuilder = Mockito.mock(KeycloakBuilder.class);
@@ -199,8 +198,7 @@ public class KeycloakManagerTest {
         AccessTokenResponse tokenResponse = Mockito.mock(AccessTokenResponse.class);
         Mockito.when(tokenManager.getAccessToken()).thenReturn(tokenResponse);
         Mockito.when(tokenResponse.getToken()).thenReturn(ACCESS_TOKEN_STRING);
-//        PowerMockito.mockStatic(KeycloakTokenVerifier.class);
-//        Mockito.when(KeycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
+        Mockito.when(keycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
     }
 
     @Test(timeout = 2000)
@@ -209,7 +207,6 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
         ApiKeySecret apiKey = keycloakManager.createClient(securityContext, apiKeyCreate);
-
         Assert.assertNotNull(apiKey);
         Assert.assertEquals(apiKeyCreate.getFirstName(), apiKey.getFirstName());
         Assert.assertEquals(apiKeyCreate.getLastName(), apiKey.getLastName());
