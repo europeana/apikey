@@ -25,7 +25,7 @@
     <properties>
         <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
         <java.version>11</java.version>
-        <keycloak.version>4.8.3.Final</keycloak.version>
+        <keycloak.version>10.0.2</keycloak.version>
         <spring-security-test.version>5.2.1.RELEASE</spring-security-test.version>
 
         <mockito.version>3.1.0</mockito.version>
@@ -149,6 +149,7 @@
             <artifactId>keycloak-spring-boot-adapter-core</artifactId>
             <version>${keycloak.version}</version>
         </dependency>
+
 
         <!-- test dependencies -->
         <dependency>

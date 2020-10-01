@@ -30,6 +30,7 @@ import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
@@ -76,6 +77,16 @@ public class KeycloakManager {
      * Template for clients endpoint
      */
     private static final String CLIENTS_ENDPOINT = "%s/admin/realms/%s/clients";
+
+    /**
+     * Template for users endpoint
+     */
+    private static final String USERS_ENDPOINT = "%s/admin/realms/%s/users";
+
+    /**
+     * Template for users delete endpoint
+     */
+    private static final String USERS_DELETE_ENDPOINT = "%s/admin/realms/%s/users/%s";
 
     /**
      * Template for client-secret endpoint
@@ -125,6 +136,42 @@ public class KeycloakManager {
         } catch (IOException e) {
             LOG.error("Closing http client failed", e);
         }
+    }
+
+    KeycloakPrincipal<KeycloakSecurityContext> authenticateUser(String username, String password, String clientId,
+                                                                String grantType) {
+        Keycloak keycloak = KeycloakBuilder.builder()
+                                           .realm(kcProperties.getRealm())
+                                           .serverUrl(kcProperties.getAuthServerUrl())
+                                           .username(username)
+                                           .password(password)
+                                           .clientId(clientId)
+                                           .grantType(grantType)
+                                           .build();
+        AccessTokenResponse token;
+        try {
+            LOG.debug("Retrieving access token for user {}...", username);
+            token = keycloak.tokenManager().getAccessToken();
+            if (token == null) {
+                LOG.error("No access token retrieved for user {}!", username);
+                return null;
+            }
+        } catch (RuntimeException eek) {
+            throw new AuthenticationServiceException("Retrieving access token failed for user " + username, eek);
+        }
+
+        try {
+            LOG.debug("Verifying access token for user {}...", username);
+            AccessToken accessToken = keycloakTokenVerifier.verifyToken(token.getToken());
+            if (accessToken != null) {
+                return new KeycloakPrincipal<>(username,
+                                               new KeycloakSecurityContext(keycloak, accessToken, token.getToken(), keycloakTokenVerifier));
+            }
+        } catch (VerificationException e) {
+            throw new KeycloakAuthenticationException("Authentication failed for user " + username, e);
+        }
+        LOG.error("Verifying access token failed for user {}!", username);
+        return null;
     }
 
     /**
@@ -496,6 +543,22 @@ public class KeycloakManager {
     }
 
     /**
+     * Configure get request for getting a specific client with client-id equal to new api key
+     *
+     * @param apiKey api key used as keycloak clientId
+     * @param accessToken access token to authorize request
+     * @return configured get request
+     */
+    private HttpGet prepareGetClientRequest(String apiKey, String accessToken) {
+        HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(
+                String.format(CLIENTS_ENDPOINT, kcProperties.getAuthServerUrl(), kcProperties.getRealm()))
+                                                        .queryParam("clientId", apiKey)
+                                                        .build());
+        addAuthorizationHeader(accessToken, httpGet);
+        return httpGet;
+    }
+
+    /**
      * Retrieve a list of clients using a configured get request.
      *
      * @param httpGet get request
@@ -527,13 +590,38 @@ public class KeycloakManager {
      * @param accessToken access token to authorize request
      * @return configured get request
      */
-    private HttpGet prepareGetClientRequest(String apiKey, String accessToken) {
+    private HttpGet prepareGetUserRequest(String userId, String adminToken) {
         HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(
-                String.format(CLIENTS_ENDPOINT, kcProperties.getAuthServerUrl(), kcProperties.getRealm()))
-                    .queryParam("clientId", apiKey)
-                    .build());
-        addAuthorizationHeader(accessToken, httpGet);
+                String.format(USERS_ENDPOINT, kcProperties.getAuthServerUrl(), kcProperties.getRealm()))
+                                                        .queryParam("clientId", userId)
+                                                        .build());
+        addAuthorizationHeader(adminToken, httpGet);
         return httpGet;
+    }
+
+    /**
+     * Retrieve a list of users using a configured get request.
+     *
+     * @param httpGet get request
+     * @return a list of retrieved users
+     * @throws ApiKeyException in case keycloak refuses to communicate
+     */
+    private List<UserRepresentation> getUsers(HttpGet httpGet) throws ApiKeyException {
+        LOG.debug("Sending getUsers to Keycloak...");
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            LOG.debug("Received getUsers from Keycloak");
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                InputStream is = response.getEntity().getContent();
+                CollectionType mapCollectionType = mapper.getTypeFactory().constructCollectionType(List.class,
+                                                                                                   UserRepresentation.class);
+                return mapper.readValue(is, mapCollectionType);
+            }
+            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK +
+                                      "Received " + response.getStatusLine().getStatusCode() +
+                                      " - " + response.getStatusLine().getReasonPhrase());
+        } catch (IOException e) {
+            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
+        }
     }
 
     /**

@@ -18,6 +18,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.requiresChannel().requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
             .requiresSecure().and()
+            .authorizeRequests().antMatchers("/user/**").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll().and()
@@ -41,7 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             auth.authenticationProvider(this.authenticationProvider);
         }
 
-        private CustomKeycloakAuthenticationProvider authenticationProvider;
+        private final CustomKeycloakAuthenticationProvider authenticationProvider;
 
         public WebSecurityConfiguration(CustomKeycloakAuthenticationProvider authenticationProvider) {
             this.authenticationProvider = authenticationProvider;

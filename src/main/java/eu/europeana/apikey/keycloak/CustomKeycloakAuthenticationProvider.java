@@ -33,6 +33,19 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         return null;
     }
 
+    // this is for the admin user authentication
+    public Authentication authenticate(String username, String password, String clientId, String grantType) {
+        LOG.debug("Authenticating user {}", username);
+        KeycloakPrincipal<KeycloakSecurityContext> principal =
+                keycloakManager.authenticateUser(username, password, clientId, grantType);
+        if (principal != null) {
+            return new KeycloakAuthenticationToken(principal,
+                                                   keycloakManager.getAuthorities(principal.getKeycloakSecurityContext().getAccessToken()));
+        }
+        LOG.info("Authentication for user {} failed!", username);
+        return null;
+    }
+
     @Override
     public Authentication authenticate(Authentication authentication) {
         return authenticate(authentication.getName(), authentication.getCredentials().toString());
