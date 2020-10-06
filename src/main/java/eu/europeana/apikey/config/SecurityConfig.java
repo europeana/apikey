@@ -18,6 +18,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.requiresChannel().requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
             .requiresSecure().and()
+            .authorizeRequests().antMatchers(HttpMethod.GET,"/user/hello/**").permitAll().and()
+//            .authorizeRequests().antMatchers(HttpMethod.DELETE,"/user/delete").permitAll().and()
             .authorizeRequests().antMatchers("/user/**").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll().and()
             .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll().and()

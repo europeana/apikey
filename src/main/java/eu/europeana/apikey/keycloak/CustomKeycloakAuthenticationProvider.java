@@ -21,7 +21,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         this.keycloakManager = keycloakManager;
     }
 
-    public Authentication authenticate(String clientId, String clientSecret) {
+    public Authentication authenticateAdminUser(String clientId, String clientSecret) {
         LOG.debug("Authenticating client {}", clientId);
         KeycloakPrincipal<KeycloakSecurityContext> principal =
                 keycloakManager.authenticateClient(clientId, clientSecret);
@@ -34,10 +34,10 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
     }
 
     // this is for the admin user authentication
-    public Authentication authenticate(String username, String password, String clientId, String grantType) {
+    public Authentication authenticateAdminUser(String username, String password, String clientId, String grantType) {
         LOG.debug("Authenticating user {}", username);
         KeycloakPrincipal<KeycloakSecurityContext> principal =
-                keycloakManager.authenticateUser(username, password, clientId, grantType);
+                keycloakManager.authenticateAdminUser(username, password, clientId, grantType);
         if (principal != null) {
             return new KeycloakAuthenticationToken(principal,
                                                    keycloakManager.getAuthorities(principal.getKeycloakSecurityContext().getAccessToken()));
@@ -48,7 +48,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
 
     @Override
     public Authentication authenticate(Authentication authentication) {
-        return authenticate(authentication.getName(), authentication.getCredentials().toString());
+        return authenticateAdminUser(authentication.getName(), authentication.getCredentials().toString());
     }
 
     @Override

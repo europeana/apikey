@@ -52,12 +52,24 @@ public class KeycloakTokenVerifier {
     /**
      * Verify JWT token with the realm public key. Return an AccessToken that can be used to authorize further requests.
      *
-     * @param token base64 encoded JWT token
+     * @param tokenString base64 encoded JWT token
      * @return access token object
      * @throws VerificationException
      */
-    AccessToken verifyToken(String token) throws VerificationException {
-        TokenVerifier<AccessToken> verifier = TokenVerifier.create(token, AccessToken.class);
+    AccessToken verifyToken(String tokenString) throws VerificationException {
+        TokenVerifier<AccessToken> verifier = TokenVerifier.create(tokenString, AccessToken.class);
         return verifier.publicKey(publicKey).verify().getToken();
     }
+
+    /**
+     * Retrieve the accesstoken from the user token
+     *
+     * @param tokenString base64 encoded JWT token
+     * @return access token object
+     * @throws VerificationException
+     */
+    AccessToken getNameFromToken(String tokenString) throws VerificationException {
+        return TokenVerifier.create(tokenString, AccessToken.class).getToken();
+    }
+
 }
