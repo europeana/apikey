@@ -1,6 +1,5 @@
 package eu.europeana.apikey.controller;
 
-import eu.europeana.apikey.captcha.CaptchaManager;
 import eu.europeana.apikey.exception.*;
 import eu.europeana.apikey.keycloak.*;
 import eu.europeana.apikey.mail.MailService;
@@ -10,7 +9,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -24,11 +22,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
 
 /**
  * Handles incoming requests to delete Keycloak users
@@ -43,10 +38,20 @@ public class UserController {
 
     private static final Logger LOG = LogManager.getLogger(UserController.class);
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
-    private final MailService                          emailService;
-    private final SimpleMailMessage                    apiKeyCreatedMail;
     private final KeycloakUserManager                  keycloakUserManager;
-    private final String slackMessageBody = "{\"text\":\"User account with ID: %s, email %s has been deleted from Keycloak.\"}";
+
+    private final String slackMessageBody = "{\"text\":\"The following user %s has requested their account to be removed.\\n\\n" +
+    "Please remove their data from the following systems:\\n\\n" +
+    "[%s] Keycloak\\n" +
+    "[%s] The User Sets API\\n" +
+    "[:x:] The recommendation engine\\n" +
+    "[:x:] Mailchimp\\n\\n" +
+    "The date of their request is %tc. You have until 30 days from this date to action this request.\"}";
+
+
+    private static final String ERROR_ICON = ":x:";
+    private static final String OK_ICON = ":heavy_check_mark:";
+
     @Value("${keycloak.user.admin.username}")
     private String adminUserName;
 
@@ -70,8 +75,6 @@ public class UserController {
                           SimpleMailMessage apiKeyCreatedMail,
                           KeycloakUserManager keycloakUserManager) {
         this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
-        this.emailService = emailService;
-        this.apiKeyCreatedMail = apiKeyCreatedMail;
         this.keycloakUserManager = keycloakUserManager;
     }
 
@@ -102,7 +105,8 @@ public class UserController {
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/delete")
     public ResponseEntity<HttpStatus> delete(HttpServletRequest request) throws ApiKeyException {
-
+        String kcDelIcon   = ERROR_ICON;
+        String setsDelIcon = ERROR_ICON;
         String userToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         KeycloakAuthenticationToken adminAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminUser(
@@ -118,12 +122,13 @@ public class UserController {
         String userId = keycloakUserManager.extractUserId(userToken);
 
         if (StringUtils.isNotBlank(userId)) {
+            kcDelIcon = OK_ICON;
             UserRepresentation userRep = keycloakUserManager.userDetails(userId,
                                                                          (KeycloakSecurityContext) adminAuthToken.getCredentials());
 
             LOG.info("Deleting user with ID: {}, name: {}", userId, userRep.getUsername());
             keycloakUserManager.deleteUser(userId, (KeycloakSecurityContext) adminAuthToken.getCredentials());
-            if (!sendSlackMessage(userId, userRep.getEmail())){
+            if (!sendSlackMessage(userRep.getEmail(), kcDelIcon, setsDelIcon)){
                 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
             }
         }
@@ -134,16 +139,17 @@ public class UserController {
     /**
      * Configure post request sending the User delete confirmation to Slack
      *
-     * @param userId api key used as keycloak userId
      * @param email  access token to authorize request
-     * @return configured HttpGet request
+     * @param kcDelIcon  string containing Slack code for success or failure deleting KC user
+     * @param setsDelIcon  string containing Slack code for success or failure deleting user sets
+     * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendSlackMessage(String userId, String email) {
+    private boolean sendSlackMessage(String email, String kcDelIcon, String setsDelIcon) {
         StringEntity        entity;
         CloseableHttpClient client   = HttpClients.createDefault();
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
-        String json = String.format(slackMessageBody, userId, email);
+        String json = String.format(slackMessageBody, email, kcDelIcon, setsDelIcon, new Date());
 
         try {
             entity = new StringEntity(json);
