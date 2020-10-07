@@ -15,19 +15,23 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
 
     private static final Logger LOG = LogManager.getLogger(CustomKeycloakAuthenticationProvider.class);
 
-    private KeycloakManager keycloakManager;
+    private final KeycloakClientManager keycloakClientManager;
+    private final KeycloakUserManager   keycloakUserManager;
 
-    public CustomKeycloakAuthenticationProvider(KeycloakManager keycloakManager) {
-        this.keycloakManager = keycloakManager;
+    public CustomKeycloakAuthenticationProvider(KeycloakClientManager keycloakClientManager,
+                                                KeycloakUserManager keycloakUserManager) {
+        this.keycloakClientManager = keycloakClientManager;
+        this.keycloakUserManager = keycloakUserManager;
     }
 
     public Authentication authenticateAdminUser(String clientId, String clientSecret) {
         LOG.debug("Authenticating client {}", clientId);
-        KeycloakPrincipal<KeycloakSecurityContext> principal =
-                keycloakManager.authenticateClient(clientId, clientSecret);
+        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakClientManager.authenticateClient(clientId,
+                                                                                                        clientSecret);
         if (principal != null) {
             return new KeycloakAuthenticationToken(principal,
-                    keycloakManager.getAuthorities(principal.getKeycloakSecurityContext().getAccessToken()));
+                                                   keycloakClientManager.getAuthorities(principal.getKeycloakSecurityContext()
+                                                                                                 .getAccessToken()));
         }
         LOG.info("Authentication for client {} failed!", clientId);
         return null;
@@ -36,11 +40,14 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
     // this is for the admin user authentication
     public Authentication authenticateAdminUser(String username, String password, String clientId, String grantType) {
         LOG.debug("Authenticating user {}", username);
-        KeycloakPrincipal<KeycloakSecurityContext> principal =
-                keycloakManager.authenticateAdminUser(username, password, clientId, grantType);
+        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakUserManager.authenticateAdminUser(username,
+                                                                                                         password,
+                                                                                                         clientId,
+                                                                                                         grantType);
         if (principal != null) {
             return new KeycloakAuthenticationToken(principal,
-                                                   keycloakManager.getAuthorities(principal.getKeycloakSecurityContext().getAccessToken()));
+                                                   keycloakClientManager.getAuthorities(principal.getKeycloakSecurityContext()
+                                                                                                 .getAccessToken()));
         }
         LOG.info("Authentication for user {} failed!", username);
         return null;

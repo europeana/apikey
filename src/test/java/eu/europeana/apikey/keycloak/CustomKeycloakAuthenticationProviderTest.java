@@ -28,7 +28,7 @@ public class CustomKeycloakAuthenticationProviderTest {
     private static final String RESOURCE_ACCESS       = "access";
 
     @Mock
-    private KeycloakManager keycloakManager;
+    private KeycloakClientManager keycloakClientManager;
 
     @InjectMocks
     private CustomKeycloakAuthenticationProvider authenticationProvider;
@@ -57,7 +57,7 @@ public class CustomKeycloakAuthenticationProviderTest {
     }
 
     private KeycloakSecurityContext prepareForResourceRoleMappings() {
-        ReflectionTestUtils.setField(keycloakManager, "useResourceRoleMappings", true);
+        ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", true);
         KeycloakSecurityContext                    securityContext = Mockito.mock(KeycloakSecurityContext.class);
         KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(MANAGER_CLIENT_ID,
                                                                                              securityContext);
@@ -70,9 +70,9 @@ public class CustomKeycloakAuthenticationProviderTest {
         roles.add(ROLE_CREATE_CLIENT);
         Mockito.when(access.getRoles()).thenReturn(roles);
         Mockito.when(accessToken.getResourceAccess()).thenReturn(accessMap);
-        Mockito.when(keycloakManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
                .thenReturn(principal);
-        Mockito.when(keycloakManager.getAuthorities(Mockito.any(AccessToken.class))).thenCallRealMethod();
+        Mockito.when(keycloakClientManager.getAuthorities(Mockito.any(AccessToken.class))).thenCallRealMethod();
         return securityContext;
     }
 
@@ -100,7 +100,7 @@ public class CustomKeycloakAuthenticationProviderTest {
     }
 
     private KeycloakSecurityContext prepareForRealmAccess() {
-        ReflectionTestUtils.setField(keycloakManager, "useResourceRoleMappings", false);
+        ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", false);
         KeycloakSecurityContext                    securityContext = Mockito.mock(KeycloakSecurityContext.class);
         KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(MANAGER_CLIENT_ID,
                                                                                              securityContext);
@@ -111,9 +111,9 @@ public class CustomKeycloakAuthenticationProviderTest {
         roles.add(ROLE_CREATE_CLIENT);
         Mockito.when(access.getRoles()).thenReturn(roles);
         Mockito.when(accessToken.getRealmAccess()).thenReturn(access);
-        Mockito.when(keycloakManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
                .thenReturn(principal);
-        Mockito.when(keycloakManager.getAuthorities(Mockito.any(AccessToken.class))).thenCallRealMethod();
+        Mockito.when(keycloakClientManager.getAuthorities(Mockito.any(AccessToken.class))).thenCallRealMethod();
         return securityContext;
     }
 
@@ -121,7 +121,7 @@ public class CustomKeycloakAuthenticationProviderTest {
     public void authenticateFailed() {
         Authentication authentication = new UsernamePasswordAuthenticationToken(MANAGER_CLIENT_ID,
                                                                                 MANAGER_CLIENT_SECRET);
-        Mockito.when(keycloakManager.authenticateClient(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
+        Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
 
         Authentication authenticatedToken = authenticationProvider.authenticate(authentication);
 

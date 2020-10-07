@@ -40,7 +40,7 @@ import java.util.List;
 //@RunWith(SpringJUnit4ClassRunner.class)
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
-public class KeycloakManagerTest {
+public class KeycloakClientManagerTest {
 
 
     private static final String CREDENTIAL_REPRESENTATION = "{\n" +
@@ -165,7 +165,7 @@ public class KeycloakManagerTest {
                                                                      REALM_PUBLIC_KEY);
 
     @InjectMocks
-    private KeycloakManager keycloakManager = new KeycloakManager(kcProperties);
+    private KeycloakClientManager keycloakClientManager = new KeycloakClientManager(kcProperties);
 
     // TODO temporarily disabled because I could not get this test working under Java 11 & Powermock
     // TODO within reasonable time
@@ -208,7 +208,7 @@ public class KeycloakManagerTest {
         ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
 
-        ApiKeySecret apiKey = keycloakManager.createClient(securityContext, apiKeyCreate);
+        ApiKeySecret apiKey = keycloakClientManager.createClient(securityContext, apiKeyCreate);
 
         Assert.assertNotNull(apiKey);
         Assert.assertEquals(apiKeyCreate.getFirstName(), apiKey.getFirstName());
@@ -285,7 +285,7 @@ public class KeycloakManagerTest {
     public void getAuthoritiesForRealm() throws VerificationException {
         AccessToken                  accessToken         = prepareVerifier();
         List<String>                 roles               = prepareRoles(false);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
 
         Assert.assertNotNull(authorityCollection);
         Assert.assertFalse(authorityCollection.isEmpty());
@@ -298,7 +298,7 @@ public class KeycloakManagerTest {
     public void getAuthoritiesForResource() throws VerificationException {
         AccessToken                  accessToken         = prepareVerifier();
         List<String>                 roles               = prepareRoles(true);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
 
         Assert.assertNotNull(authorityCollection);
         Assert.assertFalse(authorityCollection.isEmpty());
@@ -310,7 +310,7 @@ public class KeycloakManagerTest {
     private List<String> prepareRoles(boolean useResourceRoleMappings) {
         List<String> roles = new ArrayList<>();
         if (useResourceRoleMappings) {
-            ReflectionTestUtils.setField(keycloakManager, "useResourceRoleMappings", true);
+            ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", true);
             roles.add("uma_protection");
             roles.add("view-realm");
             roles.add("view-identity-providers");
@@ -352,7 +352,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isOwner(CLIENT_ID, keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isOwner(CLIENT_ID, keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
     }
@@ -364,7 +364,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isOwner("other key", keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isOwner("other key", keycloakAuthenticationToken);
 
         Assert.assertFalse(authorized);
     }
@@ -375,12 +375,12 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext     securityContext             = Mockito.mock(KeycloakSecurityContext.class);
         AccessToken                 accessToken                 = prepareVerifier();
         prepareRoles(true);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
         Mockito.when(keycloakAuthenticationToken.getAuthorities()).thenReturn(authorityCollection);
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn("manager");
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
     }
@@ -392,7 +392,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertFalse(authorized);
     }
@@ -402,7 +402,7 @@ public class KeycloakManagerTest {
         ApiKeyRequest           apiKeyDetails   = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
-        keycloakManager.updateClient(securityContext, apiKeyDetails, CLIENT_ID);
+        keycloakClientManager.updateClient(securityContext, apiKeyDetails, CLIENT_ID);
     }
 
     @Test
@@ -410,7 +410,7 @@ public class KeycloakManagerTest {
         ApiKeyRequest           apiKeyUpdate    = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
-        keycloakManager.updateClient(securityContext, apiKeyUpdate, CLIENT_ID);
+        keycloakClientManager.updateClient(securityContext, apiKeyUpdate, CLIENT_ID);
     }
 
     private KeycloakSecurityContext prepareForUpdateClient(boolean existing, boolean enabled) throws IOException {
@@ -464,25 +464,25 @@ public class KeycloakManagerTest {
     @Test(expected = ApiKeyException.class)
     public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-        keycloakManager.disableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.disableClient(CLIENT_ID, securityContext);
     }
 
     @Test
     public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
-        keycloakManager.disableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.disableClient(CLIENT_ID, securityContext);
     }
 
     @Test(expected = ApiKeyException.class)
     public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-        keycloakManager.enableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.enableClient(CLIENT_ID, securityContext);
     }
 
     @Test
     public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
-        keycloakManager.enableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.enableClient(CLIENT_ID, securityContext);
     }
 
 }

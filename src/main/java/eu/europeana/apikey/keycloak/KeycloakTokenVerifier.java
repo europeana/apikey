@@ -62,13 +62,13 @@ public class KeycloakTokenVerifier {
     }
 
     /**
-     * Retrieve the accesstoken from the user token
+     * Retrieve the user token from the token string
      *
      * @param tokenString base64 encoded JWT token
-     * @return access token object
+     * @return user token
      * @throws VerificationException
      */
-    AccessToken getNameFromToken(String tokenString) throws VerificationException {
+    AccessToken retrieveUserToken(String tokenString) throws VerificationException {
         return TokenVerifier.create(tokenString, AccessToken.class).getToken();
     }
 

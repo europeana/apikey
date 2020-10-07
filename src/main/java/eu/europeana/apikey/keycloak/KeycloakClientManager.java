@@ -30,7 +30,6 @@ import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
@@ -59,8 +58,8 @@ import java.util.*;
  *  </code>
  */
 @Service
-public class KeycloakManager {
-    private static final Logger LOG = LogManager.getLogger(KeycloakManager.class);
+public class KeycloakClientManager {
+    private static final Logger LOG = LogManager.getLogger(KeycloakClientManager.class);
 
     private static final String MASTER_REALM = "master";
 
@@ -80,16 +79,6 @@ public class KeycloakManager {
     private static final String CLIENTS_ENDPOINT = "%s/admin/realms/%s/clients";
 
     /**
-     * Template for users endpoint
-     */
-    private static final String USERS_ENDPOINT = "%s/admin/realms/%s/users";
-
-    /**
-     * Template for users delete endpoint
-     */
-    private static final String USERS_DELETE_ENDPOINT = "%s/admin/realms/%s/users/%s";
-
-    /**
      * Template for client-secret endpoint
      */
     private static final String CLIENT_SECRET_ENDPOINT = "%s/admin/realms/%s/clients/%s/client-secret";
@@ -105,22 +94,24 @@ public class KeycloakManager {
     private static final String MANAGE_CLIENTS_ROLE = "manage-clients";
 
     private static final String ERROR_COMMUNICATING_WITH_KEYCLOAK = "Error communicating with Keycloak";
+
+    private static final String RECEIVED = ": received ";
+
+
     /**
      * Object mapper used for serialization and deserialization Keycloak objects to / from json
      */
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final KeycloakTokenVerifier keycloakTokenVerifier;
-    private final KeycloakTokenVerifier keycloakMasterTokenVerifier;
-    private final KeycloakProperties kcProperties;
+    private final        ObjectMapper          mapper                            = new ObjectMapper();
+    private final        KeycloakTokenVerifier keycloakTokenVerifier;
+    private final        KeycloakProperties    kcProperties;
     /**
      * Http client used for communicating with Keycloak where Keycloak admin client is not appropriate
      */
-    private CloseableHttpClient httpClient;
+    private              CloseableHttpClient   httpClient;
 
-    public KeycloakManager(KeycloakProperties kcProperties) {
+    public KeycloakClientManager(KeycloakProperties kcProperties) {
         this.kcProperties = kcProperties;
         this.keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties.getRealmPublicKey());
-        this.keycloakMasterTokenVerifier = new KeycloakTokenVerifier(kcProperties.getMasterPublicKey());
     }
 
     @PostConstruct
@@ -135,47 +126,6 @@ public class KeycloakManager {
         } catch (IOException e) {
             LOG.error("Closing http client failed", e);
         }
-    }
-
-    KeycloakPrincipal<KeycloakSecurityContext> authenticateAdminUser(String username,
-                                                                     String password,
-                                                                     String clientId,
-                                                                     String grantType) {
-        Keycloak keycloak = KeycloakBuilder.builder()
-                                           .realm(MASTER_REALM)
-                                           .serverUrl(kcProperties.getAuthServerUrl())
-                                           .username(username)
-                                           .password(password)
-                                           .clientId(clientId)
-                                           .grantType(grantType)
-                                           .build();
-        AccessTokenResponse accessTokenResponse;
-        try {
-            LOG.debug("Retrieving access token for user {}...", username);
-            accessTokenResponse = keycloak.tokenManager().getAccessToken();
-            if (accessTokenResponse == null) {
-                LOG.error("No access token retrieved for user {}!", username);
-                return null;
-            }
-        } catch (RuntimeException eek) {
-            throw new AuthenticationServiceException("Retrieving access token failed for user " + username, eek);
-        }
-
-        try {
-            LOG.debug("Verifying access token for user {}...", username);
-            AccessToken accessToken = keycloakMasterTokenVerifier.verifyToken(accessTokenResponse.getToken());
-            if (accessToken != null) {
-                return new KeycloakPrincipal<>(username,
-                                               new KeycloakSecurityContext(keycloak,
-                                                                           accessToken,
-                                                                           accessTokenResponse.getToken(),
-                                                                           keycloakTokenVerifier));
-            }
-        } catch (VerificationException e) {
-            throw new KeycloakAuthenticationException("Verification failed for user " + username, e);
-        }
-        LOG.error("Verifying access token failed for user {}!", username);
-        return null;
     }
 
     /**
@@ -310,7 +260,7 @@ public class KeycloakManager {
                                                                                   kcProperties.getRealm())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPost);
         addRequestEntity(toCreate, httpPost);
-        sendRequestToKeycloak(httpPost, HttpStatus.SC_CREATED, toCreate);
+        sendClientRequestToKeycloak(httpPost, HttpStatus.SC_CREATED, toCreate);
         LOG.debug("Client {} was created", apiKey);
 
         return getClientSecret(apiKey, securityContext);
@@ -331,24 +281,6 @@ public class KeycloakManager {
                                                                                                                  ApiKeyException {
         ClientRepresentation clientRepresentation = getClientRepresentation(apiKey, securityContext);
         updateClient(updateClientRepresentation(clientRepresentation, apiKeyUpdate), securityContext);
-    }
-
-    /**
-     * Deletes a client from Keycloak
-     *
-     * @param securityContext security context with access token
-     * @param apiKey          the id of the client that is to be deleted
-     * @throws ApiKeyException when trouble strikes
-     */
-    public void deleteClient(KeycloakSecurityContext securityContext, String apiKey) throws ApiKeyException {
-        ClientRepresentation clientRepresentation = getClientRepresentation(apiKey, securityContext);
-        HttpDelete httpDelete = new HttpDelete(KeycloakUriBuilder.fromUri(String.format(CLIENTS_UPDATE_ENDPOINT,
-                                                                                        kcProperties.getAuthServerUrl(),
-                                                                                        kcProperties.getRealm(),
-                                                                                        clientRepresentation.getId()))
-                                                                 .build());
-        addAuthorizationHeader(securityContext.getAccessTokenString(), httpDelete);
-        sendRequestToKeycloak(httpDelete, HttpStatus.SC_NO_CONTENT, clientRepresentation);
     }
 
     /**
@@ -376,7 +308,8 @@ public class KeycloakManager {
     }
 
     /**
-     * Performs actual call to Keycloak sending the updated client data. Only Name and Description are subject of an update. The rest will remain unchanged.
+     * Performs actual call to Keycloak sending the updated client data.
+     * Only Name and Description are subject of an update. The rest will remain unchanged.
      *
      * @param clientRepresentation client representation that will be sent as request body
      * @param securityContext      security context with the access token
@@ -390,12 +323,97 @@ public class KeycloakManager {
                                                                                clientRepresentation.getId())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPut);
         addRequestEntity(clientRepresentation, httpPut);
-        sendRequestToKeycloak(httpPut, HttpStatus.SC_NO_CONTENT, clientRepresentation);
+        sendClientRequestToKeycloak(httpPut, HttpStatus.SC_NO_CONTENT, clientRepresentation);
+    }
+
+    /**
+     * Deletes a client from Keycloak
+     *
+     * @param securityContext security context with access token
+     * @param apiKey          the id of the client that is to be deleted
+     * @throws ApiKeyException when trouble strikes
+     */
+    public void deleteClient(KeycloakSecurityContext securityContext, String apiKey) throws ApiKeyException {
+        ClientRepresentation clientRepresentation = getClientRepresentation(apiKey, securityContext);
+        HttpDelete httpDelete = new HttpDelete(KeycloakUriBuilder.fromUri(String.format(CLIENTS_UPDATE_ENDPOINT,
+                                                                                        kcProperties.getAuthServerUrl(),
+                                                                                        kcProperties.getRealm(),
+                                                                                        clientRepresentation.getId()))
+                                                                 .build());
+        addAuthorizationHeader(securityContext.getAccessTokenString(), httpDelete);
+        sendClientRequestToKeycloak(httpDelete, HttpStatus.SC_NO_CONTENT, clientRepresentation);
+    }
+
+    /**
+     * Enables the client in Keycloak, but only if it was disabled
+     *
+     * @param clientId        client identifier
+     * @param securityContext security context with access token
+     * @throws ApiKeyException when client not found in Keycloak or update failed
+     */
+    public void enableClient(String clientId, KeycloakSecurityContext securityContext) throws ApiKeyException {
+        ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
+        if (Boolean.FALSE.equals(clientRepresentation.isEnabled())) {
+            clientRepresentation.setEnabled(true);
+            updateClient(clientRepresentation, securityContext);
+        } else {
+            LOG.warn("API key {} of client {} is already enabled",
+                     clientRepresentation.getClientId(),
+                     clientRepresentation.getId());
+        }
+    }
+
+    /**
+     * Disables the client in Keycloak, but only if it is enabled
+     *
+     * @param clientId        client identifier
+     * @param securityContext security context with access token
+     * @throws ApiKeyException when client not found in Keycloak or update failed
+     */
+    public void disableClient(String clientId, KeycloakSecurityContext securityContext) throws ApiKeyException {
+        ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
+        if (Boolean.TRUE.equals(clientRepresentation.isEnabled())) {
+            clientRepresentation.setEnabled(false);
+            updateClient(clientRepresentation, securityContext);
+        } else {
+            LOG.warn("API key {} of client {} is already disabled",
+                     clientRepresentation.getClientId(),
+                     clientRepresentation.getId());
+        }
+    }
+
+    /**
+     * Retrieve a list of clients using a configured get request.
+     *
+     * @param httpGet get request
+     * @return a list of retrieved clients
+     * @throws ApiKeyException in case keycloak refuses to communicate
+     */
+    private List<ClientRepresentation> getClients(HttpGet httpGet) throws ApiKeyException {
+        LOG.debug("Sending getClients to Keycloak...");
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            LOG.debug("Received getClients from Keycloak");
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                InputStream is = response.getEntity().getContent();
+                CollectionType mapCollectionType = mapper.getTypeFactory()
+                                                         .constructCollectionType(List.class,
+                                                                                  ClientRepresentation.class);
+                return mapper.readValue(is, mapCollectionType);
+            }
+            throw new ApiKeyException(
+                    ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() + " - " +
+                    response.getStatusLine().getReasonPhrase());
+        } catch (IOException e) {
+            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
+        }
     }
 
     /**
      * Retrieve client secret from Keycloak. In order to do it client identifier (not client-id) must be retrieved first.
      * This identifier is needed when requesting the client secret.
+     *
+     * Note that we need to retrieve the newly created client from keycloak (reusing the one we sent to Keycloak to
+     * create the account doesn't work)
      *
      * @param clientId        client id
      * @param securityContext security context with access token
@@ -404,8 +422,6 @@ public class KeycloakManager {
      */
     private ClientRepresentation getClientSecret(String clientId, KeycloakSecurityContext securityContext) throws
                                                                                                            ApiKeyException {
-        // we need to retrieve the newly created client from keycloak (reusing the one we sent to Keycloak to create
-        // the account doesn't work)
         ClientRepresentation representation = getClientRepresentation(clientId, securityContext);
 
         HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(String.format(CLIENT_SECRET_ENDPOINT,
@@ -420,7 +436,7 @@ public class KeycloakManager {
             LOG.debug("Received getClientSecret for {} from Keycloak", clientId);
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 throw new ApiKeyException(
-                        ERROR_COMMUNICATING_WITH_KEYCLOAK + "Received " + response.getStatusLine().getStatusCode() +
+                        ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
                         " - " + response.getStatusLine().getReasonPhrase());
             }
             try (InputStream is = response.getEntity().getContent()) {
@@ -455,9 +471,9 @@ public class KeycloakManager {
         return clients.get(0);
     }
 
-    private void sendRequestToKeycloak(HttpUriRequest httpRequest,
-                                       int expectedHttpStatus,
-                                       ClientRepresentation clientRep) throws ApiKeyException {
+    private void sendClientRequestToKeycloak(HttpUriRequest httpRequest,
+                                             int expectedHttpStatus,
+                                             ClientRepresentation clientRep) throws ApiKeyException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Sending {} request for API key {} (client {}) to Keycloak...",
                       httpRequest.getMethod() + " " + httpRequest.getURI().getPath(),
@@ -468,7 +484,7 @@ public class KeycloakManager {
             LOG.debug("Received response for client {} from Keycloak: {}", clientRep.getId(), response);
             if (response.getStatusLine().getStatusCode() != expectedHttpStatus) {
                 throw new ApiKeyException(
-                        ERROR_COMMUNICATING_WITH_KEYCLOAK + "Received " + response.getStatusLine().getStatusCode() +
+                        ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
                         " - " + response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
@@ -569,109 +585,6 @@ public class KeycloakManager {
     }
 
     /**
-     * Retrieve a list of clients using a configured get request.
-     *
-     * @param httpGet get request
-     * @return a list of retrieved clients
-     * @throws ApiKeyException in case keycloak refuses to communicate
-     */
-    private List<ClientRepresentation> getClients(HttpGet httpGet) throws ApiKeyException {
-        LOG.debug("Sending getClients to Keycloak...");
-        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-            LOG.debug("Received getClients from Keycloak");
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                InputStream is = response.getEntity().getContent();
-                CollectionType mapCollectionType = mapper.getTypeFactory()
-                                                         .constructCollectionType(List.class,
-                                                                                  ClientRepresentation.class);
-                return mapper.readValue(is, mapCollectionType);
-            }
-            throw new ApiKeyException(
-                    ERROR_COMMUNICATING_WITH_KEYCLOAK + "Received " + response.getStatusLine().getStatusCode() + " - " +
-                    response.getStatusLine().getReasonPhrase());
-        } catch (IOException e) {
-            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-        }
-    }
-
-    /**
-     * Check whether the user with a given userId exists in Keycloak
-     *
-     * @param userId               identifying the user
-     * @param adminSecurityContext admin level auth token (context) to authorize the request
-     * @return true when user with id iserId exists
-     * @throws ApiKeyException if this goes not as intended
-     */
-    public boolean userExists(String userId, KeycloakSecurityContext adminSecurityContext) throws ApiKeyException {
-        HttpGet httpGet = prepareGetUserRequest(userId, adminSecurityContext.getAccessTokenString());
-        LOG.debug("Checking if user {} exists...", userId);
-        List<UserRepresentation> users  = getUsers(httpGet);
-        boolean                  result = (users != null && !users.isEmpty());
-        LOG.debug("Keycloak user with userID {} exists = {}", userId, result);
-        return result;
-    }
-
-    /**
-     * Configure get request for getting a specific client with client-id equal to new api key
-     *
-     * @param userId     api key used as keycloak userId
-     * @param adminToken access token to authorize request
-     * @return configured get request
-     */
-    private HttpGet prepareGetUserRequest(String userId, String adminToken) {
-        HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(String.format(USERS_ENDPOINT,
-                                                                               kcProperties.getAuthServerUrl(),
-                                                                               kcProperties.getRealm()))
-                                                        .queryParam("search", userId)
-                                                        .build());
-        addAuthorizationHeader(adminToken, httpGet);
-        return httpGet;
-    }
-
-    /**
-     * Retrieve a list of users using a configured get request.
-     *
-     * @param httpGet get request
-     * @return a list of retrieved users
-     * @throws ApiKeyException in case keycloak refuses to communicate
-     */
-    private List<UserRepresentation> getUsers(HttpGet httpGet) throws ApiKeyException {
-        LOG.debug("Sending getUsers to Keycloak...");
-        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-            LOG.debug("Received users from Keycloak");
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                InputStream is = response.getEntity().getContent();
-                CollectionType mapCollectionType = mapper.getTypeFactory()
-                                                         .constructCollectionType(List.class, UserRepresentation.class);
-                return mapper.readValue(is, mapCollectionType);
-            }
-            throw new ApiKeyException(
-                    ERROR_COMMUNICATING_WITH_KEYCLOAK + "Received " + response.getStatusLine().getStatusCode() + " - " +
-                    response.getStatusLine().getReasonPhrase());
-        } catch (IOException e) {
-            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
-        }
-    }
-
-    public String extractUserName(String userToken) {
-        try {
-            return keycloakTokenVerifier.getNameFromToken(userToken).getSubject();
-        } catch (VerificationException e) {
-            throw new KeycloakAuthenticationException("Error parsing usertoken", e);
-        }
-    }
-
-    /**
-     * Add authorization header with the given access token
-     *
-     * @param accessToken access token to put in the header
-     * @param request     request to which the header will be added
-     */
-    private void addAuthorizationHeader(String accessToken, HttpRequestBase request) {
-        request.addHeader("Authorization", "bearer " + accessToken);
-    }
-
-    /**
      * Checks whether the client for which the token was issued is the owner of the apikey
      *
      * @param apiKey                      api key to check
@@ -712,40 +625,12 @@ public class KeycloakManager {
     }
 
     /**
-     * Enables the client in Keycloak, but only if it was disabled
+     * Add authorization header with the given access token
      *
-     * @param clientId        client identifier
-     * @param securityContext security context with access token
-     * @throws ApiKeyException when client not found in Keycloak or update failed
+     * @param accessToken access token to put in the header
+     * @param request     request to which the header will be added
      */
-    public void enableClient(String clientId, KeycloakSecurityContext securityContext) throws ApiKeyException {
-        ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
-        if (Boolean.FALSE.equals(clientRepresentation.isEnabled())) {
-            clientRepresentation.setEnabled(true);
-            updateClient(clientRepresentation, securityContext);
-        } else {
-            LOG.warn("API key {} of client {} is already enabled",
-                     clientRepresentation.getClientId(),
-                     clientRepresentation.getId());
-        }
-    }
-
-    /**
-     * Disables the client in Keycloak, but only if it is enabled
-     *
-     * @param clientId        client identifier
-     * @param securityContext security context with access token
-     * @throws ApiKeyException when client not found in Keycloak or update failed
-     */
-    public void disableClient(String clientId, KeycloakSecurityContext securityContext) throws ApiKeyException {
-        ClientRepresentation clientRepresentation = getClientRepresentation(clientId, securityContext);
-        if (Boolean.TRUE.equals(clientRepresentation.isEnabled())) {
-            clientRepresentation.setEnabled(false);
-            updateClient(clientRepresentation, securityContext);
-        } else {
-            LOG.warn("API key {} of client {} is already disabled",
-                     clientRepresentation.getClientId(),
-                     clientRepresentation.getId());
-        }
+    private void addAuthorizationHeader(String accessToken, HttpRequestBase request) {
+        request.addHeader("Authorization", "bearer " + accessToken);
     }
 }

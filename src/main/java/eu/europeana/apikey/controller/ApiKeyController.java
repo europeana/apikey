@@ -8,7 +8,7 @@ import eu.europeana.apikey.domain.ApiKeySecret;
 import eu.europeana.apikey.domain.View;
 import eu.europeana.apikey.exception.*;
 import eu.europeana.apikey.keycloak.KeycloakAuthenticationToken;
-import eu.europeana.apikey.keycloak.KeycloakManager;
+import eu.europeana.apikey.keycloak.KeycloakClientManager;
 import eu.europeana.apikey.mail.MailService;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import eu.europeana.apikey.util.PassGenerator;
@@ -61,20 +61,20 @@ public class ApiKeyController {
     private final ApiKeyRepo        apiKeyRepo;
     private final CaptchaManager    captchaManager;
     private final MailService       emailService;
-    private final SimpleMailMessage apiKeyCreatedMail;
-    private final KeycloakManager   keycloakManager;
+    private final SimpleMailMessage     apiKeyCreatedMail;
+    private final KeycloakClientManager keycloakClientManager;
 
     @Autowired
     public ApiKeyController(ApiKeyRepo apiKeyRepo,
                             CaptchaManager captchaManager,
                             MailService emailService,
                             SimpleMailMessage apiKeyCreatedMail,
-                            KeycloakManager keycloakManager) {
+                            KeycloakClientManager keycloakClientManager) {
         this.apiKeyRepo = apiKeyRepo;
         this.captchaManager = captchaManager;
         this.emailService = emailService;
         this.apiKeyCreatedMail = apiKeyCreatedMail;
-        this.keycloakManager = keycloakManager;
+        this.keycloakClientManager = keycloakClientManager;
     }
 
 
@@ -159,7 +159,7 @@ public class ApiKeyController {
     @PostMapping(path = "/captcha",
                  produces = MediaType.APPLICATION_JSON_VALUE,
                  consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createCaptcha(HttpServletRequest httpServletRequest,
+    public ResponseEntity<Object> createCaptcha(HttpServletRequest httpServletRequest,
                                         @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new stand-alone API key (without linked KeyCloak Client) secured by captcha...");
 
@@ -317,14 +317,14 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{id}/disable")
-    public ResponseEntity disable(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity<HttpStatus> disable(@PathVariable("id") String id) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         ApiKey                      apiKey      = checkKeyExists(id);
         checkKeyDeprecated(apiKey);
         apiKey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
         this.apiKeyRepo.save(apiKey);
         LOG.debug("User {} has disabled API key {}", kcAuthToken.getPrincipal(), id);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -370,7 +370,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity delete(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity<HttpStatus> delete(@PathVariable("id") String id) throws ApiKeyException {
 
         KeycloakAuthenticationToken kcAuthToken    = checkManagerCredentials();
         Optional<ApiKey>            optionalApiKey = apiKeyRepo.findById(id);
@@ -381,7 +381,7 @@ public class ApiKeyController {
             throw new ApiKeyNotFoundException(id);
         }
         this.apiKeyRepo.delete(optionalApiKey.get());
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -395,7 +395,7 @@ public class ApiKeyController {
      * HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
      */
     @PostMapping(path = "/validate")
-    public ResponseEntity validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
+    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
 
         // When no apikey was supplied return 400
         String id = getAuthorizationHeader(httpServletRequest, APIKEY_PATTERN);
@@ -411,7 +411,7 @@ public class ApiKeyController {
             String reason = String.format(APIKEY_NOT_REGISTERED, id);
             LOG.debug(reason);
             // TODO make sure returned message is json!
-            return new ResponseEntity(reason, HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(reason, HttpStatus.UNAUTHORIZED);
         }
 
         checkKeyDeprecated(optionalApiKey.get());
@@ -425,7 +425,7 @@ public class ApiKeyController {
         // set lastAccessDate
         optionalApiKey.get().setLastAccessDate(now);
         this.apiKeyRepo.save(optionalApiKey.get());
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     protected void copyValuesToApiKey(ApiKey apiKey, ApiKeyRequest keyRequest) {
@@ -455,7 +455,7 @@ public class ApiKeyController {
     protected KeycloakAuthenticationToken checkManagerCredentials() throws ForbiddenException {
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
                                                                                                .getAuthentication();
-        if (!keycloakManager.isManagerClientAuthorized(token)) {
+        if (!keycloakClientManager.isManagerClientAuthorized(token)) {
             throw new ForbiddenException();
         }
         return token;
@@ -464,7 +464,7 @@ public class ApiKeyController {
     protected void checkManagerOrOwnerCredentials(String id) throws ForbiddenException {
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
                                                                                                .getAuthentication();
-        if (!keycloakManager.isManagerClientAuthorized(token) && !keycloakManager.isOwner(id, token)) {
+        if (!keycloakClientManager.isManagerClientAuthorized(token) && !keycloakClientManager.isOwner(id, token)) {
             throw new ForbiddenException();
         }
     }
