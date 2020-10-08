@@ -153,9 +153,10 @@ public class UserController {
 
         if (!sendSlackMessage(userEmail, kcDelIcon, setsDelIcon)){
             String errorMessage = "Error sending User delete request message to Slack. " + reportMsg.toString();
-            LOG.warn(errorMessage);
+            LOG.error(errorMessage);
             return new ResponseEntity<>(errorMessage, HttpStatus.BAD_GATEWAY);
         }
+        LOG.info(reportMsg.toString());
         return new ResponseEntity<>(reportMsg.toString(), HttpStatus.NO_CONTENT);
     }
 
