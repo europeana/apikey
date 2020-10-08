@@ -1,49 +1,32 @@
 package eu.europeana.apikey.keycloak;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.europeana.apikey.config.KeycloakProperties;
-import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
-import eu.europeana.apikey.exception.KCClientExistsException;
-import eu.europeana.apikey.exception.MissingKCClientException;
-import eu.europeana.apikey.util.PassGenerator;
-import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.keycloak.OAuth2Constants;
 import org.keycloak.adapters.springsecurity.KeycloakAuthenticationException;
-import org.keycloak.adapters.springsecurity.account.KeycloakRole;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
-import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.http.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Class for working with Keycloak and it's
@@ -168,7 +151,7 @@ public class KeycloakUserManager {
      * @param adminSecurityContext security context with access token
      * @param userId          the id of the client that is to be deleted
      */
-    public void deleteUser(String userId, KeycloakSecurityContext adminSecurityContext) throws ApiKeyException {
+    public boolean deleteUser(String userId, KeycloakSecurityContext adminSecurityContext) {
         HttpDelete httpDelete = new HttpDelete(KeycloakUriBuilder.fromUri(String.format(USER_ENDPOINT,
                                                                                         kcProperties.getAuthServerUrl(),
                                                                                         kcProperties.getRealm(),
@@ -176,14 +159,13 @@ public class KeycloakUserManager {
         addAuthorizationHeader(adminSecurityContext.getAccessTokenString(), httpDelete);
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
             LOG.debug("Received response for user {} from Keycloak: {}", httpDelete, response);
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                throw new ApiKeyException(
-                        ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
-                        " - " + response.getStatusLine().getReasonPhrase());
+            if (response.getStatusLine().getStatusCode() != HttpStatus.NO_CONTENT.value()) {
+                return false;
             }
-        } catch (IOException | ApiKeyException e) {
-            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
+        } catch (IOException e) {
+            return false;
         }
+        return true;
     }
 
     /**
@@ -213,7 +195,7 @@ public class KeycloakUserManager {
         LOG.debug("Sending user representation request to Keycloak...");
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received user representation from Keycloak");
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() == HttpStatus.OK.value()) {
                 InputStream is = response.getEntity().getContent();
                 return mapper.readValue(is, UserRepresentation.class);
             }

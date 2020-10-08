@@ -5,6 +5,7 @@ import eu.europeana.apikey.keycloak.*;
 import eu.europeana.apikey.mail.MailService;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -67,6 +68,9 @@ public class UserController {
     @Value("${keycloak.user.slack.webhook}")
     private String slackWebHook;
 
+    @Value("${userset.api.url}")
+    private String userSetUrl;
+
     private CloseableHttpClient httpClient;
 
     @Autowired
@@ -104,10 +108,12 @@ public class UserController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/delete")
-    public ResponseEntity<HttpStatus> delete(HttpServletRequest request) throws ApiKeyException {
+    public ResponseEntity<String> delete(HttpServletRequest request) throws ApiKeyException {
+        StringBuilder reportMsg = new StringBuilder("Result of User delete request:");
         String kcDelIcon   = ERROR_ICON;
         String setsDelIcon = ERROR_ICON;
         String userToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String userEmail = "[unable to retrieve]";
 
         KeycloakAuthenticationToken adminAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminUser(
                 adminUserName,
@@ -119,20 +125,38 @@ public class UserController {
             throw new ForbiddenException();
         }
 
+        reportMsg.append(" sending delete request to User Sets Api: [");
+        if (deleteUserSets(userToken)){
+            setsDelIcon = OK_ICON;
+            reportMsg.append("OK] ;");
+        } else {
+            reportMsg.append("FAILED] ;");
+        }
+
         String userId = keycloakUserManager.extractUserId(userToken);
+        reportMsg.append(" sending User delete request to Keycloak: [");
 
         if (StringUtils.isNotBlank(userId)) {
             kcDelIcon = OK_ICON;
             UserRepresentation userRep = keycloakUserManager.userDetails(userId,
                                                                          (KeycloakSecurityContext) adminAuthToken.getCredentials());
-
-            LOG.info("Deleting user with ID: {}, name: {}", userId, userRep.getUsername());
-            keycloakUserManager.deleteUser(userId, (KeycloakSecurityContext) adminAuthToken.getCredentials());
-            if (!sendSlackMessage(userRep.getEmail(), kcDelIcon, setsDelIcon)){
-                return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+            userEmail = userRep.getEmail();
+            LOG.info("Sending delete request to Keycloak for user with ID: {}, name: {}", userId, userRep.getUsername());
+            if (keycloakUserManager.deleteUser(userId, (KeycloakSecurityContext) adminAuthToken.getCredentials())){
+                reportMsg.append("OK]");
+            } else {
+                reportMsg.append("FAILED]");
             }
+        } else {
+            reportMsg.append("FAILED]");
         }
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+        if (!sendSlackMessage(userEmail, kcDelIcon, setsDelIcon)){
+            String errorMessage = "Error sending User delete request message to Slack. " + reportMsg.toString();
+            LOG.warn(errorMessage);
+            return new ResponseEntity<>(errorMessage, HttpStatus.BAD_GATEWAY);
+        }
+        return new ResponseEntity<>(reportMsg.toString(), HttpStatus.NO_CONTENT);
     }
 
 
@@ -162,7 +186,24 @@ public class UserController {
         httpPost.setHeader("Content-type", "application/json");
 
         try (CloseableHttpResponse response = client.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() != org.apache.http.HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
+                return false;
+            }
+            client.close();
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean deleteUserSets(String userToken){
+        CloseableHttpClient client     = HttpClients.createDefault();
+        HttpDelete          httpDelete = new HttpDelete(userSetUrl);
+
+        httpDelete.setHeader("Authorization", "Bearer " + userToken);
+
+        try (CloseableHttpResponse response = client.execute(httpDelete)) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.NO_CONTENT.value()) {
                 return false;
             }
             client.close();

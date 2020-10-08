@@ -13,7 +13,6 @@ import eu.europeana.apikey.util.PassGenerator;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -34,6 +33,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.http.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -260,7 +260,7 @@ public class KeycloakClientManager {
                                                                                   kcProperties.getRealm())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPost);
         addRequestEntity(toCreate, httpPost);
-        sendClientRequestToKeycloak(httpPost, HttpStatus.SC_CREATED, toCreate);
+        sendClientRequestToKeycloak(httpPost, HttpStatus.CREATED.value(), toCreate);
         LOG.debug("Client {} was created", apiKey);
 
         return getClientSecret(apiKey, securityContext);
@@ -323,7 +323,7 @@ public class KeycloakClientManager {
                                                                                clientRepresentation.getId())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPut);
         addRequestEntity(clientRepresentation, httpPut);
-        sendClientRequestToKeycloak(httpPut, HttpStatus.SC_NO_CONTENT, clientRepresentation);
+        sendClientRequestToKeycloak(httpPut, HttpStatus.NO_CONTENT.value(), clientRepresentation);
     }
 
     /**
@@ -341,7 +341,7 @@ public class KeycloakClientManager {
                                                                                         clientRepresentation.getId()))
                                                                  .build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpDelete);
-        sendClientRequestToKeycloak(httpDelete, HttpStatus.SC_NO_CONTENT, clientRepresentation);
+        sendClientRequestToKeycloak(httpDelete, HttpStatus.NO_CONTENT.value(), clientRepresentation);
     }
 
     /**
@@ -393,7 +393,7 @@ public class KeycloakClientManager {
         LOG.debug("Sending getClients to Keycloak...");
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received getClients from Keycloak");
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() == HttpStatus.OK.value()) {
                 InputStream is = response.getEntity().getContent();
                 CollectionType mapCollectionType = mapper.getTypeFactory()
                                                          .constructCollectionType(List.class,
@@ -434,7 +434,7 @@ public class KeycloakClientManager {
         LOG.debug("Sending getClientSecret of {} to Keycloak...", clientId);
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received getClientSecret for {} from Keycloak", clientId);
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
                 throw new ApiKeyException(
                         ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
                         " - " + response.getStatusLine().getReasonPhrase());
