@@ -5,20 +5,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @Configuration
 @EnableWebMvc
-class MailConfig extends WebMvcConfigurerAdapter {
+class ApikeyMailConfig extends WebMvcConfigurerAdapter {
 
-    @Value("${europeanaMail.sentFrom}")
+    @Value("${europeana.mail.from}")
     private String sentFrom;
 
-    @Value("${europeanaMail.copyTo}")
+    @Value("${europeana.mail.bcc}")
     private String copyTo;
 
-    @Bean
+    @Bean("apikeyMail")
     public SimpleMailMessage apikeyCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setText("Dear %s %s,%n%nThank you for registering for the Europeana API." +

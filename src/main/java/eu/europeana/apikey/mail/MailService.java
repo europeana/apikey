@@ -9,6 +9,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+import java.util.Objects;
+
 
 /**
  * Created by luthien on 04/07/2017.
@@ -20,7 +23,8 @@ public class MailService {
     @Autowired
     public JavaMailSender emailSender;
 
-    private void sendSimpleMessage(String from, String[] bcc, String to, String subject, String messageBody) throws SendMailException {
+    private void sendSimpleMessage(String from, String[] bcc, String to, String subject, String messageBody) throws
+                                                                                                             SendMailException {
         LOG.debug("Sending email ...");
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -32,16 +36,36 @@ public class MailService {
 
             emailSender.send(message);
         } catch (MailException e) {
-            throw new SendMailException(
-                    String.format("A problem prevented sending a confirmation '%s' email to %s", subject, to), e);
+            throw new SendMailException(String.format("A problem prevented sending a confirmation '%s' email to %s",
+                                                      subject,
+                                                      to), e);
         }
     }
 
     public void sendSimpleMessageUsingTemplate(String to,
                                                String subject,
                                                SimpleMailMessage template,
-                                               String... templateArgs) throws SendMailException {
-        String messageBody = String.format(template.getText(), templateArgs);
+                                               String firstName,
+                                               String lastName,
+                                               String apiKey,
+                                               String clientSecret) throws SendMailException {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()), firstName, lastName, apiKey, clientSecret);
         sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+    }
+
+    public boolean sendSimpleSlackMessage(String to,
+                                       String subject,
+                                       SimpleMailMessage template,
+                                       String email,
+                                       String kcDeleted,
+                                       String setsDeleted,
+                                       Date now) {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()), email, kcDeleted, setsDeleted, now);
+        try {
+            sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+        } catch (SendMailException sme) {
+            return false;
+        }
+        return true;
     }
 }

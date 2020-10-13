@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -58,8 +59,8 @@ public class ApiKeyClientController {
     private final CaptchaManager                       captchaManager;
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
     private final MailService                          emailService;
-    private final SimpleMailMessage     apiKeyCreatedMail;
-    private final KeycloakClientManager keycloakClientManager;
+    private final SimpleMailMessage                    apiKeyCreatedMail;
+    private final KeycloakClientManager                keycloakClientManager;
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -75,7 +76,7 @@ public class ApiKeyClientController {
                                   CaptchaManager captchaManager,
                                   CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
                                   MailService emailService,
-                                  SimpleMailMessage apiKeyCreatedMail,
+                                  @Qualifier("apikeyMail") SimpleMailMessage apiKeyCreatedMail,
                                   KeycloakClientManager keycloakClientManager) {
         this.apiKeyRepo = apiKeyRepo;
         this.captchaManager = captchaManager;

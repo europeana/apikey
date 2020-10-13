@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -39,7 +40,8 @@ import java.util.List;
 
 //@RunWith(SpringJUnit4ClassRunner.class)
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
+@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakProperties.class})
+//@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
 public class KeycloakClientManagerTest {
 
 
@@ -156,16 +158,19 @@ public class KeycloakClientManagerTest {
     @Mock
     private CloseableHttpClient httpClient;
 
-    @Mock
-    private KeycloakTokenVerifier keycloakTokenVerifier;
+//    @Mock
+//    private KeycloakTokenVerifier keycloakTokenVerifier;
 
-    private KeycloakProperties kcProperties = new KeycloakProperties("https://keycloak-cf-test.eanadev.org/auth",
-                                                                     "europeana",
-                                                                     true,
-                                                                     REALM_PUBLIC_KEY);
+    private final KeycloakProperties kcProperties = new KeycloakProperties("https://keycloak-cf-test.eanadev.org/auth",
+                                                                           "europeana",
+                                                                           true,
+                                                                           REALM_PUBLIC_KEY);
 
     @InjectMocks
-    private KeycloakClientManager keycloakClientManager = new KeycloakClientManager(kcProperties);
+    private final KeycloakClientManager keycloakClientManager = new KeycloakClientManager(kcProperties);
+
+    @InjectMocks
+    private KeycloakTokenVerifier keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties);
 
     // TODO temporarily disabled because I could not get this test working under Java 11 & Powermock
     // TODO within reasonable time

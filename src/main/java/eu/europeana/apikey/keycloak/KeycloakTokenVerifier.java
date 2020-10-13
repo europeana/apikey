@@ -1,9 +1,11 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.config.KeycloakProperties;
 import org.keycloak.TokenVerifier;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +26,10 @@ public class KeycloakTokenVerifier {
 
     protected KeycloakTokenVerifier(String realmPublicKey) {
         generatePublicKey(realmPublicKey);
+    }
+
+    public KeycloakTokenVerifier(KeycloakProperties kcProperties) {
+        this(kcProperties.getRealmPublicKey());
     }
 
     /**

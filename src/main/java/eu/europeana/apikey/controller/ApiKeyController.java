@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -68,7 +69,7 @@ public class ApiKeyController {
     public ApiKeyController(ApiKeyRepo apiKeyRepo,
                             CaptchaManager captchaManager,
                             MailService emailService,
-                            SimpleMailMessage apiKeyCreatedMail,
+                            @Qualifier("apikeyMail") SimpleMailMessage apiKeyCreatedMail,
                             KeycloakClientManager keycloakClientManager) {
         this.apiKeyRepo = apiKeyRepo;
         this.captchaManager = captchaManager;
