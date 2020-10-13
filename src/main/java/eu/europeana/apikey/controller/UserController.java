@@ -55,7 +55,7 @@ public class UserController {
             "[%s] The User Sets API\\n" +
             "[:x:] The recommendation engine\\n" +
             "[:x:] Mailchimp\\n\\n" +
-            "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"";
+            "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"}";
     @Value("${keycloak.user.admin.username}")
     private String adminUserName;
 
@@ -125,6 +125,8 @@ public class UserController {
         String userToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String userEmail = "[unable to retrieve]";
 
+        LOG.info("Processing delete request for user");
+
         KeycloakAuthenticationToken adminAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminUser(
                 adminUserName,
                 adminUserPassword,
@@ -132,6 +134,7 @@ public class UserController {
                 adminUserGrantType);
 
         if (adminAuthToken == null) {
+            LOG.error("Error requesting admin level token: aborted processing delete request ");
             throw new ForbiddenException();
         }
 
@@ -142,15 +145,17 @@ public class UserController {
         } else {
             reportMsg.append("FAILED] ;");
         }
+        LOG.info("Deleting User Sets {}", setsDeleted ? "succeeded" : "failed");
 
         String userId = keycloakUserManager.extractUserId(userToken);
         reportMsg.append(" sending User delete request to Keycloak: [");
 
         if (StringUtils.isNotBlank(userId)) {
+            LOG.info("User with ID: {} found in Keycloak", userId);
             UserRepresentation userRep = keycloakUserManager.userDetails(userId,
                                                                          (KeycloakSecurityContext) adminAuthToken.getCredentials());
             userEmail = userRep.getEmail();
-            LOG.info("Sending delete request to Keycloak for user with ID: {}, name: {}",
+            LOG.info("User with ID: {}, name: {} found in Keycloak; sending delete request ... ",
                      userId,
                      userRep.getUsername());
             if (keycloakUserManager.deleteUser(userId, (KeycloakSecurityContext) adminAuthToken.getCredentials())) {
@@ -162,6 +167,8 @@ public class UserController {
         } else {
             reportMsg.append("FAILED]");
         }
+
+        LOG.info("Deleting User from Keycloak {}", kcDeleted ? "succeeded" : "failed");
 
         if (!sendSlackMessage(userEmail, kcDeleted, setsDeleted, debug) &&
             !sendSlackEmail(userEmail, kcDeleted, setsDeleted)) {
@@ -183,6 +190,7 @@ public class UserController {
      */
     private boolean sendSlackMessage(String userEmail, boolean kcDeleted, boolean setsDeleted, boolean debug) {
         StringEntity        entity;
+        CloseableHttpClient client   = HttpClients.createDefault();
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
         String json = String.format(SLACKMESSAGEBODY,
@@ -201,8 +209,7 @@ public class UserController {
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
 
-        try (CloseableHttpClient client   = HttpClients.createDefault()) {
-            CloseableHttpResponse response = client.execute(httpPost);
+        try (CloseableHttpResponse response = client.execute(httpPost)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
                 return false;
             }
