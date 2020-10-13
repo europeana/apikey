@@ -25,6 +25,7 @@ import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -40,22 +41,21 @@ public class UserController {
 
     private static final Logger                               LOG = LogManager.getLogger(UserController.class);
     private static final String ERROR_ICON  = ":x:";
-    private static final String ERROR_ASCII = "X";
+    private static final String ERROR_ASCII = "✘";
     private static final String OK_ICON     = ":heavy_check_mark:";
-    private static final String OK_ASCII    = "V";
+    private static final String OK_ASCII    = "✓";
     private final        CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
     private final        KeycloakUserManager                  keycloakUserManager;
     private final        MailService                          emailService;
     private final        SimpleMailMessage                    userDeletedSlackMail;
     private static final String SLACKMESSAGEBODY =
-            "{\"text\":\"User %s has requested to remove their account.\\n" +
-            "This has just been done for the systems marked with :heavy_check_mark: :\\n\\n" +
+            "{\"text\":\"On %s, user %s has requested to remove their account.\\n" +
+            "This has just been done automatically for those systems marked with :heavy_check_mark: :\\n\\n" +
             "[%s] Keycloak\\n" +
             "[%s] The User Sets API\\n" +
             "[:x:] The recommendation engine\\n" +
             "[:x:] Mailchimp\\n\\n" +
-            "The date of their request is %tc. \\n" +
-            "Please remove their account from the services marked with :x: within 30 days from this date.\"}";
+            "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"";
     @Value("${keycloak.user.admin.username}")
     private String adminUserName;
 
@@ -186,10 +186,11 @@ public class UserController {
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
         String json = String.format(SLACKMESSAGEBODY,
+                                    LocalDate.now().toString(),
                                     userEmail,
                                     kcDeleted ? OK_ICON : ERROR_ICON,
                                     setsDeleted ? OK_ICON : ERROR_ICON,
-                                    new Date());
+                                    LocalDate.now().plusDays(30).toString());
         try {
             entity = new StringEntity(json);
         } catch (UnsupportedEncodingException e) {
@@ -223,10 +224,11 @@ public class UserController {
         return emailService.sendSimpleSlackMessage(slackEmail,
                                                    "Auth user service: result of user delete request",
                                                    userDeletedSlackMail,
+                                                   LocalDate.now().toString(),
                                                    userEmail,
                                                    kcDeleted ? OK_ASCII : ERROR_ASCII,
                                                    setsDeleted ? OK_ASCII : ERROR_ASCII,
-                                                   new Date());
+                                                   LocalDate.now().plusDays(30).toString());
     }
 
     private boolean deleteUserSets(String userToken) {

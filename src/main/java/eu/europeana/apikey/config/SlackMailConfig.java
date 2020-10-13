@@ -22,14 +22,14 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     public SimpleMailMessage userDeletedSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
 
-        message.setText("User %s has requested to remove their account.\n\n" +
-                        "This has just been done for the systems marked with [V]:\n\n" +
+        message.setText("On %s, user %s has requested to remove their account.\n\n" +
+                        "This has just been done automatically for those systems marked with [✓]:\n\n" +
                         "[%s] Keycloak\n" +
                         "[%s] The User Sets Api\n" +
-                        "[X] The recommendation engine\n" +
-                        "[X] Mailchimp%n\n\n" +
-                        "The date of their request is %tc. \n" +
-                        "Please remove their account from the services marked with [X] within 30 days.\n\n\n" +
+                        "[✘] The recommendation engine\n" +
+                        "[✘] Mailchimp%n\n\n" +
+                        "From the remaining systems (marked with [✘] above) their account should be removed " +
+                        "within 30 days (before %s).\n\n\n" +
                         "(Please note that this email was sent by the Delete User Service only after sending this " +
                         "message via the regular HTTP request failed: please check why this happened)");
         message.setFrom(sentFrom);

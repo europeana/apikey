@@ -56,11 +56,12 @@ public class MailService {
     public boolean sendSimpleSlackMessage(String to,
                                        String subject,
                                        SimpleMailMessage template,
+                                       String today,
                                        String email,
                                        String kcDeleted,
                                        String setsDeleted,
-                                       Date now) {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()), email, kcDeleted, setsDeleted, now);
+                                       String inThirtyDays) {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()), today, email, kcDeleted, setsDeleted, inThirtyDays);
         try {
             sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
         } catch (SendMailException sme) {
