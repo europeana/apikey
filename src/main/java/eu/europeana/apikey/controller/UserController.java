@@ -116,7 +116,9 @@ public class UserController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/delete")
-    public ResponseEntity<String> delete(HttpServletRequest request) throws ApiKeyException {
+    public ResponseEntity<String> delete(
+            @RequestParam(value = "debug", required = false, defaultValue = "false") boolean debug,
+            HttpServletRequest request) throws ApiKeyException {
         StringBuilder reportMsg   = new StringBuilder("Result of User delete request:");
         boolean       kcDeleted   = false;
         boolean       setsDeleted = false;
@@ -161,12 +163,11 @@ public class UserController {
             reportMsg.append("FAILED]");
         }
 
-        if (!sendSlackMessage(userEmail, kcDeleted, setsDeleted)) {
-            if (!sendSlackEmail(userEmail, kcDeleted, setsDeleted)) {
-                String errorMessage = "Error sending User delete request message to Slack. " + reportMsg.toString();
-                LOG.error(errorMessage);
-                return new ResponseEntity<>(errorMessage, HttpStatus.BAD_GATEWAY);
-            }
+        if (!sendSlackMessage(userEmail, kcDeleted, setsDeleted, debug) &&
+            !sendSlackEmail(userEmail, kcDeleted, setsDeleted)) {
+            String errorMessage = "Error sending User delete request message to Slack. " + reportMsg.toString();
+            LOG.error(errorMessage);
+            return new ResponseEntity<>(errorMessage, HttpStatus.BAD_GATEWAY);
         }
 
         LOG.info(reportMsg.toString());
@@ -180,9 +181,8 @@ public class UserController {
      * @param setsDeleted boolean representing success or failure deleting user sets
      * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendSlackMessage(String userEmail, boolean kcDeleted, boolean setsDeleted) {
+    private boolean sendSlackMessage(String userEmail, boolean kcDeleted, boolean setsDeleted, boolean debug) {
         StringEntity        entity;
-        CloseableHttpClient client   = HttpClients.createDefault();
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
         String json = String.format(SLACKMESSAGEBODY,
@@ -200,16 +200,15 @@ public class UserController {
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
 
-        try (CloseableHttpResponse response = client.execute(httpPost)) {
+        try (CloseableHttpClient client   = HttpClients.createDefault()) {
+            CloseableHttpResponse response = client.execute(httpPost);
             if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
                 return false;
             }
-            client.close();
         } catch (IOException e) {
             return false;
         }
-        return false;
-//        return true;
+        return !debug;
     }
 
     /**
@@ -222,7 +221,7 @@ public class UserController {
      */
     private boolean sendSlackEmail(String userEmail, boolean kcDeleted, boolean setsDeleted) {
         return emailService.sendSimpleSlackMessage(slackEmail,
-                                                   "Result of User delete request",
+                                                   "Auth user service: result of user delete request",
                                                    userDeletedSlackMail,
                                                    userEmail,
                                                    kcDeleted ? OK_ASCII : ERROR_ASCII,
