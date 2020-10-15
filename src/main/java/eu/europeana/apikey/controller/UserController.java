@@ -250,14 +250,13 @@ public class UserController {
 
         if (kcCommProblem){
             msg.append(". There was a problem connecting to Keycloak (HTTP ").append(status)
-               .append(") so no action could be taken. The user token has been logged in Kibana.");
+               .append(") so no action could be taken.");
         } else {
             msg.append(". This userID could not be found in Keycloak, which might indicate a problem " +
-                       "with the token used to send the request. Therefore the token has been logged in Kibana.");
+                       "with the token used to send the request.");
         }
-        msg.append("UserId ").append(userId).append(" could not be found in Keycloak.");
-        LOG.error("{} The supplied user token was: {}", msg, userToken);
-        msg.append(" The token has been logged in Kibana");
+        LOG.error("{} Supplied usertoken: {}", msg, userToken);
+        msg.append(" Therefore the token has been logged in Kibana.");
         return new ResponseEntity<>(msg, returnStatus);
     }
 
