@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * Handles incoming requests to delete Keycloak users
@@ -39,23 +38,33 @@ import java.util.Date;
 public class UserController {
 
 
-    private static final Logger                               LOG = LogManager.getLogger(UserController.class);
-    private static final String ERROR_ICON  = ":x:";
-    private static final String ERROR_ASCII = "✘";
-    private static final String OK_ICON     = ":heavy_check_mark:";
-    private static final String OK_ASCII    = "✓";
+    private static final Logger                               LOG                             = LogManager.getLogger(
+            UserController.class);
+    private static final String                               ERROR_ICON                      = ":x:";
+    private static final String                               ERROR_ASCII                     = "✘";
+    private static final String                               OK_ICON                         = ":heavy_check_mark:";
+    private static final String                               OK_ASCII                        = "✓";
+    private static final String                               SLACK_USER_DELETE_MESSAGEBODY   =
+            "{\"text\":\"On %s, user %s has requested to remove their account.\\n" +
+            "This has just been done automatically for those systems marked with :heavy_check_mark: :\\n\\n" +
+            "[%s] Keycloak\\n" + "[%s] The User Sets API\\n" + "[:x:] The recommendation engine\\n" +
+            "[:x:] Mailchimp\\n\\n" +
+            "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"}";
+    private static final String                               SLACK_USER_NOTFOUND_MESSAGEBODY =
+            "{\"text\":\"On %s, a request was received to remove user account with ID %s.\\n\\n" +
+            "This userID could not be found in Keycloak (HTTP %d), which might indicate a problem " +
+            "with the token used to send the request. Therefore the token has been logged in Kibana.\"}";
+    private static final String                               SLACK_KC_COMM_ISSUE_MESSAGEBODY =
+            "{\"text\":\"On %s, a request was received to remove user account with ID %s.\\n\\n" +
+            "There was a problem connecting to Keycloak (HTTP %d), so no action could be taken.\\n" +
+            "The user token has been logged in Kibana.\"}";
     private final        CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
     private final        KeycloakUserManager                  keycloakUserManager;
     private final        MailService                          emailService;
     private final        SimpleMailMessage                    userDeletedSlackMail;
-    private static final String SLACKMESSAGEBODY =
-            "{\"text\":\"On %s, user %s has requested to remove their account.\\n" +
-            "This has just been done automatically for those systems marked with :heavy_check_mark: :\\n\\n" +
-            "[%s] Keycloak\\n" +
-            "[%s] The User Sets API\\n" +
-            "[:x:] The recommendation engine\\n" +
-            "[:x:] Mailchimp\\n\\n" +
-            "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"}";
+    private final        SimpleMailMessage                    userNotFoundSlackMail;
+    private final        SimpleMailMessage                    kcCommProblemSlackMail;
+
     @Value("${keycloak.user.admin.username}")
     private String adminUserName;
 
@@ -82,12 +91,16 @@ public class UserController {
     @Autowired
     public UserController(CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
                           MailService emailService,
-                          @Qualifier("slackMail") SimpleMailMessage userDeletedSlackMail,
+                          @Qualifier("userDeletedMail") SimpleMailMessage userDeletedSlackMail,
+                          @Qualifier("userNotFoundMail") SimpleMailMessage userNotFoundSlackMail,
+                          @Qualifier("kcCommProblemMail") SimpleMailMessage kcCommProblemSlackMail,
                           KeycloakUserManager keycloakUserManager) {
         this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
         this.keycloakUserManager = keycloakUserManager;
         this.emailService = emailService;
         this.userDeletedSlackMail = userDeletedSlackMail;
+        this.userNotFoundSlackMail = userNotFoundSlackMail;
+        this.kcCommProblemSlackMail = kcCommProblemSlackMail;
     }
 
     @PostConstruct
@@ -116,16 +129,26 @@ public class UserController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/delete")
-    public ResponseEntity<String> delete(
+    public ResponseEntity<Object> delete(
             @RequestParam(value = "debug", required = false, defaultValue = "false") boolean debug,
             HttpServletRequest request) throws ApiKeyException {
-        StringBuilder reportMsg   = new StringBuilder("Result of User delete request:");
+        StringBuilder reportMsg   = new StringBuilder("Result of delete request for userID ");
         boolean       kcDeleted   = false;
         boolean       setsDeleted = false;
-        String userToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String userEmail = "[unable to retrieve]";
+        String        userToken   = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (StringUtils.isBlank(userToken)){
+            return new ResponseEntity<>("No usertoken provided", HttpStatus.BAD_REQUEST);
+        }
+        String        userEmail   = "[unable to retrieve]";
+        String        userId;
 
-        LOG.info("Processing delete request for user");
+        try {
+            userId = keycloakUserManager.extractUserId(userToken);
+        } catch (MissingDataException mde) {
+            return new ResponseEntity<>(mde.getError(), HttpStatus.BAD_REQUEST);
+        }
+
+        LOG.info("Processing delete request for userID {}", userId);
 
         KeycloakAuthenticationToken adminAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminUser(
                 adminUserName,
@@ -138,7 +161,7 @@ public class UserController {
             throw new ForbiddenException();
         }
 
-        reportMsg.append(" sending delete request to User Sets Api: [");
+        reportMsg.append(". Sending delete request to User Sets Api: [");
         if (deleteUserSets(userToken)) {
             setsDeleted = true;
             reportMsg.append("OK] ;");
@@ -147,17 +170,24 @@ public class UserController {
         }
         LOG.info("Deleting User Sets {}", setsDeleted ? "succeeded" : "failed");
 
-        String userId = keycloakUserManager.extractUserId(userToken);
-        reportMsg.append(" sending User delete request to Keycloak: [");
-
         if (StringUtils.isNotBlank(userId)) {
-            LOG.info("User with ID: {} found in Keycloak", userId);
-            UserRepresentation userRep = keycloakUserManager.userDetails(userId,
-                                                                         (KeycloakSecurityContext) adminAuthToken.getCredentials());
+            reportMsg.append(" sending User delete request to Keycloak: [");
+            UserRepresentation userRep;
+
+            try {
+                userRep = keycloakUserManager.userDetails(userId,
+                                                          (KeycloakSecurityContext) adminAuthToken.getCredentials());
+            } catch (MissingKCUserException e) {
+                return (handleKCUserErrorMessages(userId, userToken, 404, false, debug));
+            } catch (KCComException e) {
+                return (handleKCUserErrorMessages(userId, userToken, e.getStatus(), true, debug));
+            }
+
             userEmail = userRep.getEmail();
-            LOG.info("User with ID: {}, name: {} found in Keycloak; sending delete request ... ",
+            LOG.info("UserID: {}, name: {} found in Keycloak; sending delete request ... ",
                      userId,
                      userRep.getUsername());
+
             if (keycloakUserManager.deleteUser(userId, (KeycloakSecurityContext) adminAuthToken.getCredentials())) {
                 kcDeleted = true;
                 reportMsg.append("OK]");
@@ -168,37 +198,105 @@ public class UserController {
             reportMsg.append("FAILED]");
         }
 
-        LOG.info("Deleting User from Keycloak {}", kcDeleted ? "succeeded" : "failed");
+        LOG.info("Deleting userID {} from Keycloak {}", userId, kcDeleted ? "succeeded" : "failed");
 
-        if (!sendSlackMessage(userEmail, kcDeleted, setsDeleted, debug) &&
-            !sendSlackEmail(userEmail, kcDeleted, setsDeleted)) {
-            String errorMessage = "Error sending User delete request message to Slack. " + reportMsg.toString();
-            LOG.error(errorMessage);
-            return new ResponseEntity<>(errorMessage, HttpStatus.BAD_GATEWAY);
+        if (!prepareUserDeleteSlackMessage(userEmail, kcDeleted, setsDeleted, debug)) {
+            if (!sendUserDeletedSlackEmail(userEmail, kcDeleted, setsDeleted)) {
+                reportMsg.insert(0, "Error sending User delete request report to Slack: ");
+                LOG.error(reportMsg);
+                return new ResponseEntity<>(reportMsg, HttpStatus.BAD_GATEWAY);
+            } else {
+                reportMsg.insert(0,
+                                 "Error sending User delete request report to Slack via HTTP Post webhook." +
+                                 "The message was successfully sent via email instead: ");
+                LOG.warn(reportMsg);
+            }
+        } else {
+            LOG.info(reportMsg);
         }
-
-        LOG.info(reportMsg.toString());
         return new ResponseEntity<>(reportMsg.toString(), HttpStatus.NO_CONTENT);
     }
+
+
+    /**
+     * Configure sending "Keycloak communication error" or "user not found" message to Slack by HTTP or email.
+     * The token is therefore logged in Kibana.
+     *
+     * @param userId        the userId as found in the supplied user token
+     * @param userToken     the user token used to call this serviceuserToken
+     * @param kcCommProblem boolean true: send "keycloak comm error messages"; false: send "user not found" messages
+     * @param debug         boolean if true: force the Slack send method to return false, triggering this method to also
+     *                      send an email message
+     * @return ResponseEntity with either HTTP NOT_FOUND (when user cannot be found) or HTTP BAD_GATEWAY (when there was
+     * a problem communicating with Keycloak and / or when sending a message to Slack failed)
+     */
+    private ResponseEntity<Object> handleKCUserErrorMessages(String userId,
+                                                             String userToken,
+                                                             int status,
+                                                             boolean kcCommProblem,
+                                                             boolean debug) {
+        HttpStatus    returnStatus = kcCommProblem ? HttpStatus.BAD_GATEWAY : HttpStatus.NOT_FOUND;
+        StringBuilder msg          = new StringBuilder();
+
+        if (!prepareKCUserProblemEmail(userId, status, kcCommProblem, debug) &&
+            !sendUserProblemEmail(userId, status, kcCommProblem)) {
+            msg.append("Could not send the following message to Slack via HTTP nor email: ");
+            returnStatus = HttpStatus.BAD_GATEWAY;
+        }
+        msg.append("On ")
+           .append(LocalDate.now().toString())
+           .append(", a request was received to remove user account with ID ")
+           .append(userId);
+
+        if (kcCommProblem){
+            msg.append(". There was a problem connecting to Keycloak (HTTP ").append(status)
+               .append(") so no action could be taken. The user token has been logged in Kibana.");
+        } else {
+            msg.append(". This userID could not be found in Keycloak, which might indicate a problem " +
+                       "with the token used to send the request. Therefore the token has been logged in Kibana.");
+        }
+        msg.append("UserId ").append(userId).append(" could not be found in Keycloak.");
+        LOG.error("{} The supplied user token was: {}", msg, userToken);
+        msg.append(" The token has been logged in Kibana");
+        return new ResponseEntity<>(msg, returnStatus);
+    }
+
+    private boolean prepareKCUserProblemEmail(String userId, int status, boolean kcCommProblem, boolean debug) {
+        return sendSlackMessage(String.format(kcCommProblem ? SLACK_KC_COMM_ISSUE_MESSAGEBODY : SLACK_USER_NOTFOUND_MESSAGEBODY,
+                                              LocalDate.now().toString(),
+                                              userId,
+                                              status), debug);
+    }
+
+
     /**
      * Configure post request sending the User delete confirmation to Slack
      *
      * @param userEmail   email address of the User to delete
      * @param kcDeleted   boolean representing success or failure deleting KC user
      * @param setsDeleted boolean representing success or failure deleting user sets
+     * @param debug       boolean if true: force the Slack send method to return false, triggering this method to also
+     *                    send an email message
      * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendSlackMessage(String userEmail, boolean kcDeleted, boolean setsDeleted, boolean debug) {
+    private boolean prepareUserDeleteSlackMessage(String userEmail,
+                                                  boolean kcDeleted,
+                                                  boolean setsDeleted,
+                                                  boolean debug) {
+        return sendSlackMessage(String.format(SLACK_USER_DELETE_MESSAGEBODY,
+                                              LocalDate.now().toString(),
+                                              userEmail,
+                                              kcDeleted ? OK_ICON : ERROR_ICON,
+                                              setsDeleted ? OK_ICON : ERROR_ICON,
+                                              LocalDate.now().plusDays(30).toString()), debug);
+
+    }
+
+    private boolean sendSlackMessage(String json, boolean debug) {
         StringEntity        entity;
         CloseableHttpClient client   = HttpClients.createDefault();
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
-        String json = String.format(SLACKMESSAGEBODY,
-                                    LocalDate.now().toString(),
-                                    userEmail,
-                                    kcDeleted ? OK_ICON : ERROR_ICON,
-                                    setsDeleted ? OK_ICON : ERROR_ICON,
-                                    LocalDate.now().plusDays(30).toString());
         try {
             entity = new StringEntity(json);
         } catch (UnsupportedEncodingException e) {
@@ -227,15 +325,25 @@ public class UserController {
      * @param setsDeleted boolean representing success or failure deleting user sets
      * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendSlackEmail(String userEmail, boolean kcDeleted, boolean setsDeleted) {
-        return emailService.sendSimpleSlackMessage(slackEmail,
-                                                   "Auth user service: result of user delete request",
-                                                   userDeletedSlackMail,
-                                                   LocalDate.now().toString(),
-                                                   userEmail,
-                                                   kcDeleted ? OK_ASCII : ERROR_ASCII,
-                                                   setsDeleted ? OK_ASCII : ERROR_ASCII,
-                                                   LocalDate.now().plusDays(30).toString());
+    private boolean sendUserDeletedSlackEmail(String userEmail, boolean kcDeleted, boolean setsDeleted) {
+        return emailService.sendDeletedUserEmail(slackEmail,
+                                                 "Auth user service: result of user delete request",
+                                                 userDeletedSlackMail,
+                                                 LocalDate.now().toString(),
+                                                 userEmail,
+                                                 kcDeleted ? OK_ASCII : ERROR_ASCII,
+                                                 setsDeleted ? OK_ASCII : ERROR_ASCII,
+                                                 LocalDate.now().plusDays(30).toString());
+    }
+
+    private boolean sendUserProblemEmail(String userId, int status, boolean kcCommProblem) {
+        return emailService.sendUserProblemEmail(slackEmail,
+                                                 "Auth user service: " +
+                                                 (kcCommProblem ? "could not connect to Keycloak" : "userId from token not found in Keycloak"),
+                                                 kcCommProblem ? kcCommProblemSlackMail : userNotFoundSlackMail,
+                                                 LocalDate.now().toString(),
+                                                 userId,
+                                                 status);
     }
 
     private boolean deleteUserSets(String userToken) {

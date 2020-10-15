@@ -18,7 +18,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Value("${keycloak.user.slack.bcc}")
     private String copyTo;
 
-    @Bean("slackMail")
+    @Bean("userDeletedMail")
     public SimpleMailMessage userDeletedSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -32,6 +32,34 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
                         "within 30 days (before %s).\n\n\n" +
                         "(Please note that this email was sent by the Delete User Service only after sending this " +
                         "message via the regular HTTP request failed: please check why this happened)");
+        message.setFrom(sentFrom);
+        if (StringUtils.isNotEmpty(copyTo)) {
+            message.setBcc(copyTo);
+        }
+        return message;
+    }
+
+    @Bean("userNotFoundMail")
+    public SimpleMailMessage userNotFoundSlackMail() {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setText("On %s, a request was received to remove user account with ID %s.\n\n" +
+                        "This userID could not be found in Keycloak (HTTP status %d), which might indicate a problem " +
+                        "with the token used to send the request. Therefore the token has been logged in Kibana.");
+        message.setFrom(sentFrom);
+        if (StringUtils.isNotEmpty(copyTo)) {
+            message.setBcc(copyTo);
+        }
+        return message;
+    }
+
+    @Bean("kcCommProblemMail")
+    public SimpleMailMessage kcCommProblemSlackMail() {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setText("On %s, a request was received to remove user account with ID %s.\n\n" +
+                        "There was a problem connecting to Keycloak (HTTP status %d), so no action could be taken.\n" +
+                        "The user token has been logged in Kibana.");
         message.setFrom(sentFrom);
         if (StringUtils.isNotEmpty(copyTo)) {
             message.setBcc(copyTo);

@@ -49,19 +49,43 @@ public class MailService {
                                                String lastName,
                                                String apiKey,
                                                String clientSecret) throws SendMailException {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()), firstName, lastName, apiKey, clientSecret);
+        String messageBody = String.format(Objects.requireNonNull(template.getText()),
+                                           firstName,
+                                           lastName,
+                                           apiKey,
+                                           clientSecret);
         sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
     }
 
-    public boolean sendSimpleSlackMessage(String to,
-                                       String subject,
-                                       SimpleMailMessage template,
-                                       String today,
-                                       String email,
-                                       String kcDeleted,
-                                       String setsDeleted,
-                                       String inThirtyDays) {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()), today, email, kcDeleted, setsDeleted, inThirtyDays);
+    public boolean sendDeletedUserEmail(String to,
+                                        String subject,
+                                        SimpleMailMessage template,
+                                        String today,
+                                        String email,
+                                        String kcDeleted,
+                                        String setsDeleted,
+                                        String inThirtyDays) {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()),
+                                           today,
+                                           email,
+                                           kcDeleted,
+                                           setsDeleted,
+                                           inThirtyDays);
+        try {
+            sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+        } catch (SendMailException sme) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean sendUserProblemEmail(String to,
+                                        String subject,
+                                        SimpleMailMessage template,
+                                        String today,
+                                        String userId,
+                                        int status) {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()), today, userId, status);
         try {
             sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
         } catch (SendMailException sme) {

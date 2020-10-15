@@ -3,6 +3,9 @@ package eu.europeana.apikey.keycloak;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.config.KeycloakProperties;
 import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.apikey.exception.KCComException;
+import eu.europeana.apikey.exception.MissingDataException;
+import eu.europeana.apikey.exception.MissingKCUserException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -126,21 +129,24 @@ public class KeycloakUserManager {
 
     /**
      * Check whether the user with a given userId exists in Keycloak
+     * This method silently logs any errors that may occur communicating with Keycloak in order to allow
+     * a report message to be delivered to Slack
      *
      * @param userId               identifying the user
      * @param adminSecurityContext admin level auth token (context) to authorize the request
      * @return true when user with id userId exists
-     * @throws ApiKeyException if this goes not as intended
      */
-    public UserRepresentation userDetails(String userId, KeycloakSecurityContext adminSecurityContext) throws ApiKeyException {
+    public UserRepresentation userDetails(String userId, KeycloakSecurityContext adminSecurityContext) throws
+                                                                                                       KCComException,
+                                                                                                       MissingKCUserException {
         HttpGet httpGet = prepareGetUserRequest(userId, adminSecurityContext.getAccessTokenString());
-        LOG.debug("Checking if user with ID {} exists...", userId);
-        UserRepresentation user   = getUser(httpGet);
+        LOG.debug("Checking if userID {} exists...", userId);
+        UserRepresentation user   = getUser(httpGet, userId);
         if (null != user){
-            LOG.debug("Keycloak user with userID {} exists!", userId);
+            LOG.debug("Keycloak user with userID {} found", userId);
             return user;
         } else {
-            LOG.warn("Keycloak user with userID {} cannot be found!", userId);
+            LOG.warn("Keycloak user with userID {} cannot be found", userId);
             return null;
         }
     }
@@ -186,24 +192,37 @@ public class KeycloakUserManager {
 
     /**
      * Retrieve details about a given user identified by userId
+     * This method silently logs any errors that may occur communicating with Keycloak in order to allow
+     * a report message to be delivered to Slack
      *
      * @param httpGet get request
      * @return a list of retrieved users
-     * @throws ApiKeyException in case keycloak refuses to communicate
+     * @throws MissingKCUserException in case the user cannot be found
+     * @throws KCComException in case keycloak refuses to communicate
      */
-    private UserRepresentation getUser(HttpGet httpGet) throws ApiKeyException {
+    private UserRepresentation getUser(HttpGet httpGet, String userId) throws MissingKCUserException, KCComException {
         LOG.debug("Sending user representation request to Keycloak...");
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received user representation from Keycloak");
             if (response.getStatusLine().getStatusCode() == HttpStatus.OK.value()) {
                 InputStream is = response.getEntity().getContent();
                 return mapper.readValue(is, UserRepresentation.class);
+            } else if (response.getStatusLine().getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                throw new MissingKCUserException(userId);
+            } else {
+                LOG.error("{}{}{} - {}",
+                          ERROR_COMMUNICATING_WITH_KEYCLOAK,
+                          RECEIVED,
+                          response.getStatusLine().getStatusCode(),
+                          response.getStatusLine().getReasonPhrase());
+                throw new KCComException(ERROR_COMMUNICATING_WITH_KEYCLOAK,
+                                         response.getStatusLine().getReasonPhrase(),
+                                         response.getStatusLine().getStatusCode());
+
             }
-            throw new ApiKeyException(
-                    ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() + " - " +
-                    response.getStatusLine().getReasonPhrase());
         } catch (IOException e) {
-            throw new ApiKeyException(ERROR_COMMUNICATING_WITH_KEYCLOAK, e);
+            LOG.error("{}: IOException occurred: {}", ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
+            throw new KCComException(e);
         }
     }
 
@@ -212,12 +231,13 @@ public class KeycloakUserManager {
      *
      * @param userTokenString base64 encoded JWT token
      * @return UserId / value of "sub"
+     * @throws MissingDataException when no user is found in the supplied token or an error occurs trying
      */
-    public String extractUserId(String userTokenString) {
+    public String extractUserId(String userTokenString) throws MissingDataException {
         try {
             return keycloakTokenVerifier.retrieveUserToken(userTokenString).getSubject();
         } catch (VerificationException e) {
-            throw new KeycloakAuthenticationException("Error parsing usertoken", e);
+            throw new MissingDataException("Error parsing usertoken", e.getMessage());
         }
     }
 
