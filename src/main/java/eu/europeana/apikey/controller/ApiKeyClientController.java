@@ -87,7 +87,7 @@ public class ApiKeyClientController {
 
 
     /**
-     * Create a new API key with the following mandatory values supplied in a JSON request body:
+     * Create a new ApiKey / Keycloak client pair with the following mandatory values supplied in a JSON request body:
      * - firstName
      * - lastName
      * - email
@@ -124,7 +124,7 @@ public class ApiKeyClientController {
     }
 
     /**
-     * Create a new API key with the following mandatory values supplied in a JSON request body:
+     * Create a new ApiKey / Keycloak client pair with the following mandatory values supplied in a JSON request body:
      * - firstName
      * - lastName
      * - email
@@ -185,7 +185,7 @@ public class ApiKeyClientController {
     }
 
     /**
-     * Create an ApiKey and a Keycloak client with the data supplied in the request and the security context.
+     * Create an ApiKey / Keycloak client pair with the data supplied in the request and the security context.
      * When successful, the ApiKey is persisted in the apikey Postgresql database while the linked Keycloak client is
      * stored by the Keycloak server. ApiKey and Keycloak ID (aka "Secret (key)") are sent to the supplied email
      * address.
@@ -279,7 +279,7 @@ public class ApiKeyClientController {
     }
 
     /**
-     * Disables / deprecates a given ApiKey. This is achieved by:
+     * Disables / deprecates a given ApiKey / Keycloak client pair. This is achieved by:
      * - setting the deprecationdate column of the given key to the current time;
      * - disabling the linked Keycloak client
      * Note that this method does not delete any data !
@@ -296,7 +296,7 @@ public class ApiKeyClientController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{id}/disable")
-    public ResponseEntity disable(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity<Object> disable(@PathVariable("id") String id) throws ApiKeyException {
         LOG.debug("Disabling API key {}...", id);
 
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
@@ -308,12 +308,12 @@ public class ApiKeyClientController {
         }
         apiKey.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
         this.apiKeyRepo.save(apiKey);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
-     * Re-enables a given invalid ApiKey (of which the deprecationdate column has previously been set to a past time).
-     * This is achieved by:
+     * Re-enables a given invalid ApiKey / Keycloak client pair (of which the Apikey deprecationdate column has
+     * previously been set to a past time). This is achieved by:
      * - removing the contents of the deprecationdate column for this ApiKey; and
      * - enabling the linked Keycloak client
      * The code will execute regardless if the key is actually deprecated or not.
@@ -369,7 +369,7 @@ public class ApiKeyClientController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity delete(@PathVariable("id") String id) throws ApiKeyException {
+    public ResponseEntity<Object> delete(@PathVariable("id") String id) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
 
         Optional<ApiKey> optionalApiKey = apiKeyRepo.findById(id);
@@ -395,20 +395,20 @@ public class ApiKeyClientController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/synchronize/{keycloakid}")
-    public ResponseEntity deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws ForbiddenException {
+    public ResponseEntity<Object> deleteSynchronize(@PathVariable("keycloakid") String keycloakId) throws ForbiddenException {
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
 
         Optional<ApiKey> optionalApiKey = this.apiKeyRepo.findByKeycloakId(keycloakId);
         return optionalApiKey.map(value -> deleteApiKey(value, kcAuthToken))
-                             .orElseGet(() -> new ResponseEntity(HttpStatus.NOT_FOUND));
+                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    private ResponseEntity deleteApiKey(ApiKey apiKey, KeycloakAuthenticationToken kcAuthenticationToken) {
+    private ResponseEntity<Object> deleteApiKey(ApiKey apiKey, KeycloakAuthenticationToken kcAuthenticationToken) {
         LOG.warn("User {} is permanently deleting API key {}...",
                  kcAuthenticationToken.getPrincipal(),
                  apiKey.getApiKey());
         this.apiKeyRepo.delete(apiKey);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -417,7 +417,7 @@ public class ApiKeyClientController {
      * database to a new one with Keycloak as backend.
      */
     @PostMapping(path = "/synchronize/missingClient/all")
-    public ResponseEntity synchronizeAllMissingClients() throws ApiKeyException {
+    public ResponseEntity<Object> synchronizeAllMissingClients() throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
 
         List<ApiKey> keysToUpdate = apiKeyRepo.findAllKeysToMigrate();
@@ -428,7 +428,7 @@ public class ApiKeyClientController {
             synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), keyToUpdate.getApiKey());
         }
         LOG.info("Finished creating clients for API keys with missing keycloakId");
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -437,12 +437,12 @@ public class ApiKeyClientController {
      * WARNING: this will replace the existing client secret with a new one!
      */
     @PostMapping(path = "/synchronize/missingClient/{apiKey}")
-    public ResponseEntity synchronizeMissingClient(@PathVariable String apiKey) throws ApiKeyException {
+    public ResponseEntity<Object> synchronizeMissingClient(@PathVariable String apiKey) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
         return synchronizeMissingClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKey);
     }
 
-    private ResponseEntity synchronizeMissingClient(KeycloakSecurityContext securityContext, String apiKey) throws
+    private ResponseEntity<Object>synchronizeMissingClient(KeycloakSecurityContext securityContext, String apiKey) throws
                                                                                                             ApiKeyException {
         ApiKey apiClient = apikeyController.checkKeyExists(apiKey);
         LOG.debug("Verified that API key {} exists in database!", apiKey);
@@ -461,7 +461,7 @@ public class ApiKeyClientController {
         apiClient.setKeycloakId(keycloakId);
         apiKeyRepo.save(apiClient);
         LOG.info("API key {} was updated, keycloakId is {}", apiKey, apiClient.getKeycloakId());
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     /**

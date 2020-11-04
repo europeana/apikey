@@ -478,15 +478,28 @@ public class KeycloakManager {
         return result;
     }
 
+    public String checkifClientExists(String apiKey,  KeycloakSecurityContext kcSecurityContext) throws
+                                                                                                  ApiKeyException {
+        HttpGet                    httpGet = prepareGetClientRequest(apiKey, kcSecurityContext.getAccessTokenString());
+        LOG.debug("Checking if client with clientId {} exists...", apiKey);
+        List<ClientRepresentation> clients = getClients(httpGet);
+       if (clients != null && !clients.isEmpty()){
+           return clients.get(0).getId();
+       } else {
+           return null;
+       }
+    }
+
     /**
-     * Check whether the client with a given clientId (apiKey) exists in Keycloak
+     * Check whether the client with a given clientId (keycloak client.clientid == apikey.apiKey, and
+     * keycloak client.id == apikey.keycloakid) exists in Keycloak
      *
      * @param apiKey   api key to use as client-id
      * @param accessToken access token to authorize the request
      * @return true when apiKey belongs to a valid client
      * @throws ApiKeyException if this goes not as intended
      */
-    private boolean clientExists(String apiKey, String accessToken) throws ApiKeyException {
+    protected boolean clientExists(String apiKey, String accessToken) throws ApiKeyException {
         HttpGet                    httpGet = prepareGetClientRequest(apiKey, accessToken);
         LOG.debug("Checking if client {} exists...", apiKey);
         List<ClientRepresentation> clients = getClients(httpGet);
