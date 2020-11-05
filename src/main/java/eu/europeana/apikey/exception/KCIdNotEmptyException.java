@@ -15,6 +15,14 @@ public class KCIdNotEmptyException extends ApiKeyException {
         super("ApiKey " + apiKey + " already has a keycloak client id set (" + keycloakId + ")");
     }
 
+    public KCIdNotEmptyException(String apiKey, String keycloakId, String action) {
+        super("Encountered a problem preparing to " + action + " Apikey: " + apiKey + ". There exists " +
+              "an associated Keycloak client (id: " + keycloakId + ", clientId: " + apiKey +
+              "). Please use the combined apikey + client " + " " + action + " endpoint instead.");
+    }
+
+
+
     @Override
     public boolean doLogStacktrace() {
         return false;

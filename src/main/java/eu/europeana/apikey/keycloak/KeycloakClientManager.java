@@ -101,13 +101,13 @@ public class KeycloakClientManager {
     /**
      * Object mapper used for serialization and deserialization Keycloak objects to / from json
      */
-    private final        ObjectMapper          mapper                            = new ObjectMapper();
-    private final        KeycloakTokenVerifier keycloakTokenVerifier;
-    private final        KeycloakProperties    kcProperties;
+    private final ObjectMapper          mapper = new ObjectMapper();
+    private final KeycloakTokenVerifier keycloakTokenVerifier;
+    private final KeycloakProperties    kcProperties;
     /**
      * Http client used for communicating with Keycloak where Keycloak admin client is not appropriate
      */
-    private              CloseableHttpClient   httpClient;
+    private       CloseableHttpClient   httpClient;
 
     public KeycloakClientManager(KeycloakProperties kcProperties) {
         this.kcProperties = kcProperties;
@@ -195,7 +195,7 @@ public class KeycloakClientManager {
         ClientRepresentation newClient = this.createClient(securityContext, newApiKey, requestClient);
 
         // gather all data to sent back to user (so also secret)
-        ApiKeySecret result = new ApiKeySecret(newClient.getClientId(),
+        ApiKeySecret result = new ApiKeySecret(newApiKey,
                                                requestClient.getFirstName(),
                                                requestClient.getLastName(),
                                                requestClient.getEmail(),
@@ -221,46 +221,44 @@ public class KeycloakClientManager {
      * @param requestClient   object containing registration data from the original apikey
      * @return String containing the new keycloakId of the newly created client in Keycloak
      */
-    public String recreateClient(KeycloakSecurityContext securityContext,
+    public ClientRepresentation recreateClient(KeycloakSecurityContext securityContext,
                                  String apiKey,
                                  ApiKeyRequest requestClient) throws ApiKeyException {
         // Check if there already is a client with this apikey
         if (clientExists(apiKey, securityContext.getAccessTokenString())) {
             throw new KCClientExistsException(apiKey);
         }
-
-        ClientRepresentation newClient = this.createClient(securityContext, apiKey, requestClient);
-        return newClient.getId();
+        return this.createClient(securityContext, apiKey, requestClient);
     }
 
     private ClientRepresentation createClient(KeycloakSecurityContext securityContext,
                                               String apiKey,
-                                              ApiKeyRequest requestClient) throws ApiKeyException {
+                                              ApiKeyRequest newClientRequest) throws ApiKeyException {
         // create keycloak client object to save
-        ClientRepresentation toCreate = new ClientRepresentation();
-        toCreate.setClientId(apiKey);
-        toCreate.setPublicClient(false);
-        toCreate.setProtocol("openid-connect");
-        toCreate.setName(String.format(CLIENT_NAME,
-                                       requestClient.getAppName(),
-                                       (StringUtils.isBlank(requestClient.getCompany()) ? "" : requestClient.getCompany())));
-        toCreate.setDescription(String.format(CLIENT_DESCRIPTION,
-                                              requestClient.getFirstName(),
-                                              requestClient.getLastName(),
-                                              requestClient.getEmail()));
-        toCreate.setDirectAccessGrantsEnabled(false);
-        toCreate.setServiceAccountsEnabled(true);
+        ClientRepresentation newClientRep = new ClientRepresentation();
+        newClientRep.setClientId(apiKey);
+        newClientRep.setPublicClient(false);
+        newClientRep.setProtocol("openid-connect");
+        newClientRep.setName(String.format(CLIENT_NAME,
+                                       newClientRequest.getAppName(),
+                                       (StringUtils.isBlank(newClientRequest.getCompany()) ? "" : newClientRequest.getCompany())));
+        newClientRep.setDescription(String.format(CLIENT_DESCRIPTION,
+                                              newClientRequest.getFirstName(),
+                                              newClientRequest.getLastName(),
+                                              newClientRequest.getEmail()));
+        newClientRep.setDirectAccessGrantsEnabled(false);
+        newClientRep.setServiceAccountsEnabled(true);
         ArrayList<String> redirectUris = new ArrayList<>();
         redirectUris.add("*");
-        toCreate.setRedirectUris(redirectUris);
+        newClientRep.setRedirectUris(redirectUris);
 
         // create post request and send it
         HttpPost httpPost = new HttpPost(KeycloakUriBuilder.fromUri(String.format(CLIENTS_ENDPOINT,
                                                                                   kcProperties.getAuthServerUrl(),
                                                                                   kcProperties.getRealm())).build());
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPost);
-        addRequestEntity(toCreate, httpPost);
-        sendClientRequestToKeycloak(httpPost, HttpStatus.CREATED.value(), toCreate);
+        addRequestEntity(newClientRep, httpPost);
+        sendClientRequestToKeycloak(httpPost, HttpStatus.CREATED.value(), newClientRep);
         LOG.debug("Client {} was created", apiKey);
 
         return getClientSecret(apiKey, securityContext);
@@ -409,9 +407,9 @@ public class KeycloakClientManager {
     }
 
     /**
-     * Retrieve client secret from Keycloak. In order to do it client identifier (not client-id) must be retrieved first.
-     * This identifier is needed when requesting the client secret.
-     *
+     * Retrieve client secret from Keycloak. In order to do it client id / UUID (client.id, not client.client_id)
+     * must be retrieved first. This identifier is needed when requesting the client secret.
+     * <p>
      * Note that we need to retrieve the newly created client from keycloak (reusing the one we sent to Keycloak to
      * create the account doesn't work)
      *
@@ -549,6 +547,19 @@ public class KeycloakClientManager {
         }
         return result;
     }
+
+    public String checkifClientExists(String apiKey,  KeycloakSecurityContext kcSecurityContext) throws
+                                                                                                 ApiKeyException {
+        HttpGet                    httpGet = prepareGetClientRequest(apiKey, kcSecurityContext.getAccessTokenString());
+        LOG.debug("Checking if client with clientId {} exists...", apiKey);
+        List<ClientRepresentation> clients = getClients(httpGet);
+        if (clients != null && !clients.isEmpty()){
+            return clients.get(0).getId();
+        } else {
+            return null;
+        }
+    }
+
 
     /**
      * Check whether the client with a given clientId (apiKey) exists in Keycloak

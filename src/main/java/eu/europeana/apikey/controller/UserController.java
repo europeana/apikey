@@ -101,6 +101,7 @@ public class UserController {
         this.userDeletedSlackMail = userDeletedSlackMail;
         this.userNotFoundSlackMail = userNotFoundSlackMail;
         this.kcCommProblemSlackMail = kcCommProblemSlackMail;
+
     }
 
     @PostConstruct
@@ -288,12 +289,10 @@ public class UserController {
                                               kcDeleted ? OK_ICON : ERROR_ICON,
                                               setsDeleted ? OK_ICON : ERROR_ICON,
                                               LocalDate.now().plusDays(30).toString()), debug);
-
     }
 
     private boolean sendSlackMessage(String json, boolean debug) {
         StringEntity        entity;
-        CloseableHttpClient client   = HttpClients.createDefault();
         HttpPost            httpPost = new HttpPost(slackWebHook);
 
         try {
@@ -306,7 +305,7 @@ public class UserController {
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
 
-        try (CloseableHttpResponse response = client.execute(httpPost)) {
+        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
                 return false;
             }

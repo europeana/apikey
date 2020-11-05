@@ -88,7 +88,7 @@ public class ApiKeyClientController {
 
 
     /**
-     * Create a new API key with the following mandatory values supplied in a JSON request body:
+     * Create a new API key / Keycloak Client pair, with the following mandatory values supplied in a JSON request body:
      * - firstName
      * - lastName
      * - email
@@ -263,8 +263,7 @@ public class ApiKeyClientController {
     @PutMapping(value = "/{id}",
                 produces = MediaType.APPLICATION_JSON_VALUE,
                 consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiKey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apiKeyUpdate) throws
-                                                                                                 ApiKeyException {
+    public ApiKey update(@PathVariable("id") String id, @RequestBody ApiKeyRequest apiKeyUpdate) throws ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = apikeyController.checkManagerCredentials();
         apikeyController.checkMandatoryFields(apiKeyUpdate);
