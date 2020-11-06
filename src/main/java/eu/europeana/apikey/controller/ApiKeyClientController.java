@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
  */
 @RestController
 @RequestMapping("/apikeyclient")
+@Deprecated
 public class ApiKeyClientController {
 
     // keycloakId that indicates that a new keycloak client should be created (as part of old API key migration)
@@ -202,13 +203,13 @@ public class ApiKeyClientController {
         this.apiKeyRepo.save(new ApiKey(apiKey));
         LOG.debug("API key {} created", apiKey.getApiKey());
 
-        emailService.sendSimpleMessageUsingTemplate(apiKey.getEmail(),
-                                                    "Your Europeana API keys",
-                                                    apiKeyCreatedMail,
-                                                    apiKey.getFirstName(),
-                                                    apiKey.getLastName(),
-                                                    apiKey.getApiKey(),
-                                                    apiKey.getClientSecret());
+        emailService.sendApiKeyAndClientEmail(apiKey.getEmail(),
+                                              "Your Europeana API keys",
+                                              apiKeyCreatedMail,
+                                              apiKey.getFirstName(),
+                                              apiKey.getLastName(),
+                                              apiKey.getApiKey(),
+                                              apiKey.getClientSecret());
         return new ResponseEntity<>(apiKey, HttpStatus.CREATED);
     }
 
@@ -454,7 +455,7 @@ public class ApiKeyClientController {
         }
 
         ApiKeyRequest requestClient = copyValuesToNewApiKeyRequest(apiClient);
-        String        keycloakId    = keycloakClientManager.recreateClient(securityContext, apiKey, requestClient);
+        String        keycloakId    = keycloakClientManager.createClient(securityContext, apiKey, requestClient);
         LOG.debug("API key {} has a new keycloak client with id {}", apiKey, keycloakId);
 
         // update only keycloakId (and keep old registration, activation and deprecated dates!)

@@ -187,53 +187,47 @@ public class KeycloakClientManager {
      * @return new ApiKey object with all necessary fields, including the Keycloak ID aka "privateKey"
      * @throws ApiKeyException when there is a failure
      */
-    public ApiKeySecret createClient(KeycloakSecurityContext securityContext, ApiKeyRequest requestClient) throws
-                                                                                                           ApiKeyException {
-        // ClientId must be unique
-        String newApiKey = generateClientId(securityContext);
-
-        ClientRepresentation newClient = this.createClient(securityContext, newApiKey, requestClient);
-
-        // gather all data to sent back to user (so also secret)
-        ApiKeySecret result = new ApiKeySecret(newApiKey,
-                                               requestClient.getFirstName(),
-                                               requestClient.getLastName(),
-                                               requestClient.getEmail(),
-                                               requestClient.getAppName(),
-                                               requestClient.getCompany(),
-                                               newClient.getSecret());
-        result.setKeycloakId(newClient.getId());
-        // set optional fields
-        if (StringUtils.isNotEmpty(requestClient.getWebsite())) {
-            result.setWebsite(requestClient.getWebsite());
-        }
-        if (StringUtils.isNotEmpty(requestClient.getSector())) {
-            result.setSector(requestClient.getSector());
-        }
-        return result;
-    }
+//    public ApiKeySecret createClient(KeycloakSecurityContext securityContext, ApiKeyRequest requestClient) throws
+//                                                                                                           ApiKeyException {
+//        // ClientId must be unique
+//        String newApiKey = generateClientId(securityContext);
+//
+//        ClientRepresentation newClient = this.createClient(securityContext, newApiKey, requestClient);
+//
+//        // gather all data to sent back to user (so also secret)
+//        ApiKeySecret result = new ApiKeySecret(newApiKey,
+//                                               requestClient.getFirstName(),
+//                                               requestClient.getLastName(),
+//                                               requestClient.getEmail(),
+//                                               requestClient.getAppName(),
+//                                               requestClient.getCompany(),
+//                                               newClient.getSecret());
+//        result.setKeycloakId(newClient.getId());
+//        // set optional fields
+//        if (StringUtils.isNotEmpty(requestClient.getWebsite())) {
+//            result.setWebsite(requestClient.getWebsite());
+//        }
+//        if (StringUtils.isNotEmpty(requestClient.getSector())) {
+//            result.setSector(requestClient.getSector());
+//        }
+//        return result;
+//    }
 
     /**
      * Used for creating a new keycloak client based on an already existing apikey (missing client synchronization)
      *
      * @param securityContext security context with access token
      * @param apiKey          apikey of the client that needs to be recreated
-     * @param requestClient   object containing registration data from the original apikey
+     * @param newClientRequest   object containing registration data from the original apikey
      * @return String containing the new keycloakId of the newly created client in Keycloak
      */
-    public ClientRepresentation recreateClient(KeycloakSecurityContext securityContext,
-                                 String apiKey,
-                                 ApiKeyRequest requestClient) throws ApiKeyException {
+    public ClientRepresentation createClient(KeycloakSecurityContext securityContext,
+                                              String apiKey,
+                                              ApiKeyRequest newClientRequest) throws ApiKeyException {
         // Check if there already is a client with this apikey
         if (clientExists(apiKey, securityContext.getAccessTokenString())) {
             throw new KCClientExistsException(apiKey);
         }
-        return this.createClient(securityContext, apiKey, requestClient);
-    }
-
-    private ClientRepresentation createClient(KeycloakSecurityContext securityContext,
-                                              String apiKey,
-                                              ApiKeyRequest newClientRequest) throws ApiKeyException {
         // create keycloak client object to save
         ClientRepresentation newClientRep = new ClientRepresentation();
         newClientRep.setClientId(apiKey);
@@ -421,7 +415,6 @@ public class KeycloakClientManager {
     private ClientRepresentation getClientSecret(String clientId, KeycloakSecurityContext securityContext) throws
                                                                                                            ApiKeyException {
         ClientRepresentation representation = getClientRepresentation(clientId, securityContext);
-
         HttpGet httpGet = new HttpGet(KeycloakUriBuilder.fromUri(String.format(CLIENT_SECRET_ENDPOINT,
                                                                                kcProperties.getAuthServerUrl(),
                                                                                kcProperties.getRealm(),

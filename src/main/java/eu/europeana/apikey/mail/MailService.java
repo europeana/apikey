@@ -42,26 +42,38 @@ public class MailService {
         }
     }
 
-    public void sendSimpleMessageUsingTemplate(String to,
-                                               String subject,
-                                               SimpleMailMessage template,
-                                               String firstName,
-                                               String lastName,
-                                               String apiKey) throws SendMailException {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()),
-                                           firstName,
-                                           lastName,
-                                           apiKey);
+    public void sendApiKeyEmail(String to,
+                                String subject,
+                                SimpleMailMessage template,
+                                String firstName,
+                                String lastName,
+                                String apiKey) throws SendMailException {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()), firstName, lastName, apiKey);
         sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
     }
 
-    public void sendSimpleMessageUsingTemplate(String to,
-                                               String subject,
-                                               SimpleMailMessage template,
-                                               String firstName,
-                                               String lastName,
-                                               String apiKey,
-                                               String clientSecret) throws SendMailException {
+    public void sendApiKeyAndClientEmail(String to,
+                                         String subject,
+                                         SimpleMailMessage template,
+                                         String firstName,
+                                         String lastName,
+                                         String apiKey,
+                                         String clientSecret) throws SendMailException {
+        String messageBody = String.format(Objects.requireNonNull(template.getText()),
+                                           firstName,
+                                           lastName,
+                                           apiKey,
+                                           clientSecret);
+        sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+    }
+
+    public void sendClientAddedEmail(String to,
+                                     String subject,
+                                     SimpleMailMessage template,
+                                     String firstName,
+                                     String lastName,
+                                     String apiKey,
+                                     String clientSecret) throws SendMailException {
         String messageBody = String.format(Objects.requireNonNull(template.getText()),
                                            firstName,
                                            lastName,
