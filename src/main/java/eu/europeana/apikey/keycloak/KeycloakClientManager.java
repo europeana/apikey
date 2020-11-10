@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.europeana.apikey.config.KeycloakProperties;
+import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
 import eu.europeana.apikey.exception.KCClientExistsException;
 import eu.europeana.apikey.exception.MissingKCClientException;
@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import static eu.europeana.apikey.config.ApikeyDefinitions.*;
+
 /**
  * Class for working with Keycloak and it's
  * <a href="https://www.keycloak.org/docs-api/6.0/rest-api/index.html">Rest Admin API</a>.<br/>
@@ -61,41 +63,7 @@ import java.util.*;
 public class KeycloakClientManager {
     private static final Logger LOG = LogManager.getLogger(KeycloakClientManager.class);
 
-    private static final String MASTER_REALM = "master";
 
-    /**
-     * Template for client name
-     */
-    private static final String CLIENT_NAME = "%s (%s)";
-
-    /**
-     * Template for client description
-     */
-    private static final String CLIENT_DESCRIPTION = "%s %s (%s)";
-
-    /**
-     * Template for clients endpoint
-     */
-    private static final String CLIENTS_ENDPOINT = "%s/admin/realms/%s/clients";
-
-    /**
-     * Template for client-secret endpoint
-     */
-    private static final String CLIENT_SECRET_ENDPOINT = "%s/admin/realms/%s/clients/%s/client-secret";
-
-    /**
-     * Template for clients update endpoint
-     */
-    private static final String CLIENTS_UPDATE_ENDPOINT = "%s/admin/realms/%s/clients/%s";
-
-    /**
-     * Role for managing clients used to authorize access by Manager Client
-     */
-    private static final String MANAGE_CLIENTS_ROLE = "manage-clients";
-
-    private static final String ERROR_COMMUNICATING_WITH_KEYCLOAK = "Error communicating with Keycloak";
-
-    private static final String RECEIVED = ": received ";
 
 
     /**
@@ -187,7 +155,7 @@ public class KeycloakClientManager {
      * @return new ApiKey object with all necessary fields, including the Keycloak ID aka "privateKey"
      * @throws ApiKeyException when there is a failure
      */
-//    public ApiKeySecret createClient(KeycloakSecurityContext securityContext, ApiKeyRequest requestClient) throws
+//    public ApiKeyContainer createClient(KeycloakSecurityContext securityContext, ApiKeyRequest requestClient) throws
 //                                                                                                           ApiKeyException {
 //        // ClientId must be unique
 //        String newApiKey = generateClientId(securityContext);
@@ -195,7 +163,7 @@ public class KeycloakClientManager {
 //        ClientRepresentation newClient = this.createClient(securityContext, newApiKey, requestClient);
 //
 //        // gather all data to sent back to user (so also secret)
-//        ApiKeySecret result = new ApiKeySecret(newApiKey,
+//        ApiKeyContainer result = new ApiKeyContainer(newApiKey,
 //                                               requestClient.getFirstName(),
 //                                               requestClient.getLastName(),
 //                                               requestClient.getEmail(),
@@ -214,32 +182,30 @@ public class KeycloakClientManager {
 //    }
 
     /**
-     * Used for creating a new keycloak client based on an already existing apikey (missing client synchronization)
+     * Creates a new Keycloak client linked to (missing client synchronization)
      *
-     * @param securityContext security context with access token
-     * @param apiKey          apikey of the client that needs to be recreated
-     * @param newClientRequest   object containing registration data from the original apikey
-     * @return String containing the new keycloakId of the newly created client in Keycloak
+     * @param securityContext   security context with access token
+     * @param key         object containing registration data from the apikey
+     * @return ClientRepresentation representing the newly created client in Keycloak
      */
     public ClientRepresentation createClient(KeycloakSecurityContext securityContext,
-                                              String apiKey,
-                                              ApiKeyRequest newClientRequest) throws ApiKeyException {
+                                              ApiKey key) throws ApiKeyException {
         // Check if there already is a client with this apikey
-        if (clientExists(apiKey, securityContext.getAccessTokenString())) {
-            throw new KCClientExistsException(apiKey);
+        if (clientExists(key.getApiKey(), securityContext.getAccessTokenString())) {
+            throw new KCClientExistsException(key.getApiKey());
         }
         // create keycloak client object to save
         ClientRepresentation newClientRep = new ClientRepresentation();
-        newClientRep.setClientId(apiKey);
+        newClientRep.setClientId(key.getApiKey());
         newClientRep.setPublicClient(false);
         newClientRep.setProtocol("openid-connect");
         newClientRep.setName(String.format(CLIENT_NAME,
-                                       newClientRequest.getAppName(),
-                                       (StringUtils.isBlank(newClientRequest.getCompany()) ? "" : newClientRequest.getCompany())));
+                                           key.getAppName(),
+                                           (StringUtils.isBlank(key.getCompany()) ? "" : key.getCompany())));
         newClientRep.setDescription(String.format(CLIENT_DESCRIPTION,
-                                              newClientRequest.getFirstName(),
-                                              newClientRequest.getLastName(),
-                                              newClientRequest.getEmail()));
+                                                  key.getFirstName(),
+                                                  key.getLastName(),
+                                                  key.getEmail()));
         newClientRep.setDirectAccessGrantsEnabled(false);
         newClientRep.setServiceAccountsEnabled(true);
         ArrayList<String> redirectUris = new ArrayList<>();
@@ -253,9 +219,9 @@ public class KeycloakClientManager {
         addAuthorizationHeader(securityContext.getAccessTokenString(), httpPost);
         addRequestEntity(newClientRep, httpPost);
         sendClientRequestToKeycloak(httpPost, HttpStatus.CREATED.value(), newClientRep);
-        LOG.debug("Client {} was created", apiKey);
+        LOG.debug("Client with ID {} and client_id {} was created", newClientRep.getId(), newClientRep.getClientId());
 
-        return getClientSecret(apiKey, securityContext);
+        return getClientSecret(key.getApiKey(), securityContext);
     }
 
     /**

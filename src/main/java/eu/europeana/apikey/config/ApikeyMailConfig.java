@@ -35,7 +35,7 @@ class ApikeyMailConfig extends WebMvcConfigurerAdapter {
     @Value("${europeana.mail.bcc}")
     private String copyTo;
 
-    @Bean("apikeyMail")
+    @Bean("apikeyTemplate")
     public SimpleMailMessage apikeyCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setText("Dear %s %s,%n%nThank you for registering for the Europeana API." + "%n%n" +
@@ -52,7 +52,7 @@ class ApikeyMailConfig extends WebMvcConfigurerAdapter {
         return message;
     }
 
-    @Bean("apikeyAndClientMail")
+    @Bean("apikeyAndClientTemplate")
     public SimpleMailMessage apikeyAndClientCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setText("Dear %s %s,%n%nThank you for registering for the Europeana API." + "%n%n" +
@@ -72,7 +72,7 @@ class ApikeyMailConfig extends WebMvcConfigurerAdapter {
         return message;
     }
 
-    @Bean("clientAddedMail")
+    @Bean("clientTemplate")
     public SimpleMailMessage clientAddedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setText("Dear %s %s,%n%nThank you for requesting a secret key for the Europeana API." + "%n%n" +

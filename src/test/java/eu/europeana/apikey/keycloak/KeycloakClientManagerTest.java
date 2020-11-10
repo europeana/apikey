@@ -2,8 +2,10 @@ package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.config.KeycloakProperties;
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.apikey.util.PassGenerator;
+import eu.europeana.apikey.domain.ApiKey;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,12 +22,12 @@ import org.keycloak.admin.client.token.TokenManager;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -38,12 +40,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static eu.europeana.apikey.config.ApikeyDefinitions.CLIENT_DESCRIPTION;
+
 //@RunWith(SpringJUnit4ClassRunner.class)
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {KeycloakBuilder.class, KeycloakProperties.class})
 //@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
 public class KeycloakClientManagerTest {
 
+    private PassGenerator pg = new PassGenerator();
 
     private static final String CREDENTIAL_REPRESENTATION = "{\n" +
             "    \"type\": \"secret\",\n" +
@@ -212,14 +217,21 @@ public class KeycloakClientManagerTest {
     public void createClient() throws ApiKeyException, IOException {
         ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
+        String               publicKey       = pg.generate(RandomUtils.nextInt(8, 13));
+        ApiKey newKey  = new ApiKey(publicKey,
+                                    apiKeyCreate.getFirstName(),
+                                    apiKeyCreate.getLastName(),
+                                    apiKeyCreate.getEmail(),
+                                    apiKeyCreate.getAppName(),
+                                    apiKeyCreate.getCompany());
+        ClientRepresentation newClientRep = keycloakClientManager.createClient(securityContext, newKey);
 
-        ApiKeySecret apiKey = keycloakClientManager.createClient(securityContext, apiKeyCreate);
-
-        Assert.assertNotNull(apiKey);
-        Assert.assertEquals(apiKeyCreate.getFirstName(), apiKey.getFirstName());
-        Assert.assertEquals(apiKeyCreate.getLastName(), apiKey.getLastName());
-        Assert.assertEquals(apiKeyCreate.getEmail(), apiKey.getEmail());
-        Assert.assertEquals(NEW_CLIENT_SECRET, apiKey.getClientSecret());
+        Assert.assertNotNull(publicKey);
+        Assert.assertEquals(String.format(CLIENT_DESCRIPTION,
+                      apiKeyCreate.getFirstName(),
+                      apiKeyCreate.getLastName(),
+                      apiKeyCreate.getEmail()), newClientRep.getDescription());
+        Assert.assertEquals(NEW_CLIENT_SECRET, newClientRep.getSecret());
     }
 
     private KeycloakSecurityContext prepareForCreateClient() throws IOException {

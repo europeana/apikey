@@ -18,7 +18,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Value("${keycloak.user.slack.bcc}")
     private String copyTo;
 
-    @Bean("userDeletedMail")
+    @Bean("userDeletedTemplate")
     public SimpleMailMessage userDeletedSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -39,7 +39,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
         return message;
     }
 
-    @Bean("userNotFoundMail")
+    @Bean("userNotFoundTemplate")
     public SimpleMailMessage userNotFoundSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -53,7 +53,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
         return message;
     }
 
-    @Bean("kcCommProblemMail")
+    @Bean("kcCommProblemTemplate")
     public SimpleMailMessage kcCommProblemSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
 

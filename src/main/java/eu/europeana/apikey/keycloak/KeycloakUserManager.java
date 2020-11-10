@@ -2,7 +2,6 @@ package eu.europeana.apikey.keycloak;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.config.KeycloakProperties;
-import eu.europeana.apikey.exception.ApiKeyException;
 import eu.europeana.apikey.exception.KCComException;
 import eu.europeana.apikey.exception.MissingDataException;
 import eu.europeana.apikey.exception.MissingKCUserException;
@@ -31,8 +30,10 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static eu.europeana.apikey.config.ApikeyDefinitions.*;
+
 /**
- * Class for working with Keycloak and it's
+ * Class for working with Keycloak and its
  * <a href="https://www.keycloak.org/docs-api/6.0/rest-api/index.html">Rest Admin API</a>.<br/>
  * <p>
  * Note that there are 2 client id's used by keycloak:
@@ -51,11 +52,6 @@ import java.io.InputStream;
 public class KeycloakUserManager {
     private static final Logger LOG = LogManager.getLogger(KeycloakUserManager.class);
 
-    private static final String MASTER_REALM = "master";
-    private static final String USER_ENDPOINT = "%s/admin/realms/%s/users/%s";
-    private static final String ERROR_COMMUNICATING_WITH_KEYCLOAK = "Error communicating with Keycloak";
-    private static final String RECEIVED = ": received ";
-
     private final        ObjectMapper          mapper                            = new ObjectMapper();
     private final        KeycloakTokenVerifier keycloakTokenVerifier;
     private final        KeycloakTokenVerifier keycloakMasterTokenVerifier;
@@ -66,6 +62,11 @@ public class KeycloakUserManager {
      */
     private              CloseableHttpClient   httpClient;
 
+    /**
+     * Instantiates a new Keycloak user manager.
+     *
+     * @param kcProperties the kc properties
+     */
     public KeycloakUserManager(KeycloakProperties kcProperties) {
         this.kcProperties = kcProperties;
         this.keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties.getRealmPublicKey());
@@ -86,6 +87,15 @@ public class KeycloakUserManager {
         }
     }
 
+    /**
+     * Authenticate admin user keycloak principal.
+     *
+     * @param username  the username
+     * @param password  the password
+     * @param clientId  the client id
+     * @param grantType the grant type
+     * @return the keycloak principal
+     */
     KeycloakPrincipal<KeycloakSecurityContext> authenticateAdminUser(String username,
                                                                      String password,
                                                                      String clientId,
@@ -135,6 +145,8 @@ public class KeycloakUserManager {
      * @param userId               identifying the user
      * @param adminSecurityContext admin level auth token (context) to authorize the request
      * @return true when user with id userId exists
+     * @throws KCComException         the kc com exception
+     * @throws MissingKCUserException the missing kc user exception
      */
     public UserRepresentation userDetails(String userId, KeycloakSecurityContext adminSecurityContext) throws
                                                                                                        KCComException,
@@ -154,8 +166,9 @@ public class KeycloakUserManager {
     /**
      * Deletes a client from Keycloak
      *
+     * @param userId               the id of the client that is to be deleted
      * @param adminSecurityContext security context with access token
-     * @param userId          the id of the client that is to be deleted
+     * @return the boolean
      */
     public boolean deleteUser(String userId, KeycloakSecurityContext adminSecurityContext) {
         HttpDelete httpDelete = new HttpDelete(KeycloakUriBuilder.fromUri(String.format(USER_ENDPOINT,
