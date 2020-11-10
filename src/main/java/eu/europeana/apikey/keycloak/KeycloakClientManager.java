@@ -62,19 +62,9 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.*;
 @Service
 public class KeycloakClientManager {
     private static final Logger LOG = LogManager.getLogger(KeycloakClientManager.class);
-
-
-
-
-    /**
-     * Object mapper used for serialization and deserialization Keycloak objects to / from json
-     */
     private final ObjectMapper          mapper = new ObjectMapper();
     private final KeycloakTokenVerifier keycloakTokenVerifier;
     private final KeycloakProperties    kcProperties;
-    /**
-     * Http client used for communicating with Keycloak where Keycloak admin client is not appropriate
-     */
     private       CloseableHttpClient   httpClient;
 
     public KeycloakClientManager(KeycloakProperties kcProperties) {
@@ -144,48 +134,11 @@ public class KeycloakClientManager {
     }
 
     /**
-     * Create a new client in Keycloak. An ApiKeyDetails object created by a user is used to gather all the client
-     * registration data.
-     * Keycloak security context will be used to authorize Keycloak requests with access token. When a client is successfully
-     * created in Keycloak the generated secret is retrieved from Keycloak and stored in ApiKey object that will be used to
-     * store the entry in apikey database.
-     *
-     * @param securityContext security context with access token
-     * @param requestClient   object containing registration data from the original request
-     * @return new ApiKey object with all necessary fields, including the Keycloak ID aka "privateKey"
-     * @throws ApiKeyException when there is a failure
-     */
-//    public ApiKeyContainer createClient(KeycloakSecurityContext securityContext, ApiKeyRequest requestClient) throws
-//                                                                                                           ApiKeyException {
-//        // ClientId must be unique
-//        String newApiKey = generateClientId(securityContext);
-//
-//        ClientRepresentation newClient = this.createClient(securityContext, newApiKey, requestClient);
-//
-//        // gather all data to sent back to user (so also secret)
-//        ApiKeyContainer result = new ApiKeyContainer(newApiKey,
-//                                               requestClient.getFirstName(),
-//                                               requestClient.getLastName(),
-//                                               requestClient.getEmail(),
-//                                               requestClient.getAppName(),
-//                                               requestClient.getCompany(),
-//                                               newClient.getSecret());
-//        result.setKeycloakId(newClient.getId());
-//        // set optional fields
-//        if (StringUtils.isNotEmpty(requestClient.getWebsite())) {
-//            result.setWebsite(requestClient.getWebsite());
-//        }
-//        if (StringUtils.isNotEmpty(requestClient.getSector())) {
-//            result.setSector(requestClient.getSector());
-//        }
-//        return result;
-//    }
-
-    /**
-     * Creates a new Keycloak client linked to (missing client synchronization)
+     * Creates a new Keycloak client linked to the provided Apikey. This method is both used when creating a combined
+     * Apikey and Client, and when adding a client to an existing Apikey.
      *
      * @param securityContext   security context with access token
-     * @param key         object containing registration data from the apikey
+     * @param key               Apikey to link the Client to be created to (and to copy some data from)
      * @return ClientRepresentation representing the newly created client in Keycloak
      */
     public ClientRepresentation createClient(KeycloakSecurityContext securityContext,
@@ -466,22 +419,6 @@ public class KeycloakClientManager {
             throw new ApiKeyException("Problem with creating client representation for the request", e);
         }
         httpRequest.setEntity(entity);
-    }
-
-    /**
-     * Generate a new client-id. The generated id is unique and to assure that there is a request to Keycloak to check that.
-     *
-     * @param securityContext security context with access token
-     * @return newly generated client-id
-     * @throws ApiKeyException when error occurs during check for existing clients
-     */
-    private String generateClientId(KeycloakSecurityContext securityContext) throws ApiKeyException {
-        String        newApiKey;
-        PassGenerator pg = new PassGenerator();
-        do {
-            newApiKey = pg.generate(RandomUtils.nextInt(8, 13));
-        } while (clientExists(newApiKey, securityContext.getAccessTokenString()));
-        return newApiKey;
     }
 
     /**

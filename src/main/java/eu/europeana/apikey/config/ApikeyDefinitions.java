@@ -6,6 +6,8 @@ package eu.europeana.apikey.config;
 
 public class ApikeyDefinitions {
 
+    private ApikeyDefinitions(){};
+
     public static final String TO_MIGRATE_KEYCLOAKID       = "to-migrate";
     public static final String MISSING_PARAMETER           = "missing parameter";
     public static final String BAD_EMAIL_FORMAT            = "Email is not properly formatted.";
