@@ -48,7 +48,7 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.CLIENT_DESCRIPTION;
 //@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
 public class KeycloakClientManagerTest {
 
-    private PassGenerator pg = new PassGenerator();
+    private final PassGenerator pg = new PassGenerator();
 
     private static final String CREDENTIAL_REPRESENTATION = "{\n" +
             "    \"type\": \"secret\",\n" +

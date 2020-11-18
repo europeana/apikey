@@ -23,38 +23,35 @@ public class MailService {
     @Autowired
     public JavaMailSender emailSender;
 
-    private void sendSimpleMessage(String from, String[] bcc, String to, String subject, String messageBody) throws
-                                                                                                             SendMailException {
+    private void sendSimpleMessage(SimpleMailMessage template, String messageBody) throws SendMailException {
         LOG.debug("Sending email ...");
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setBcc(bcc);
-            message.setTo(to);
-            message.setSubject(subject);
+            message.setFrom(Objects.requireNonNull(template.getFrom()));
+            message.setBcc(Objects.requireNonNull(template.getBcc()));
+            message.setTo(Objects.requireNonNull(template.getTo())[0]);
+            message.setSubject(Objects.requireNonNull(template.getSubject()));
             message.setText(messageBody);
 
             emailSender.send(message);
+        } catch (NullPointerException npe) {
+            throw new SendMailException("Missing required parameters prevented sending confirmation email", npe);
         } catch (MailException e) {
             throw new SendMailException(String.format("A problem prevented sending a confirmation '%s' email to %s",
-                                                      subject,
-                                                      to), e);
+                                                      template.getSubject(),
+                                                      Objects.requireNonNull(template.getTo())[0]), e);
         }
     }
 
-    public void sendApiKeyEmail(String to,
-                                String subject,
-                                SimpleMailMessage template,
+    public void sendApiKeyEmail(SimpleMailMessage template,
                                 String firstName,
                                 String lastName,
                                 String apiKey) throws SendMailException {
         String messageBody = String.format(Objects.requireNonNull(template.getText()), firstName, lastName, apiKey);
-        sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+        sendSimpleMessage(template, messageBody);
     }
 
-    public void sendApiKeyAndClientEmail(String to,
-                                         String subject,
-                                         SimpleMailMessage template,
+    public void sendApiKeyAndClientEmail(SimpleMailMessage template,
                                          String firstName,
                                          String lastName,
                                          String apiKey,
@@ -64,27 +61,10 @@ public class MailService {
                                            lastName,
                                            apiKey,
                                            clientSecret);
-        sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+        sendSimpleMessage(template, messageBody);
     }
 
-    public void sendClientAddedEmail(String to,
-                                     String subject,
-                                     SimpleMailMessage template,
-                                     String firstName,
-                                     String lastName,
-                                     String apiKey,
-                                     String clientSecret) throws SendMailException {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()),
-                                           firstName,
-                                           lastName,
-                                           apiKey,
-                                           clientSecret);
-        sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
-    }
-
-    public boolean sendDeletedUserEmail(String to,
-                                        String subject,
-                                        SimpleMailMessage template,
+    public boolean sendDeletedUserEmail(SimpleMailMessage template,
                                         String today,
                                         String email,
                                         String kcDeleted,
@@ -97,25 +77,30 @@ public class MailService {
                                            setsDeleted,
                                            inThirtyDays);
         try {
-            sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+            sendSimpleMessage(template, messageBody);
         } catch (SendMailException sme) {
             return false;
         }
         return true;
     }
 
-    public boolean sendUserProblemEmail(String to,
-                                        String subject,
-                                        SimpleMailMessage template,
+    public boolean sendUserProblemEmail(SimpleMailMessage template,
                                         String today,
                                         String userId,
                                         int status) {
-        String messageBody = String.format(Objects.requireNonNull(template.getText()), today, userId, status);
+
+        String messageBody;
+        if (status == 0){
+            messageBody = String.format(Objects.requireNonNull(template.getText()), today, userId);
+        } else {
+            messageBody = String.format(Objects.requireNonNull(template.getText()), today, userId, status);
+        }
         try {
-            sendSimpleMessage(template.getFrom(), template.getBcc(), to, subject, messageBody);
+            sendSimpleMessage(template, messageBody);
         } catch (SendMailException sme) {
             return false;
         }
         return true;
     }
+
 }

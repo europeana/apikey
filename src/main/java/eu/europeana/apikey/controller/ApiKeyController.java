@@ -58,11 +58,11 @@ public class ApiKeyController {
     private final ApiKeyRepo                           apiKeyRepo;
     private final CaptchaManager                       captchaManager;
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
-    private final MailService                          emailService;
-    private final SimpleMailMessage                    apiKeyCreatedMsg;
-    private final SimpleMailMessage                    apiKeyAndClientCreatedMsg;
-    private final SimpleMailMessage                    clientAddedMsg;
     private final KeycloakClientManager                keycloakClientManager;
+
+
+    @Autowired
+    private MailService emailService;
 
     @Value("${keycloak.manager-client-id}")
     private String managerClientId;
@@ -71,21 +71,25 @@ public class ApiKeyController {
     private String managerClientSecret;
 
     @Autowired
+    @Qualifier("apikeyTemplate")
+    private SimpleMailMessage apiKeyCreatedMsg;
+
+    @Autowired
+    @Qualifier("apikeyAndClientTemplate")
+    private SimpleMailMessage apiKeyAndClientCreatedMsg;
+
+    @Autowired
+    @Qualifier("clientTemplate")
+    private SimpleMailMessage clientAddedMsg;
+
+    @Autowired
     public ApiKeyController(ApiKeyRepo apiKeyRepo,
                             CaptchaManager captchaManager,
                             CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider,
-                            MailService emailService,
-                            @Qualifier("apikeyTemplate") SimpleMailMessage apiKeyCreatedMsg,
-                            @Qualifier("apikeyAndClientTemplate") SimpleMailMessage apiKeyAndClientCreatedMsg,
-                            @Qualifier("clientTemplate") SimpleMailMessage clientAddedMsg,
                             KeycloakClientManager keycloakClientManager) {
         this.apiKeyRepo = apiKeyRepo;
         this.captchaManager = captchaManager;
         this.customKeycloakAuthenticationProvider = customKeycloakAuthenticationProvider;
-        this.emailService = emailService;
-        this.apiKeyCreatedMsg = apiKeyCreatedMsg;
-        this.apiKeyAndClientCreatedMsg = apiKeyAndClientCreatedMsg;
-        this.clientAddedMsg = clientAddedMsg;
         this.keycloakClientManager = keycloakClientManager;
     }
 
@@ -244,15 +248,18 @@ public class ApiKeyController {
 
         // create new apikey, making sure it is unique
         ApiKey newKey = prepareNewApiKey(newKeyRequest);
-        LOG.debug("New Apikey {} created. Creating Client ...", newKey.getApiKey());
+        LOG.debug("New Apikey '{}' prepared; creating Client and retrieving its ID ...", newKey.getApiKey());
 
         KeycloakSecurityContext securityContext = (KeycloakSecurityContext) kcAuthToken.getCredentials();
         ClientRepresentation newClientRep = keycloakClientManager.createClient(securityContext, newKey);
-        LOG.debug("New Client {} created.", newClientRep.getId());
+        newKey.setKeycloakId(newClientRep.getId());
+        LOG.debug("New Client with ID '{}' created linked to Apikey '{}'", newClientRep.getId(), newKey.getApiKey());
 
-        emailService.sendApiKeyAndClientEmail(newKey.getEmail(),
-                                              "Your Europeana API keys",
-                                              apiKeyAndClientCreatedMsg,
+        this.apiKeyRepo.save(newKey);
+        LOG.debug("Apikey '{}' created", newKey.getApiKey());
+
+        apiKeyAndClientCreatedMsg.setTo(newKey.getEmail());
+        emailService.sendApiKeyAndClientEmail(apiKeyAndClientCreatedMsg,
                                               newKey.getFirstName(),
                                               newKey.getLastName(),
                                               newKey.getApiKey(),
@@ -299,10 +306,8 @@ public class ApiKeyController {
         // update only keycloakId (and keep old registration, activation and deprecated dates!)
         existingApiKey.setKeycloakId(keycloakId);
         apiKeyRepo.save(existingApiKey);
-
-        emailService.sendClientAddedEmail(existingApiKey.getEmail(),
-                                          "Your Europeana API keys",
-                                          clientAddedMsg,
+        clientAddedMsg.setTo(existingApiKey.getEmail());
+        emailService.sendApiKeyAndClientEmail(clientAddedMsg,
                                           existingApiKey.getFirstName(),
                                           existingApiKey.getLastName(),
                                           existingApiKey.getApiKey(),
@@ -314,10 +319,10 @@ public class ApiKeyController {
 
     private ResponseEntity<Object> createApikey(ApiKeyRequest newKeyRequest) throws ApiKeyException {
         ApiKey newKey = prepareNewApiKey(newKeyRequest);
+        this.apiKeyRepo.save(newKey);
         LOG.debug("New Apikey {} created", newKey.getApiKey());
-        emailService.sendApiKeyEmail(newKey.getEmail(),
-                                     "Your Europeana API key",
-                                     apiKeyCreatedMsg,
+        apiKeyCreatedMsg.setTo(newKey.getEmail());
+        emailService.sendApiKeyEmail(apiKeyCreatedMsg,
                                      newKey.getFirstName(),
                                      newKey.getLastName(),
                                      newKey.getApiKey());
@@ -338,9 +343,6 @@ public class ApiKeyController {
         if (StringUtils.isNotEmpty(newKeyRequest.getSector())) {
             newKey.setSector(newKeyRequest.getSector());
         }
-
-        this.apiKeyRepo.save(newKey);
-        LOG.debug("Stand-alone API key with public key {} created", newKey.getApiKey());
         return newKey;
     }
 
@@ -381,11 +383,11 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
-    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiKey read(@PathVariable("id") String id) throws ApiKeyException {
-        LOG.debug("Retrieving details for API key {}...", id);
-        checkManagerOrOwnerCredentials(id);
-        return checkKeyExists(id);
+    @GetMapping(path = "/{apikey}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiKey read(@PathVariable("apikey") String apiKey) throws ApiKeyException {
+        LOG.debug("Retrieving details for API key '{}' ...", apiKey);
+        checkManagerOrOwnerCredentials(apiKey);
+        return checkKeyExists(apiKey);
     }
 
     /**
@@ -425,7 +427,6 @@ public class ApiKeyController {
         checkKeyDeprecated(key);
         copyValuesToApiKey(key, updateKeyRequest);
         this.apiKeyRepo.save(key);
-        LOG.debug("User {} has updated API key {}", kcAuthToken.getPrincipal(), apiKey);
 
         String keyCloakId = keycloakClientManager.checkifClientExists(apiKey,
                                                                       (KeycloakSecurityContext) kcAuthToken.getCredentials());
@@ -434,10 +435,12 @@ public class ApiKeyController {
             keycloakClientManager.updateClient((KeycloakSecurityContext) kcAuthToken.getCredentials(),
                                                updateKeyRequest,
                                                apiKey);
-            LOG.debug("User {} updated Client {} linked with Apikey {}",
+            LOG.debug("User {} has updated Apikey '{}' and linked Client '{}'",
                       kcAuthToken.getPrincipal(),
-                      keyCloakId,
-                      apiKey);
+                      apiKey,
+                      keyCloakId);
+        } else {
+            LOG.debug("User {} has updated API key '{}'", kcAuthToken.getPrincipal(), apiKey);
         }
         return key;
     }
@@ -467,17 +470,18 @@ public class ApiKeyController {
         checkKeyDeprecated(key);
         key.setDeprecationDate(new DateTime(DateTimeZone.UTC).toDate());
         this.apiKeyRepo.save(key);
-        LOG.debug("User {} has disabled API key {}", kcAuthToken.getPrincipal(), apiKey);
 
         String keyCloakId = keycloakClientManager.checkifClientExists(apiKey,
                                                                       (KeycloakSecurityContext) kcAuthToken.getCredentials());
         if (StringUtils.isNotBlank(keyCloakId)) {
             // there is a client in Keycloak with clientId == apiKey; also try and disable Client
             keycloakClientManager.disableClient(apiKey, (KeycloakSecurityContext) kcAuthToken.getCredentials());
-            LOG.debug("User {} disabled Client {} linked with Apikey {}",
+            LOG.debug("User {} has disabled Apikey '{}' and linked Client '{}'",
                       kcAuthToken.getPrincipal(),
-                      keyCloakId,
-                      apiKey);
+                      apiKey,
+                      keyCloakId);
+        } else {
+            LOG.debug("User {} has disabled API key '{}'", kcAuthToken.getPrincipal(), apiKey);
         }
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -512,17 +516,18 @@ public class ApiKeyController {
         }
         key.setDeprecationDate(null);
         this.apiKeyRepo.save(key);
-        LOG.debug("User {} has enabled API key {}", kcAuthToken.getPrincipal(), apiKey);
 
         String keyCloakId = keycloakClientManager.checkifClientExists(apiKey,
                                                                       (KeycloakSecurityContext) kcAuthToken.getCredentials());
         if (StringUtils.isNotBlank(keyCloakId)) {
             // there is a client in Keycloak with clientId == apiKey; also try and enable Client
-            keycloakClientManager.disableClient(apiKey, (KeycloakSecurityContext) kcAuthToken.getCredentials());
-            LOG.debug("User {} enabled Client {} linked with Apikey {}",
+            keycloakClientManager.enableClient(apiKey, (KeycloakSecurityContext) kcAuthToken.getCredentials());
+            LOG.debug("User {} has enabled Apikey '{}' and linked Client '{}'",
                       kcAuthToken.getPrincipal(),
-                      keyCloakId,
-                      apiKey);
+                      apiKey,
+                      keyCloakId);
+        } else {
+            LOG.debug("User {} has enabled API key '{}'", kcAuthToken.getPrincipal(), apiKey);
         }
         return key;
     }
@@ -531,8 +536,7 @@ public class ApiKeyController {
      * This method deletes the apikey identified by the supplied string.
      * NOTE: this actually deletes the apikey row from the database, as opposed to disabling it!
      * <p>
-     * NOTE: if this method finds a linked Keycloak Client, it also disables that.
-     * No data are deleted by this method.
+     * NOTE: if this method finds a linked Keycloak Client, it also deletes that.
      *
      * @param apiKey string identifying the ApiKey's "public key"
      * @return HTTP 204 upon successful execution
@@ -553,18 +557,18 @@ public class ApiKeyController {
             throw new ApiKeyNotFoundException(apiKey);
         }
         this.apiKeyRepo.delete(optionalApiKey.get());
-        LOG.debug("User {} has deleted API key {}", kcAuthToken.getPrincipal(), apiKey);
 
         String keyCloakId = keycloakClientManager.checkifClientExists(apiKey,
                                                                       (KeycloakSecurityContext) kcAuthToken.getCredentials());
-
         if (StringUtils.isNotBlank(keyCloakId)) {
             // there is a client in Keycloak with clientId == apiKey, delete Client as well
             keycloakClientManager.deleteClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKey);
-            LOG.debug("User {} has deleted Client {} linked with Apikey {}",
+            LOG.debug("User {} has deleted Apikey '{}' and linked Client '{}'",
                       kcAuthToken.getPrincipal(),
-                      keyCloakId,
-                      apiKey);
+                      apiKey,
+                      keyCloakId);
+        } else {
+            LOG.debug("User {} has deleted API key '{}'", kcAuthToken.getPrincipal(), apiKey);
         }
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
