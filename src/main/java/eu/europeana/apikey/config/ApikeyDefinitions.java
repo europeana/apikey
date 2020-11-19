@@ -24,7 +24,9 @@ public class ApikeyDefinitions {
     public static final String OK_ASCII                              = "✓";
 
     private static final String REQUEST_RECEIVED                      = "{\"text\":\"On %s, a request was received to remove user account with ID %s.\\n\\n";
-    private static final String NO_ACTION_BUT_LOGGED                  = "carrying out this request.\\nNo action was taken.\\nThe user token has been logged in Kibana.\"}";
+    private static final String NO_ACTION_BUT_LOGGED                  = "carrying out this request.\\nNo action was taken.\\nThe user token has been logged in Kibana.";
+    private static final String NO_ACTION_BUT_LOGGED_PERIOD           = NO_ACTION_BUT_LOGGED + "\"}";
+    private static final String NO_ACTION_LOGGED_AND_ERROR            = NO_ACTION_BUT_LOGGED + "\\n\\n[%s]\"}";
 
     public static final String SLACK_USER_DELETE_MESSAGEBODY         =
             "{\"text\":\"On %s, user %s has requested to remove their account.\\n" +
@@ -37,12 +39,12 @@ public class ApikeyDefinitions {
             "with the token used to send the request. Therefore the token has been logged in Kibana.\"}";
     public static final String SLACK_KC_COMM_ISSUE_MESSAGEBODY       =
             REQUEST_RECEIVED + "there was a problem connecting to " + "Keycloak (HTTP %d), preventing " +
-            NO_ACTION_BUT_LOGGED;
+            NO_ACTION_BUT_LOGGED_PERIOD;
     public static final String SLACK_FORBIDDEN_MESSAGEBODY           =
-            REQUEST_RECEIVED + "an authorisation problem for the embedded Keycloak User prevented " +
-            NO_ACTION_BUT_LOGGED;
+            REQUEST_RECEIVED + "an authorisation/authentication problem for the embedded Keycloak User prevented " +
+            NO_ACTION_LOGGED_AND_ERROR;
     public static final String SLACK_SERVICE_UNAVAILABLE_MESSAGEBODY =
-            REQUEST_RECEIVED + "a server error occurred which prevented " + NO_ACTION_BUT_LOGGED;
+            REQUEST_RECEIVED + "a server error occurred which prevented " + NO_ACTION_BUT_LOGGED_PERIOD;
 
     /**
      * Template for client name

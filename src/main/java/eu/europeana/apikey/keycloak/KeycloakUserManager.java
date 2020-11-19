@@ -145,8 +145,8 @@ public class KeycloakUserManager {
      * @param userId               identifying the user
      * @param adminSecurityContext admin level auth token (context) to authorize the request
      * @return true when user with id userId exists
-     * @throws KCComException         the kc com exception
-     * @throws MissingKCUserException the missing kc user exception
+     * @throws KCComException         exception indicative of communication problems with Keycloak
+     * @throws MissingKCUserException exception indicating a missing kc user
      */
     public UserRepresentation userDetails(String userId, KeycloakSecurityContext adminSecurityContext) throws
                                                                                                        KCComException,

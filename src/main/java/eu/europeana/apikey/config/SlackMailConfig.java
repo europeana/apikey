@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @EnableWebMvc
 class SlackMailConfig extends WebMvcConfigurerAdapter {
 
-    private static final String NO_ACTION_BUT_LOGGED = "carrying out this request.\nNo action was taken.\\nThe user token has been logged in Kibana.";
+    private static final String NO_ACTION_BUT_LOGGED = "carrying out this request.\nNo action was taken.\nThe user token has been logged in Kibana.";
     private static final String REQUEST_RECEIVED     = "On %s, a request was received to remove user account with ID %s.\n\n";
 
     @Value("${keycloak.user.slack.from}")
@@ -43,6 +43,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Bean("userNotFoundTemplate")
     public SimpleMailMessage userNotFoundSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("Auth user service: user to be deleted not found");
         message.setText(REQUEST_RECEIVED +
                         "This userID could not be found in Keycloak (HTTP status %d), which might indicate a problem " +
                         "with the token used to send the request. Therefore the token has been logged in Kibana.");
@@ -56,6 +57,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Bean("kcCommProblemTemplate")
     public SimpleMailMessage kcCommProblemSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("Auth user service: problem connecting to Keycloak");
         message.setText(REQUEST_RECEIVED + "There was a problem connecting to Keycloak (HTTP status %d), preventing " +
                         NO_ACTION_BUT_LOGGED);
         message.setFrom(sentFrom);
@@ -68,6 +70,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Bean("forbiddenTemplate")
     public SimpleMailMessage kcForbiddenSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("Auth user service: could not obtain authorisation for Keycloak");
         message.setText(REQUEST_RECEIVED + "An authorisation problem for the embedded Keycloak User prevented " +
                         NO_ACTION_BUT_LOGGED);
         message.setFrom(sentFrom);
@@ -80,6 +83,7 @@ class SlackMailConfig extends WebMvcConfigurerAdapter {
     @Bean("unavailableTemplate")
     public SimpleMailMessage unavailableSlackMail() {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("Auth user service: server error occurred");
         message.setText(REQUEST_RECEIVED + "\"A server error occurred which prevented  " + NO_ACTION_BUT_LOGGED);
         message.setFrom(sentFrom);
         if (StringUtils.isNotEmpty(copyTo)) {

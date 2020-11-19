@@ -1,8 +1,11 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.exception.ForbiddenException;
+import eu.europeana.apikey.exception.KCAuthException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -38,12 +41,17 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
     }
 
     // this is for the admin user authentication
-    public Authentication authenticateAdminUser(String username, String password, String clientId, String grantType) {
+    public Authentication authenticateAdminUser(String username,
+                                                String password,
+                                                String clientId,
+                                                String grantType) throws KCAuthException {
         LOG.debug("Authenticating user {}", username);
-        KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakUserManager.authenticateAdminUser(username,
-                                                                                                         password,
-                                                                                                         clientId,
-                                                                                                         grantType);
+        KeycloakPrincipal<KeycloakSecurityContext> principal;
+        try {
+            principal = keycloakUserManager.authenticateAdminUser(username, password, clientId, grantType);
+        } catch (Exception e) {
+            throw new KCAuthException(e.getMessage(), null == e.getCause() ? "N/A" : e.getCause().getMessage());
+        }
         if (principal != null) {
             return new KeycloakAuthenticationToken(principal,
                                                    keycloakClientManager.getAuthorities(principal.getKeycloakSecurityContext()

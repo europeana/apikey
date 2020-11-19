@@ -19,23 +19,14 @@ public class KCComException extends Exception {
         super.initCause(ex);
     }
 
-    public KCComException(String message) {
-        this.message = message;
+    public KCComException(String error) {
+        this.error = error;
     }
 
-    public KCComException(String error, String message) {
-        this.error = error;
-        this.message = message;
-    }
     public KCComException(String error, String message, int status) {
         this.error = error;
         this.message = message;
         this.status = status;
-    }
-
-    public KCComException(String message, Throwable ex) {
-        super.initCause(ex);
-        this.message = message;
     }
 
     public int getStatus() {

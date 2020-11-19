@@ -19,6 +19,10 @@ public class ForbiddenException extends ApiKeyException {
         super("Operation " + actionName + " is not allowed by this user");
     }
 
+    public ForbiddenException(String error, String message) {
+        super(error, message);
+    }
+
     @Override
     public boolean doLogStacktrace() {
         return false;

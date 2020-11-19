@@ -152,6 +152,7 @@ public class ApiKey {
         this.lastName         = copy.lastName;
         this.deprecationDate  = copy.deprecationDate;
         this.lastAccessDate   = copy.lastAccessDate;
+        this.comments         = copy.comments;
     }
 
     public String getApiKey() {

@@ -18,6 +18,10 @@ public interface ApiKeyRepo extends JpaRepository<ApiKey, String> {
     List<ApiKey> findAll();
     List<ApiKey> findByEmailAndAppName(String email, String appName);
 
+    /**
+     * @deprecated (The migration feature for all apikeys to Keycloak clients was abandoned)
+     **/
+    @Deprecated(since="version 0.2 to be released late november 2020")
     @Query("SELECT a FROM ApiKey a WHERE (a.keycloakId is null OR a.keycloakId = '" + TO_MIGRATE_KEYCLOAKID + "')")
     List<ApiKey> findAllKeysToMigrate();
 }
