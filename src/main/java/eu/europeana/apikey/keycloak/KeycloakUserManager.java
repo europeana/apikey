@@ -62,6 +62,16 @@ public class KeycloakUserManager {
      */
     private              CloseableHttpClient   httpClient;
 
+
+
+    @PreDestroy
+    public void close() throws IOException {
+        if (httpClient != null) {
+            LOG.info("Closing http client ...");
+            httpClient.close();
+        }
+    }
+
     /**
      * Instantiates a new Keycloak user manager.
      *
@@ -71,20 +81,8 @@ public class KeycloakUserManager {
         this.kcProperties = kcProperties;
         this.keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties.getRealmPublicKey());
         this.keycloakMasterTokenVerifier = new KeycloakTokenVerifier(kcProperties.getMasterPublicKey());
-    }
 
-    @PostConstruct
-    public void init() {
         httpClient = HttpClients.createDefault();
-    }
-
-    @PreDestroy
-    public void clean() {
-        try {
-            httpClient.close();
-        } catch (IOException e) {
-            LOG.error("Closing http client failed", e);
-        }
     }
 
     /**
