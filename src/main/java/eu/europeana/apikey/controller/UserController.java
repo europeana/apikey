@@ -106,6 +106,9 @@ public class UserController {
         }
     }
 
+    /**
+     * Testing
+     */
     @CrossOrigin(maxAge = 600)
     @GetMapping(path = "/hello/{id}", produces = MediaType.TEXT_PLAIN_VALUE)
     public String read(@PathVariable("id") String id) {
@@ -131,7 +134,7 @@ public class UserController {
      * using a HTTP Post request. If that fails, the same message will be sent via email. If that fails as well, the
      * message is logged to Kibana.
      *
-     * @param debug if true, the code will always send an email message to Slack, on top of the HTTP Post request
+     * @param debug if true, the code will send an email message to Slack also when the HTTP Post request succeeds
      * @return ResponseEntity containing appropriate HTTP status and results summary.
      */
     @CrossOrigin(maxAge = 600)
@@ -238,8 +241,7 @@ public class UserController {
      *                     "F" if designated admin user isn't authorised; and
      *                     "U" for unknown / unexpected errors
      * @param errorMessage additional information about the encountered error (if applicable)
-     * @param debug        boolean if true: force the Slack send method to return false, triggering this method to also
-     *                     send an email message
+     * @param debug        boolean TRUE: force sending an email message to Slack even when the HTTP Post request succeeds
      * @return ResponseEntity with either HTTP NOT_FOUND (when user cannot be found) or HTTP BAD_GATEWAY (when there was
      * a problem communicating with Keycloak and / or when sending a message to Slack failed)
      */
@@ -289,8 +291,7 @@ public class UserController {
      * @param userEmail   email address of the User to delete
      * @param kcDeleted   boolean representing success or failure deleting KC user
      * @param setsDeleted boolean representing success or failure deleting user sets
-     * @param debug       boolean if true: force the Slack send method to return false, triggering this method to also
-     *                    send an email message
+     * @param debug       boolean TRUE: force sending an email message to Slack even when the HTTP Post request succeeds
      * @return boolean whether or not sending the message succeeded
      */
     private boolean prepareUserDeletedMessage(String userEmail, boolean kcDeleted, boolean setsDeleted, boolean debug) {
@@ -306,7 +307,7 @@ public class UserController {
      * Send message to the Slack channel with a POST HTTP request
      *
      * @param json  contents of the messages
-     * @param debug boolean; if true: force this method to return false, so that the calling method also
+     * @param debug boolean true: force sending an email message to Slack even when the HTTP Post request succeeds
      *              sends an email message
      * @return boolean whether or not sending the message succeeded
      */
