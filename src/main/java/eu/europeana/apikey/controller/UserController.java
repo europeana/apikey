@@ -138,7 +138,7 @@ public class UserController {
      * @return ResponseEntity containing appropriate HTTP status and results summary.
      */
     @CrossOrigin(maxAge = 600)
-    @DeleteMapping(path = "/delete")
+    @DeleteMapping(path = "/account")
     public ResponseEntity<Object> delete(
             @RequestParam(value = "debug", required = false, defaultValue = "false") boolean debug,
             HttpServletRequest request) {
