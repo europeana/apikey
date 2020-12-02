@@ -47,7 +47,8 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.*;
  * Created by luthien on 18/04/2017.
  * Major refactoring by M. Helinski and Patrick Ehlert in September-November 2019
  * Upgraded to java 11 & spring boot 2 by luthien in December 2019
- * Refactored from the original code by luthien, 06/08/20 (see EA-2156)
+ * Another major refactoring to remove automatic link between apikey & client and add support to delete Keycloak
+ * users - autumn 2020 (see EA-2156, EA-2234)
  */
 @RestController
 @RequestMapping("/apikey")
@@ -118,12 +119,11 @@ public class ApiKeyController {
      * @param newKeyRequest requestbody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing or has an invalid value
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
-     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
-     * HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -161,12 +161,11 @@ public class ApiKeyController {
      * @param newKeyRequest requestbody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing or has an invalid value
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
-     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
-     * HTTP 400 if apikey already exist for <email,appName>
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
@@ -227,12 +226,11 @@ public class ApiKeyController {
      * <p>
      *
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing or has an invalid value
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
-     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
-     * HTTP 400 if apikey already exist for <email,appName>
      *
      * @param newKeyRequest requestbody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
@@ -377,7 +375,7 @@ public class ApiKeyController {
      * HTTP 200 upon successful execution
      * HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
      * HTTP 404 when the requested ApiKey is not found in the database
-     * HTTP 406 if a MIME type other than application/JSON was requested
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * <p>
      * @param apiKey string identifying the ApiKey's "public key"
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
@@ -407,10 +405,10 @@ public class ApiKeyController {
      * Return statuses:
      * HTTP 200 upon successful ApiKey update
      * HTTP 400 when a required parameter is missing
-     * HTTP 401 in case of an unauthorized request (client credential authentication fails)
-     * HTTP 403 if the request is unauthorised (when the client is not a manager)
+     * HTTP 401 in case of an unauthorised request (or client credential authentication fails)
+     * HTTP 403 if the requested resource is forbidden
      * HTTP 404 if the apikey is not found
-     * HTTP 406 if a response MIME type other than application/JSON was requested
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * HTTP 410 if the apikey is invalidated / deprecated
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
@@ -455,10 +453,10 @@ public class ApiKeyController {
      * <p>
      * Return statuses:
      *
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
-     * HTTP 404 when the requested ApiKey is not found in the database
-     * HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
+     * HTTP 404 if the apikey is not found
+     * HTTP 410 when the requested ApiKey is already deprecated (i.e. has a past deprecationdate)
      * <p>
      * Addionally, the field 'ApiKey-not-found' containing the string "apikey-not-found" will be available in the
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
@@ -503,11 +501,9 @@ public class ApiKeyController {
      *
      * HTTP 200 upon successful ApiKey update
      * HTTP 400 when a required parameter is missing or has an invalid value
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
      * HTTP 404 if the apikey is not found
-     * HTTP 406 if a response MIME type other than application/JSON was requested
-     * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param apiKey string identifying the ApiKey's "public key"
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
@@ -547,8 +543,8 @@ public class ApiKeyController {
      * <p>
      * Return statuses:
      *
-     * HTTP 401 in case of an invalid request
-     * HTTP 403 if the request is unauthorised
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
      * HTTP 404 when the requested keycloak identifier is not found in the database
      *
      * @param apiKey string identifying the ApiKey's "public key"
@@ -591,7 +587,7 @@ public class ApiKeyController {
      * Return statuses:
      *
      * HTTP 400 bad request when header does not contain api key
-     * HTTP 401 in case of an unregistered api key
+     * HTTP 401 in case of an unauthorised request (here: if the apikey is not registered)
      * HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
      *
      * @param httpServletRequest request
