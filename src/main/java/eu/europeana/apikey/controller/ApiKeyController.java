@@ -175,8 +175,8 @@ public class ApiKeyController {
                                                 @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key secured by captcha...");
 
-        // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we should do this after
-        // we validated the newKeyRequest
+        // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we
+        // should do this after we validated the newKeyRequest
         checkMandatoryFields(newKeyRequest);
         checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
 
@@ -280,6 +280,13 @@ public class ApiKeyController {
      * <p>
      *
      * TODO check error responses
+     *
+     * HTTP 201 upon successful Client creation
+     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 401 in case of an unauthorised request
+     * HTTP 403 if the requested resource is forbidden
+     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
+     * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param apiKey apikey for which the client should be created
      * @return response with created ApiKey details
