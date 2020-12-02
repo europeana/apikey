@@ -9,7 +9,7 @@ import java.security.SecureRandom;
  * Created by luthien on 03/07/2017.
  * Generates pronounceable passwords. A cleaned up and deappletified version of
  * the Java Password Generator on www.multicians.org/thvv/gpw.html
- * .
+ *
  */
 public class PassGenerator {
     private static final Logger LOG = LogManager.getLogger(PassGenerator.class);
@@ -23,11 +23,11 @@ public class PassGenerator {
      * @return the shiny new password
      */
     public String generate(int length) {
-        LOG.debug("generate new human-pronouncable password with length: " + length);
-        StringBuffer password = new StringBuffer(length);
+        LOG.debug("generate new human-pronouncable {}-characters long password", length);
+        StringBuilder password = new StringBuilder(length);
 
-        double pik   = random.nextDouble(); // random number [0,1]
-        long   ranno = (long) (pik * sigma); // weight by sum of frequencies
+        double pick  = random.nextDouble(); // random number [0,1]
+        long   ranno = (long) (pick * SIGMA); // weight by sum of frequencies
 
         long sum = 0;
         for (int c1 = 0; c1 < 26; c1++) {
@@ -35,9 +35,9 @@ public class PassGenerator {
                 for (int c3 = 0; c3 < 26; c3++) {
                     sum += get(c1, c2, c3);
                     if (sum > ranno) {
-                        password.append(alphabet.charAt(c1));
-                        password.append(alphabet.charAt(c2));
-                        password.append(alphabet.charAt(c3));
+                        password.append(ALPHABET.charAt(c1));
+                        password.append(ALPHABET.charAt(c2));
+                        password.append(ALPHABET.charAt(c3));
                         c1 = 26; // Found start. Break all 3 loops.
                         c2 = 26;
                         c3 = 26;
@@ -49,8 +49,8 @@ public class PassGenerator {
         // Now do a random walk.
         int nchar = 3;
         while (nchar < length) {
-            int c1 = alphabet.indexOf(password.charAt(nchar - 2));
-            int c2 = alphabet.indexOf(password.charAt(nchar - 1));
+            int c1 = ALPHABET.indexOf(password.charAt(nchar - 2));
+            int c2 = ALPHABET.indexOf(password.charAt(nchar - 1));
             sum = 0;
             for (int c3 = 0; c3 < 26; c3++) {
                 sum += get(c1, c2, c3);
@@ -60,13 +60,13 @@ public class PassGenerator {
                 break;
             }
 
-            pik = random.nextDouble();
-            ranno = (long) (pik * sum);
+            pick = random.nextDouble();
+            ranno = (long) (pick * sum);
             sum = 0;
             for (int c3 = 0; c3 < 26; c3++) {
                 sum += get(c1, c2, c3);
                 if (sum > ranno) {
-                    password.append(alphabet.charAt(c3));
+                    password.append(ALPHABET.charAt(c3));
                     break;
                 }
             }
@@ -79,8 +79,8 @@ public class PassGenerator {
         return c1 > 12 ? TrisData2.data[c1 - 13][c2][c3] : TrisData1.data[c1][c2][c3];
     }
 
-    private static final String alphabet = "abcdefghijklmnopqrstuvwxyz";
-    private static final long sigma; // 125729
+    private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+    private static final long   SIGMA; // 125729
 
 
     static {
@@ -92,7 +92,7 @@ public class PassGenerator {
                 }
             }
         }
-        sigma = sum;
+        SIGMA = sum;
     }
 
     /**
