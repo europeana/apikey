@@ -26,7 +26,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         this.keycloakClientManager = keycloakClientManager;
         this.keycloakUserManager = keycloakUserManager;
     }
-
+    // rename to client
     public Authentication authenticateAdminUser(String clientId, String clientSecret) {
         LOG.debug("Authenticating client {}", clientId);
         KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakClientManager.authenticateClient(clientId,

@@ -380,11 +380,11 @@ public class ApiKeyController {
      * <p>
      * Return statuses:
      * HTTP 200 upon successful execution
-     * HTTP 401 When reqested api key does not belong to the authenticated client or this client is not a manager client
+     * HTTP 401 When requested api key does not belong to the authenticated client or this client is not a manager client
      * HTTP 404 when the requested ApiKey is not found in the database
      * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * <p>
-     * @param apiKey string identifying the ApiKey's "public key"
+     * @param apiKey string identifying the Apikey
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -419,7 +419,7 @@ public class ApiKeyController {
      * HTTP 410 if the apikey is invalidated / deprecated
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
-     * @param apiKey           string identifying the ApiKey's "public key"
+     * @param apiKey string identifying the Apikey
      * @param updateKeyRequest RequestBody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
@@ -468,7 +468,7 @@ public class ApiKeyController {
      * Addionally, the field 'ApiKey-not-found' containing the string "apikey-not-found" will be available in the
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
      *
-     * @param apiKey string identifying the ApiKey's "public key"
+     * @param apiKey string identifying the Apikey
      * @return HTTP 204 upon successful execution
      */
     @CrossOrigin(maxAge = 600)
@@ -499,7 +499,6 @@ public class ApiKeyController {
     /**
      * Re-enables a given invalid ApiKey (of which the deprecationdate column has previously been set to a past time).
      * This is achieved by removing the contents of the deprecationdate column for this ApiKey.
-     * The code will execute regardless if the key is actually deprecated or not.
      * <p>
      * If this method finds a linked Keycloak Client, it also enables that.
      * No data are deleted by this method.
@@ -507,12 +506,12 @@ public class ApiKeyController {
      * Return statuses:
      *
      * HTTP 200 upon successful ApiKey update
-     * HTTP 400 when a required parameter is missing or has an invalid value
+     * HTTP 400 when a required parameter is missing, has an invalid value or when the Apikey is not deprecated
      * HTTP 401 in case of an unauthorised request
      * HTTP 403 if the requested resource is forbidden
      * HTTP 404 if the apikey is not found
      *
-     * @param apiKey string identifying the ApiKey's "public key"
+     * @param apiKey string identifying the Apikey
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -583,7 +582,6 @@ public class ApiKeyController {
         } else {
             LOG.debug("User {} has deleted API key '{}'", kcAuthToken.getPrincipal(), apiKey);
         }
-
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -616,7 +614,7 @@ public class ApiKeyController {
         if (optionalApiKey.isEmpty()) {
             String reason = String.format(APIKEY_NOT_REGISTERED, id);
             LOG.debug(reason);
-            return new ResponseEntity<>(Collections.singletonMap("response", reason), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(reason, HttpStatus.UNAUTHORIZED);
         }
 
         checkKeyDeprecated(optionalApiKey.get());

@@ -162,7 +162,7 @@ public class KeycloakUserManager {
     }
 
     /**
-     * Deletes a client from Keycloak
+     * Deletes a user from Keycloak
      *
      * @param userId               the id of the client that is to be deleted
      * @param adminSecurityContext security context with access token
@@ -177,9 +177,11 @@ public class KeycloakUserManager {
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
             LOG.debug("Received response for user {} from Keycloak: {}", httpDelete, response);
             if (response.getStatusLine().getStatusCode() != HttpStatus.NO_CONTENT.value()) {
+                LOG.error("Error sending delete user request: received HTTP {} response", response.getStatusLine().getStatusCode());
                 return false;
             }
         } catch (IOException e) {
+            LOG.error("IOException occurred while sending user delete request: {}", e.getMessage());
             return false;
         }
         return true;

@@ -9,7 +9,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.Objects;
 
 
@@ -79,6 +78,7 @@ public class MailService {
         try {
             sendSimpleMessage(template, messageBody);
         } catch (SendMailException sme) {
+            LOG.error("SendMailException occurred while sending email: {}",sme.getMessage());
             return false;
         }
         return true;
@@ -98,6 +98,7 @@ public class MailService {
         try {
             sendSimpleMessage(template, messageBody);
         } catch (SendMailException sme) {
+            LOG.error("SendMailException occurred while sending email: {}",sme.getMessage());
             return false;
         }
         return true;

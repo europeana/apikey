@@ -501,6 +501,8 @@ public class KeycloakClientManager {
     public boolean isOwner(String apiKey, KeycloakAuthenticationToken keycloakAuthenticationToken) {
         if (apiKey == null || keycloakAuthenticationToken == null ||
             keycloakAuthenticationToken.getCredentials() == null) {
+            LOG.error("Could not check if supplied token owns Apikey '{}', because one or more of the Apikey, the " +
+                      "token and / or the credentials found in the token are null", apiKey);
             return false;
         }
 
@@ -516,11 +518,15 @@ public class KeycloakClientManager {
      */
     public boolean isManagerClientAuthorized(KeycloakAuthenticationToken keycloakAuthenticationToken) {
         if (keycloakAuthenticationToken == null || keycloakAuthenticationToken.getCredentials() == null) {
+            LOG.error("Could not check if supplied token was issued for a manager client, because " +
+                      "either the token or the credentials found in there are null");
             return false;
         }
 
         Collection<GrantedAuthority> authorities = keycloakAuthenticationToken.getAuthorities();
         if (authorities == null || authorities.isEmpty()) {
+            LOG.error("Could not check if supplied token was issued for a manager client, because " +
+                      "no authorities could be found in the token");
             return false;
         }
 

@@ -139,7 +139,7 @@ public class UserController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/account")
-    public ResponseEntity<Object> delete(
+    public ResponseEntity delete(
             @RequestParam(value = "debug", required = false, defaultValue = "false") boolean debug,
             HttpServletRequest request) {
 
@@ -152,8 +152,7 @@ public class UserController {
 
         try {
             if (StringUtils.isBlank(userToken)) {
-                return new ResponseEntity<>(Collections.singletonMap(RESPONSE, "No usertoken provided"),
-                                            HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("No usertoken provided", HttpStatus.BAD_REQUEST);
             }
             userId = keycloakUserManager.extractUserId(userToken);
             reportMsg.append(userId);
@@ -202,7 +201,7 @@ public class UserController {
                 if (!sendUserDeletedEmail(userEmail, kcDeleted, setsDeleted)) {
                     reportMsg.insert(0, "Error sending User delete request report to Slack: ");
                     LOG.error(reportMsg);
-                    return new ResponseEntity<>(Collections.singletonMap(RESPONSE, reportMsg), HttpStatus.BAD_GATEWAY);
+                    return new ResponseEntity<>(reportMsg, HttpStatus.BAD_GATEWAY);
                 } else {
                     reportMsg.insert(0,
                                      "Error sending User delete request report to Slack via HTTP Post webhook. " +
@@ -214,7 +213,7 @@ public class UserController {
             }
         } catch (MissingDataException mde) {
             LOG.error(mde.getMessage(), mde);
-            return new ResponseEntity<>(Collections.singletonMap(RESPONSE, mde.getError()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(mde.getError(), HttpStatus.BAD_REQUEST);
         } catch (MissingKCUserException mke) {
             return (handleErrorMessages(userId, userToken, "M", "", 404, debug));
         } catch (KCAuthException kca) {
@@ -224,8 +223,7 @@ public class UserController {
         } catch (Exception e) {
             return (handleErrorMessages(userId, userToken, "U", "", 0, debug));
         }
-
-        return new ResponseEntity<>(Collections.singletonMap(RESPONSE, reportMsg.toString()), HttpStatus.NO_CONTENT);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
 
@@ -282,7 +280,7 @@ public class UserController {
         }
 
         LOG.error("{} Supplied usertoken: {}", message, userToken);
-        return new ResponseEntity<>(Collections.singletonMap(RESPONSE, message.toString()), returnStatus);
+        return new ResponseEntity<>(message.toString(), returnStatus);
     }
 
     /**
@@ -318,6 +316,7 @@ public class UserController {
         try {
             entity = new StringEntity(json);
         } catch (UnsupportedEncodingException e) {
+            LOG.error("UnsupportedEncodingException occurred while creating Slack message: {}", e.getMessage());
             return false;
         }
 
@@ -327,9 +326,11 @@ public class UserController {
 
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
+                LOG.error("Error sending Slack message: received HTTP {} response", response.getStatusLine().getStatusCode());
                 return false;
             }
         } catch (IOException e) {
+            LOG.error("IOException occurred while sending Slack message: {}", e.getMessage());
             return false;
         }
         return !debug;
@@ -393,9 +394,11 @@ public class UserController {
 
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.NO_CONTENT.value()) {
+                LOG.error("Error sending User Sets delete request: received HTTP {} response", response.getStatusLine().getStatusCode());
                 return false;
             }
         } catch (IOException e) {
+            LOG.error("IOException occurred while sending User Sets delete request: {}", e.getMessage());
             return false;
         }
         return true;
