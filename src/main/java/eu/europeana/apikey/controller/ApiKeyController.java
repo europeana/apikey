@@ -130,9 +130,9 @@ public class ApiKeyController {
     public ResponseEntity<Object> createKey(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         LOG.debug("User {} creates new API key ... ", kcAuthToken.getPrincipal());
-        checkMandatoryFields(newKeyRequest);
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
-        return createApikey(newKeyRequest);
+        ApiKeyRequest createApiKey = checkMandatoryFieldsAndTrim(newKeyRequest);
+        checkKeyEmailAppNameExist(createApiKey.getEmail(), createApiKey.getAppName());
+        return createApikey(createApiKey);
     }
 
     /**
@@ -177,8 +177,8 @@ public class ApiKeyController {
 
         // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we
         // should do this after we validated the newKeyRequest
-        checkMandatoryFields(newKeyRequest);
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
+        ApiKeyRequest createApiKey = checkMandatoryFieldsAndTrim(newKeyRequest);
+        checkKeyEmailAppNameExist(createApiKey.getEmail(), createApiKey.getAppName());
 
         // When no captcha token was supplied return 401
         String captchaToken = getAuthorizationHeader(httpServletRequest, CAPTCHA_PATTERN);
@@ -197,7 +197,7 @@ public class ApiKeyController {
         if (kcAuthToken == null) {
             throw new ForbiddenException();
         }
-        return createApikey(newKeyRequest);
+        return createApikey(createApiKey);
     }
 
     /**
@@ -242,11 +242,11 @@ public class ApiKeyController {
     public ResponseEntity<Object> createKeyAndClient(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         LOG.debug("User {} creates new combined API key / KeyCloak Client pair ...", kcAuthToken.getPrincipal());
-        checkMandatoryFields(newKeyRequest);
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
+        ApiKeyRequest createApiKey = checkMandatoryFieldsAndTrim(newKeyRequest);
+        checkKeyEmailAppNameExist(createApiKey.getEmail(), createApiKey.getAppName());
 
         // create new apikey, making sure it is unique
-        ApiKey newKey = prepareNewApiKey(newKeyRequest);
+        ApiKey newKey = prepareNewApiKey(createApiKey);
         LOG.debug("New Apikey '{}' prepared; creating Client and retrieving its ID ...", newKey.getApiKey());
 
         KeycloakSecurityContext securityContext = (KeycloakSecurityContext) kcAuthToken.getCredentials();
@@ -430,10 +430,10 @@ public class ApiKeyController {
     public ApiKey update(@PathVariable("apikey") String apiKey, @RequestBody ApiKeyRequest updateKeyRequest) throws
                                                                                                              ApiKeyException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        checkMandatoryFields(updateKeyRequest);
+        ApiKeyRequest updateApiKey = checkMandatoryFieldsAndTrim(updateKeyRequest);
         ApiKey key = checkKeyExists(apiKey);
         checkKeyDeprecated(key);
-        copyValuesToApiKey(key, updateKeyRequest);
+        copyValuesToApiKey(key, updateApiKey);
         this.apiKeyRepo.save(key);
 
         String keyCloakId = keycloakClientManager.checkifClientExists(apiKey,
@@ -441,7 +441,7 @@ public class ApiKeyController {
         if (StringUtils.isNotBlank(keyCloakId)) {
             // there is a client in Keycloak with clientId == apiKey; also try and update Client
             keycloakClientManager.updateClient((KeycloakSecurityContext) kcAuthToken.getCredentials(),
-                                               updateKeyRequest,
+                                               updateApiKey,
                                                apiKey);
             LOG.debug("User {} has updated Apikey '{}' and linked Client '{}'",
                       kcAuthToken.getPrincipal(),
@@ -672,7 +672,7 @@ public class ApiKeyController {
         }
     }
 
-    protected void checkMandatoryFields(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
+    protected ApiKeyRequest checkMandatoryFieldsAndTrim(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
         String            retval      = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
         if (StringUtils.isBlank(apiKeyUpdate.getFirstName())) {
@@ -697,7 +697,27 @@ public class ApiKeyController {
         if (!EmailValidator.getInstance().isValid(apiKeyUpdate.getEmail())) {
             throw new MissingDataException(BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
+        return trim(apiKeyUpdate);
     }
+
+    /**
+     * returns Apikey after trimming whitespaces.
+     *
+     * @param apiKeyRequest
+     * @return apiKeyRequest
+     */
+    private ApiKeyRequest trim(ApiKeyRequest apiKeyRequest) {
+        return new ApiKeyRequest(apiKeyRequest.getFirstName().trim(),
+                apiKeyRequest.getLastName().trim(),
+                apiKeyRequest.getEmail().trim(),
+                apiKeyRequest.getAppName().trim(),
+                apiKeyRequest.getCompany().trim(),
+                // check if non-mandatory fields are not null
+                StringUtils.isBlank(apiKeyRequest.getSector()) ? apiKeyRequest.getSector() : apiKeyRequest.getSector().trim(),
+                StringUtils.isBlank(apiKeyRequest.getWebsite()) ? apiKeyRequest.getWebsite() : apiKeyRequest.getWebsite().trim());
+    }
+
+
 
     protected ApiKey checkKeyExists(String id) throws ApiKeyNotFoundException {
         Optional<ApiKey> optionalApiKey = apiKeyRepo.findById(id);
