@@ -127,9 +127,9 @@ public class ApiKeyController {
     public ResponseEntity create(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
         LOG.debug("Creating new API key...");
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        checkMandatoryFields(newKeyRequest);
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
-        return createClient(newKeyRequest, (KeycloakSecurityContext) kcAuthToken.getCredentials());
+        ApiKeyRequest createKeyRequest =  checkMandatoryFieldsAndTrim(newKeyRequest);
+        checkKeyEmailAppNameExist(createKeyRequest.getEmail(), createKeyRequest.getAppName());
+        return createClient(createKeyRequest, (KeycloakSecurityContext) kcAuthToken.getCredentials());
     }
 
     /**
@@ -172,8 +172,8 @@ public class ApiKeyController {
 
         // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we should do this after
         // we validated the input
-        checkMandatoryFields(newKeyRequest);
-        checkKeyEmailAppNameExist(newKeyRequest.getEmail(), newKeyRequest.getAppName());
+        ApiKeyRequest createKeyRequest =  checkMandatoryFieldsAndTrim(newKeyRequest);
+        checkKeyEmailAppNameExist(createKeyRequest.getEmail(), createKeyRequest.getAppName());
 
         // When no captcha token was supplied return 401
         String captchaToken = getAuthorizationHeader(httpServletRequest, CAPTCHA_PATTERN);
@@ -191,7 +191,7 @@ public class ApiKeyController {
         if (authenticationToken == null) {
             throw new ForbiddenException();
         }
-        return createClient(newKeyRequest, (KeycloakSecurityContext) authenticationToken.getCredentials());
+        return createClient(createKeyRequest, (KeycloakSecurityContext) authenticationToken.getCredentials());
     }
 
     /**
@@ -295,13 +295,13 @@ public class ApiKeyController {
                                                                                                  ApiKeyException {
         LOG.debug("Updating API key {}...", id);
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
-        checkMandatoryFields(apiKeyUpdate);
+        ApiKeyRequest updateKeyRequest =  checkMandatoryFieldsAndTrim(apiKeyUpdate);
 
         ApiKey key = checkKeyExists(id);
         checkKeyDeprecated(key);
 
-        keycloakManager.updateClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), apiKeyUpdate, id);
-        copyValuesToApiKey(key, apiKeyUpdate);
+        keycloakManager.updateClient((KeycloakSecurityContext) kcAuthToken.getCredentials(), updateKeyRequest, id);
+        copyValuesToApiKey(key, updateKeyRequest);
         this.apiKeyRepo.save(key);
 
         return key;
@@ -596,7 +596,7 @@ public class ApiKeyController {
         }
     }
 
-    private void checkMandatoryFields(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
+    private ApiKeyRequest checkMandatoryFieldsAndTrim(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
         String            retval      = "Required parameter(s): ";
         ArrayList<String> missingList = new ArrayList<>();
         if (StringUtils.isBlank(apiKeyUpdate.getFirstName())) {
@@ -621,6 +621,24 @@ public class ApiKeyController {
         if (!EmailValidator.getInstance().isValid(apiKeyUpdate.getEmail())) {
             throw new MissingDataException(BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
         }
+        return trim(apiKeyUpdate);
+    }
+
+    /**
+     * returns Apikey after trimming whitespaces.
+     *
+     * @param apiKeyRequest
+     * @return apiKeyRequest
+     */
+    private ApiKeyRequest trim(ApiKeyRequest apiKeyRequest) {
+        return new ApiKeyRequest(apiKeyRequest.getFirstName().trim(),
+                apiKeyRequest.getLastName().trim(),
+                apiKeyRequest.getEmail().trim(),
+                apiKeyRequest.getAppName().trim(),
+                apiKeyRequest.getCompany().trim(),
+                // check if non-mandatory fields are not null
+                StringUtils.isBlank(apiKeyRequest.getSector()) ? apiKeyRequest.getSector() : apiKeyRequest.getSector().trim(),
+                StringUtils.isBlank(apiKeyRequest.getWebsite()) ? apiKeyRequest.getWebsite() : apiKeyRequest.getWebsite().trim());
     }
 
     private ApiKey checkKeyExists(String id) throws ApiKeyNotFoundException {
@@ -643,7 +661,6 @@ public class ApiKeyController {
             throw new ApiKeyExistsException(email, appName);
         }
     }
-
 }
 
 
