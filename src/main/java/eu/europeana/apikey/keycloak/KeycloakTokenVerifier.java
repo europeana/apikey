@@ -1,9 +1,11 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.config.KeycloakProperties;
 import org.keycloak.TokenVerifier;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +26,10 @@ public class KeycloakTokenVerifier {
 
     protected KeycloakTokenVerifier(String realmPublicKey) {
         generatePublicKey(realmPublicKey);
+    }
+
+    public KeycloakTokenVerifier(KeycloakProperties kcProperties) {
+        this(kcProperties.getRealmPublicKey());
     }
 
     /**
@@ -52,12 +58,24 @@ public class KeycloakTokenVerifier {
     /**
      * Verify JWT token with the realm public key. Return an AccessToken that can be used to authorize further requests.
      *
-     * @param token base64 encoded JWT token
+     * @param tokenString base64 encoded JWT token
      * @return access token object
      * @throws VerificationException
      */
-    AccessToken verifyToken(String token) throws VerificationException {
-        TokenVerifier<AccessToken> verifier = TokenVerifier.create(token, AccessToken.class);
+    AccessToken verifyToken(String tokenString) throws VerificationException {
+        TokenVerifier<AccessToken> verifier = TokenVerifier.create(tokenString, AccessToken.class);
         return verifier.publicKey(publicKey).verify().getToken();
     }
+
+    /**
+     * Retrieve the user token from the token string
+     *
+     * @param tokenString base64 encoded JWT token
+     * @return user token
+     * @throws VerificationException
+     */
+    AccessToken retrieveUserToken(String tokenString) throws VerificationException {
+        return TokenVerifier.create(tokenString, AccessToken.class).getToken();
+    }
+
 }

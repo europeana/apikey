@@ -2,8 +2,10 @@ package eu.europeana.apikey.keycloak;
 
 import eu.europeana.apikey.config.KeycloakProperties;
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.domain.ApiKeySecret;
 import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.apikey.util.PassGenerator;
+import eu.europeana.apikey.domain.ApiKey;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,6 +22,7 @@ import org.keycloak.admin.client.token.TokenManager;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -37,11 +40,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static eu.europeana.apikey.config.ApikeyDefinitions.CLIENT_DESCRIPTION;
+
 //@RunWith(SpringJUnit4ClassRunner.class)
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
-public class KeycloakManagerTest {
+@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakProperties.class})
+//@SpringBootTest(classes = {KeycloakBuilder.class, KeycloakTokenVerifier.class, KeycloakProperties.class})
+public class KeycloakClientManagerTest {
 
+    private final PassGenerator pg = new PassGenerator();
 
     private static final String CREDENTIAL_REPRESENTATION = "{\n" +
             "    \"type\": \"secret\",\n" +
@@ -136,7 +143,7 @@ public class KeycloakManagerTest {
             "]";
 
     private static final String TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ3Y1N6TDZ0a3RCNFhHcUtjbEZncnVaaHQtX3d5MkZUV0FlWUtaYWNSOTNnIn0.eyJqdGkiOiJmMzZlNWUwZS04Zjk1LTQzNmMtODNiOC1jOTRmNDcyZWRlNTQiLCJleHAiOjE1NTcyNjY1NjksIm5iZiI6MCwiaWF0IjoxNTU3MjMwNTY5LCJpc3MiOiJodHRwczovL2tleWNsb2FrLXNlcnZlci10ZXN0LmVhbmFkZXYub3JnL2F1dGgvcmVhbG1zL2V1cm9wZWFuYSIsImF1ZCI6InJlYWxtLW1hbmFnZW1lbnQiLCJzdWIiOiJkZTg5MGI1OS03NTFjLTRmNjMtYWUxYS1mODc5ODlkNDU1ZDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhcGkta2V5LXNlcnZpY2UiLCJhdXRoX3RpbWUiOjAsInNlc3Npb25fc3RhdGUiOiIzMGI2ZDkxNy0wMWIzLTRmMTItYmYyMi1lZjkxOWQ0ZjdiZDQiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkFQSSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFwaS1rZXktc2VydmljZSI6eyJyb2xlcyI6WyJ1bWFfcHJvdGVjdGlvbiJdfSwicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJ2aWV3LXJlYWxtIiwidmlldy1pZGVudGl0eS1wcm92aWRlcnMiLCJtYW5hZ2UtaWRlbnRpdHktcHJvdmlkZXJzIiwiaW1wZXJzb25hdGlvbiIsInJlYWxtLWFkbWluIiwiY3JlYXRlLWNsaWVudCIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctYXV0aG9yaXphdGlvbiIsInF1ZXJ5LWNsaWVudHMiLCJxdWVyeS11c2VycyIsIm1hbmFnZS1ldmVudHMiLCJtYW5hZ2UtcmVhbG0iLCJ2aWV3LWV2ZW50cyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJtYW5hZ2UtYXV0aG9yaXphdGlvbiIsIm1hbmFnZS1jbGllbnRzIiwicXVlcnktZ3JvdXBzIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsImNsaWVudElkIjoiYXBpLWtleS1zZXJ2aWNlIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJjbGllbnRIb3N0IjoiMTUwLjI1NC4xNjkuMTAwIiwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LWFwaS1rZXktc2VydmljZSIsImNsaWVudEFkZHJlc3MiOiIxNTAuMjU0LjE2OS4xMDAiLCJlbWFpbCI6InNlcnZpY2UtYWNjb3VudC1hcGkta2V5LXNlcnZpY2VAcGxhY2Vob2xkZXIub3JnIn0.UoENMoInw81KRWkRW7divlPpGjKTgluZaU2cyZOqw7TU92cg7b2ELFBtv-Myc1rmap2Ha-VaKRc5cVsR_wwIiqYPELkwSTqC8yMNjEJdfg0MQyDnCtxP_72ehgP9YRhMrR1JB1TeXMChhwn1BDpdRQYdZjxRQCSArGy_lQHlDjU5hLJbdV3ZWjq8-l-uIWuJiviMHG2I3J34ioyKEEi6Xo7OhclXjcQ-OmPYRBTnGZBu908IFH9b23NxOOssPZxzYr3n6Qf9HPoaJ_VEja1OOeHDCCJcBtw4ww8TnkcRaA1llugBSS5iO9Fku_CZqEEeMkG3OdUpyn7Cuzahuac5KA";
-    private static final String REALM_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp7sc54z9WkhvzCLTumC/lUq25iebcJbtk11qQY6CgAsWzXQ5fQHTQTe5bmc7moZTsDDgNWD6PHiQAUce2tMLNA1l9QFJQQXeWl7OOeFHw40erLQMbCFP9GKizMqFHSbwjgaFfyJGud6Z9KpRZ8vwyPQsxu8wB4Vi8tM3JSCRDCn3NhcRkw1KIBWboiPu4W02+XPkK7tqsotY8Dwd//Iudq5wU865Tx+9DNR0Kr/SyJaCIvwIN5agsu7dOVPQChoWkxUnOvJxpiI20jahLng5E/rxUYJD+a9Ih1CNCsQTLjAcjMxBKW0m97BmPy0rhlf1gWlhM+6/J0y8siq7WmwV9wIDAQAB";
+    private static final String REALM_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgq2lkW7yOWM1mEIyE3zvJxHoRX6S9U8GJp3leNent2E7CXffk45clrpA2ElzH7OAWEoKEth+ORlHAeyAls4eqTyjimXv4HRVTxxL9PCrQDqsd9oVKXnQPbLYxaMRN9xLF2THBYVNJv7Bz1DT3CL+DAq9f5W9N0X+Nsik2+IE8IUDLWyfY2COQrpfS3gTTzHyt7BFDUbzvOuLs6jRuA2rFyYv1i8dN6vdX7WiamrLyTBLOLNGWwCCuV4qLdhbKMUl7S3jOkPg7WHy+lfkWmWAdeSP9wPTDnSJXpCIb+dbYUW6mhlbLNfQLksjxDAqLCE8MgMD6n/CJgVvf26GhlRxWQIDAQAB";
     private static final String APP_NAME                     = "App name";
     private static final String WEBSITE                      = "www.website.com";
     private static final String SECTOR                       = "Sector";
@@ -156,16 +163,19 @@ public class KeycloakManagerTest {
     @Mock
     private CloseableHttpClient httpClient;
 
-    @Mock
-    private KeycloakTokenVerifier keycloakTokenVerifier;
+//    @Mock
+//    private KeycloakTokenVerifier keycloakTokenVerifier;
 
-    private KeycloakProperties kcProperties = new KeycloakProperties("https://keycloak-server-test.eanadev.org/auth",
-                                                                     "europeana",
-                                                                     true,
-                                                                     REALM_PUBLIC_KEY);
+    private final KeycloakProperties kcProperties = new KeycloakProperties("https://keycloak-cf-test.eanadev.org/auth",
+                                                                           "europeana",
+                                                                           true,
+                                                                           REALM_PUBLIC_KEY);
 
     @InjectMocks
-    private KeycloakManager keycloakManager = new KeycloakManager(kcProperties);
+    private final KeycloakClientManager keycloakClientManager = new KeycloakClientManager(kcProperties);
+
+    @InjectMocks
+    private KeycloakTokenVerifier keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties);
 
     // TODO temporarily disabled because I could not get this test working under Java 11 & Powermock
     // TODO within reasonable time
@@ -207,14 +217,21 @@ public class KeycloakManagerTest {
     public void createClient() throws ApiKeyException, IOException {
         ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
+        String               publicKey       = pg.generate(RandomUtils.nextInt(8, 13));
+        ApiKey newKey  = new ApiKey(publicKey,
+                                    apiKeyCreate.getFirstName(),
+                                    apiKeyCreate.getLastName(),
+                                    apiKeyCreate.getEmail(),
+                                    apiKeyCreate.getAppName(),
+                                    apiKeyCreate.getCompany());
+        ClientRepresentation newClientRep = keycloakClientManager.createClient(securityContext, newKey);
 
-        ApiKeySecret apiKey = keycloakManager.createClient(securityContext, apiKeyCreate);
-
-        Assert.assertNotNull(apiKey);
-        Assert.assertEquals(apiKeyCreate.getFirstName(), apiKey.getFirstName());
-        Assert.assertEquals(apiKeyCreate.getLastName(), apiKey.getLastName());
-        Assert.assertEquals(apiKeyCreate.getEmail(), apiKey.getEmail());
-        Assert.assertEquals(NEW_CLIENT_SECRET, apiKey.getClientSecret());
+        Assert.assertNotNull(publicKey);
+        Assert.assertEquals(String.format(CLIENT_DESCRIPTION,
+                      apiKeyCreate.getFirstName(),
+                      apiKeyCreate.getLastName(),
+                      apiKeyCreate.getEmail()), newClientRep.getDescription());
+        Assert.assertEquals(NEW_CLIENT_SECRET, newClientRep.getSecret());
     }
 
     private KeycloakSecurityContext prepareForCreateClient() throws IOException {
@@ -285,7 +302,7 @@ public class KeycloakManagerTest {
     public void getAuthoritiesForRealm() throws VerificationException {
         AccessToken                  accessToken         = prepareVerifier();
         List<String>                 roles               = prepareRoles(false);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
 
         Assert.assertNotNull(authorityCollection);
         Assert.assertFalse(authorityCollection.isEmpty());
@@ -298,7 +315,7 @@ public class KeycloakManagerTest {
     public void getAuthoritiesForResource() throws VerificationException {
         AccessToken                  accessToken         = prepareVerifier();
         List<String>                 roles               = prepareRoles(true);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
 
         Assert.assertNotNull(authorityCollection);
         Assert.assertFalse(authorityCollection.isEmpty());
@@ -310,7 +327,7 @@ public class KeycloakManagerTest {
     private List<String> prepareRoles(boolean useResourceRoleMappings) {
         List<String> roles = new ArrayList<>();
         if (useResourceRoleMappings) {
-            ReflectionTestUtils.setField(keycloakManager, "useResourceRoleMappings", true);
+            ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", true);
             roles.add("uma_protection");
             roles.add("view-realm");
             roles.add("view-identity-providers");
@@ -352,7 +369,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isOwner(CLIENT_ID, keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isOwner(CLIENT_ID, keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
     }
@@ -364,7 +381,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isOwner("other key", keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isOwner("other key", keycloakAuthenticationToken);
 
         Assert.assertFalse(authorized);
     }
@@ -375,12 +392,12 @@ public class KeycloakManagerTest {
         KeycloakSecurityContext     securityContext             = Mockito.mock(KeycloakSecurityContext.class);
         AccessToken                 accessToken                 = prepareVerifier();
         prepareRoles(true);
-        Collection<GrantedAuthority> authorityCollection = keycloakManager.getAuthorities(accessToken);
+        Collection<GrantedAuthority> authorityCollection = keycloakClientManager.getAuthorities(accessToken);
         Mockito.when(keycloakAuthenticationToken.getAuthorities()).thenReturn(authorityCollection);
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn("manager");
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertTrue(authorized);
     }
@@ -392,7 +409,7 @@ public class KeycloakManagerTest {
         Mockito.when(keycloakAuthenticationToken.getName()).thenReturn(CLIENT_ID);
         Mockito.when(keycloakAuthenticationToken.getCredentials()).thenReturn(securityContext);
 
-        boolean authorized = keycloakManager.isManagerClientAuthorized(keycloakAuthenticationToken);
+        boolean authorized = keycloakClientManager.isManagerClientAuthorized(keycloakAuthenticationToken);
 
         Assert.assertFalse(authorized);
     }
@@ -402,7 +419,7 @@ public class KeycloakManagerTest {
         ApiKeyRequest           apiKeyDetails   = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
-        keycloakManager.updateClient(securityContext, apiKeyDetails, CLIENT_ID);
+        keycloakClientManager.updateClient(securityContext, apiKeyDetails, CLIENT_ID);
     }
 
     @Test
@@ -410,7 +427,7 @@ public class KeycloakManagerTest {
         ApiKeyRequest           apiKeyUpdate    = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
-        keycloakManager.updateClient(securityContext, apiKeyUpdate, CLIENT_ID);
+        keycloakClientManager.updateClient(securityContext, apiKeyUpdate, CLIENT_ID);
     }
 
     private KeycloakSecurityContext prepareForUpdateClient(boolean existing, boolean enabled) throws IOException {
@@ -464,25 +481,25 @@ public class KeycloakManagerTest {
     @Test(expected = ApiKeyException.class)
     public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-        keycloakManager.disableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.disableClient(CLIENT_ID, securityContext);
     }
 
     @Test
     public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
-        keycloakManager.disableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.disableClient(CLIENT_ID, securityContext);
     }
 
     @Test(expected = ApiKeyException.class)
     public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
-        keycloakManager.enableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.enableClient(CLIENT_ID, securityContext);
     }
 
     @Test
     public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
-        keycloakManager.enableClient(CLIENT_ID, securityContext);
+        keycloakClientManager.enableClient(CLIENT_ID, securityContext);
     }
 
 }

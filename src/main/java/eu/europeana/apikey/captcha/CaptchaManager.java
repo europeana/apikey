@@ -20,6 +20,7 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class CaptchaManager {
@@ -60,6 +61,7 @@ public class CaptchaManager {
             JSONObject jsonObject = new JSONObject(verificationResponse);
             if (!jsonObject.getBoolean("success")) {
                 JSONArray jsonArray = jsonObject.getJSONArray("error-codes");
+                LOG.error("Captcha verification error: {} ", jsonArray.get(0));
                 throw new CaptchaException(jsonArray.get(0).toString());
             }
             return true;
@@ -78,7 +80,7 @@ public class CaptchaManager {
         try (CloseableHttpResponse response = httpClient.execute(new HttpPost(getVerificationURI(captchaToken)))) {
             LOG.debug("Received captcha verification");
             if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
-                return IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                return IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             }
         } catch (URISyntaxException e) {
             LOG.error("Wrong URI syntax.", e);

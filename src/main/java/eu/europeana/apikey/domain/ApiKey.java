@@ -83,14 +83,14 @@ public class ApiKey {
     protected String email;
 
     @NotNull
-    @Size(max = 50)
+    @Size(max = 100)
     @Column(name = "firstname")
     @JsonProperty("firstName")
     @JsonView(View.Public.class)
     private String firstName;
 
     @NotNull
-    @Size(max = 50)
+    @Size(max = 100)
     @Column(name = "lastname")
     @JsonProperty("lastName")
     @JsonView(View.Public.class)
@@ -109,6 +109,12 @@ public class ApiKey {
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss'Z'")
     @JsonView(View.Public.class)
     private Date lastAccessDate;
+
+    @Size(max = 255)
+    @Column(name = "comments")
+    @JsonProperty("comments")
+    @JsonView(View.Public.class)
+    private String comments;
 
     public ApiKey() {
         // default constructor required by JPA/Hibernate for deserialization
@@ -146,6 +152,7 @@ public class ApiKey {
         this.lastName         = copy.lastName;
         this.deprecationDate  = copy.deprecationDate;
         this.lastAccessDate   = copy.lastAccessDate;
+        this.comments         = copy.comments;
     }
 
     public String getApiKey() {
@@ -253,6 +260,13 @@ public class ApiKey {
         this.lastAccessDate = lastAccessDate;
     }
 
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
 
     @Override
     public String toString() {

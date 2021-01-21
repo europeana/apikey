@@ -16,13 +16,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.requiresChannel().requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
-            .requiresSecure().and()
-            .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll().and()
-            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll().and()
-            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey/validate").permitAll().and()
-            .authorizeRequests().antMatchers(HttpMethod.POST, "/apikey", "/apikey/").authenticated().and()
-            .authorizeRequests().antMatchers("/apikey/**").authenticated().and()
+        http
+            // https://stackoverflow.com/questions/46870411/how-to-require-ssl-in-some-environments-using-spring-boot-2-0-0-m4
+//                .requestMatchers( r -> r.getHeader("X-Forwarded-Proto") != null).requiresSecure().and()
+            .authorizeRequests()
+                .antMatchers(HttpMethod.DELETE,"/user/account").permitAll()
+                .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                .anyRequest().authenticated().and()
             .httpBasic().and()
             .requiresChannel().anyRequest().requiresSecure().and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
@@ -37,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             auth.authenticationProvider(this.authenticationProvider);
         }
 
-        private CustomKeycloakAuthenticationProvider authenticationProvider;
+        private final CustomKeycloakAuthenticationProvider authenticationProvider;
 
         public WebSecurityConfiguration(CustomKeycloakAuthenticationProvider authenticationProvider) {
             this.authenticationProvider = authenticationProvider;

@@ -21,13 +21,17 @@ public class KeycloakProperties {
     private String  realm;
     private boolean useResourceRoleMappings;
     private String  realmPublicKey;
+    private String  masterPublicKey;
     private String  managerClientId;
     private String  managerClientSecret;
 
     public KeycloakProperties() {
     }
 
-    public KeycloakProperties(String authServerUrl, String realm, boolean useResourceRoleMappings, String realmPublicKey){
+    public KeycloakProperties(String authServerUrl,
+                              String realm,
+                              boolean useResourceRoleMappings,
+                              String realmPublicKey) {
         this.authServerUrl = authServerUrl;
         this.realm = realm;
         this.useResourceRoleMappings = useResourceRoleMappings;
@@ -70,6 +74,14 @@ public class KeycloakProperties {
 
     public void setRealmPublicKey(String realmPublicKey) {
         this.realmPublicKey = realmPublicKey;
+    }
+
+    public String getMasterPublicKey() {
+        return masterPublicKey;
+    }
+
+    public void setMasterPublicKey(String masterPublicKey) {
+        this.masterPublicKey = masterPublicKey;
     }
 
     public String getManagerClientId() {
