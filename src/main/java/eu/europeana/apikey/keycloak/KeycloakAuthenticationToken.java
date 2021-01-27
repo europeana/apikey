@@ -10,12 +10,7 @@ public final class KeycloakAuthenticationToken extends AbstractAuthenticationTok
 
     private static final long serialVersionUID = 6378042438184913288L;
 
-    private transient Principal principal;
-
-    public KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> principal) {
-        super(null);
-        this.principal = principal;
-    }
+    private final transient Principal principal;
 
     KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> keycloakPrincipal,
                                 Collection<? extends GrantedAuthority> authorities) {

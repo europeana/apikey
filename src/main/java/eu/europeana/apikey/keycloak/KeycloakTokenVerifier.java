@@ -5,7 +5,6 @@ import org.keycloak.TokenVerifier;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;

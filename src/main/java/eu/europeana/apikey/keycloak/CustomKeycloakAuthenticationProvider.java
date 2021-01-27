@@ -1,11 +1,8 @@
 package eu.europeana.apikey.keycloak;
 
-import eu.europeana.apikey.exception.ForbiddenException;
-import eu.europeana.apikey.exception.KCAuthException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -19,12 +16,9 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
     private static final Logger LOG = LogManager.getLogger(CustomKeycloakAuthenticationProvider.class);
 
     private final KeycloakClientManager keycloakClientManager;
-    private final KeycloakUserManager   keycloakUserManager;
 
-    public CustomKeycloakAuthenticationProvider(KeycloakClientManager keycloakClientManager,
-                                                KeycloakUserManager keycloakUserManager) {
+    public CustomKeycloakAuthenticationProvider(KeycloakClientManager keycloakClientManager) {
         this.keycloakClientManager = keycloakClientManager;
-        this.keycloakUserManager = keycloakUserManager;
     }
     // rename to client
     public Authentication authenticateAdminUser(String clientId, String clientSecret) {
@@ -37,27 +31,6 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
                                                                                                  .getAccessToken()));
         }
         LOG.info("Authentication for client {} failed!", clientId);
-        return null;
-    }
-
-    // this is for the admin user authentication
-    public Authentication authenticateAdminUser(String username,
-                                                String password,
-                                                String clientId,
-                                                String grantType) throws KCAuthException {
-        LOG.debug("Authenticating user {}", username);
-        KeycloakPrincipal<KeycloakSecurityContext> principal;
-        try {
-            principal = keycloakUserManager.authenticateAdminUser(username, password, clientId, grantType);
-        } catch (Exception e) {
-            throw new KCAuthException(e.getMessage(), null == e.getCause() ? "N/A" : e.getCause().getMessage());
-        }
-        if (principal != null) {
-            return new KeycloakAuthenticationToken(principal,
-                                                   keycloakClientManager.getAuthorities(principal.getKeycloakSecurityContext()
-                                                                                                 .getAccessToken()));
-        }
-        LOG.info("Authentication for user {} failed!", username);
         return null;
     }
 

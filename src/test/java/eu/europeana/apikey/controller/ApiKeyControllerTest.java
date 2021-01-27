@@ -1,6 +1,7 @@
 package eu.europeana.apikey.controller;
 
 import eu.europeana.apikey.ApiKeyApplication;
+import eu.europeana.apikey.TestResources;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.junit.Before;
@@ -33,10 +34,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @TestPropertySource(locations = "classpath:apikey-test.properties")
 public class ApiKeyControllerTest {
 
-    private static final String EXISTING_API_KEY        = "apikey1";
-    private static final String UNREGISTERED_API_KEY    = "apikey2";
-    private static final String DEPRECATED_API_KEY      = "apikey3";
-
     @Autowired
     private MockMvc mvc;
 
@@ -45,19 +42,19 @@ public class ApiKeyControllerTest {
 
     @Before
     public void setup() {
-        ApiKey apiKey = new ApiKey(EXISTING_API_KEY, "edward", "potts", "potts@mail.com", "appNme", "company");
-        apiKey.setKeycloakId(EXISTING_API_KEY);
+        ApiKey apiKey = new ApiKey(TestResources.getExistingApiKey(), "edward", "potts", "potts@mail.com", "appNme", "company");
+        apiKey.setKeycloakId(TestResources.getExistingApiKey());
         apiKeyRepo.saveAndFlush(apiKey);
 
-        apiKey = new ApiKey(DEPRECATED_API_KEY, "frank", "sinatra", "sinatra@mail.com", "appName", "company");
-        apiKey.setKeycloakId(DEPRECATED_API_KEY);
+        apiKey = new ApiKey(TestResources.getDeprecatedApiKey(), "frank", "sinatra", "sinatra@mail.com", "appName", "company");
+        apiKey.setKeycloakId(TestResources.getDeprecatedApiKey());
         apiKey.setDeprecationDate(new Date());
         apiKeyRepo.saveAndFlush(apiKey);
     }
 
     @Test
     public void validateExistingApiKey() throws Exception {
-        Optional<ApiKey> optionalExistingApiKey = apiKeyRepo.findById(EXISTING_API_KEY);
+        Optional<ApiKey> optionalExistingApiKey = apiKeyRepo.findById(TestResources.getExistingApiKey());
         if (optionalExistingApiKey.isEmpty()) {
             fail();
         }
@@ -87,7 +84,7 @@ public class ApiKeyControllerTest {
     public void validateUnregisteredApiKey() throws Exception {
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
-                                            .header(HttpHeaders.AUTHORIZATION, "APIKEY " + UNREGISTERED_API_KEY)
+                                            .header(HttpHeaders.AUTHORIZATION, "APIKEY " + TestResources.getUnregisteredApiKey())
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .with(csrf()))
            .andDo(MockMvcResultHandlers.print())
@@ -96,7 +93,7 @@ public class ApiKeyControllerTest {
 
     @Test
     public void validateDeprecatedApiKey() throws Exception {
-        Optional<ApiKey> optionalDeprecatedApiKey = apiKeyRepo.findById(DEPRECATED_API_KEY);
+        Optional<ApiKey> optionalDeprecatedApiKey = apiKeyRepo.findById(TestResources.getDeprecatedApiKey());
         if (optionalDeprecatedApiKey.isEmpty()) {
             fail();
         }

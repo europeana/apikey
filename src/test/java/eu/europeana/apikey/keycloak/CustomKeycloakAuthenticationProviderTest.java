@@ -1,5 +1,6 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.TestResources;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -8,6 +9,7 @@ import org.keycloak.representations.AccessToken;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -18,25 +20,21 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@Ignore
+@RunWith(MockitoJUnitRunner.class)
+//@RunWith(SpringJUnit4ClassRunner.class)
+//@Ignore
 public class CustomKeycloakAuthenticationProviderTest {
 
-    private static final String MANAGER_CLIENT_ID     = "manager";
-    private static final String MANAGER_CLIENT_SECRET = "secret";
-    private static final String ROLE_CREATE_CLIENT    = "realm-create-client";
-    private static final String RESOURCE_ACCESS       = "access";
-
     @Mock
-    private KeycloakClientManager keycloakClientManager;
+    private final KeycloakClientManager keycloakClientManager = new KeycloakClientManager(TestResources.getKeycloakProperties());
 
     @InjectMocks
     private CustomKeycloakAuthenticationProvider authenticationProvider;
 
-    @Test
+//    @Test
     public void authenticateOKWithResourceRoleMappings() {
-        Authentication          authentication  = new UsernamePasswordAuthenticationToken(MANAGER_CLIENT_ID,
-                                                                                          MANAGER_CLIENT_SECRET);
+        Authentication          authentication  = new UsernamePasswordAuthenticationToken(TestResources.getManagerClientId(),
+                                                                                          TestResources.getManagerClientSecret());
         KeycloakSecurityContext securityContext = prepareForResourceRoleMappings();
 
         Authentication authenticatedToken = authenticationProvider.authenticate(authentication);
@@ -44,14 +42,14 @@ public class CustomKeycloakAuthenticationProviderTest {
         Assert.assertNotNull(authenticatedToken);
         Assert.assertTrue(authenticatedToken instanceof KeycloakAuthenticationToken);
         Assert.assertNotNull(authenticatedToken.getPrincipal());
-        Assert.assertEquals(MANAGER_CLIENT_ID, ((KeycloakPrincipal) authenticatedToken.getPrincipal()).getName());
+        Assert.assertEquals(TestResources.getManagerClientId(), ((KeycloakPrincipal) authenticatedToken.getPrincipal()).getName());
         Assert.assertNotNull(authenticatedToken.getDetails());
-        Assert.assertEquals(MANAGER_CLIENT_ID, authenticatedToken.getDetails());
+        Assert.assertEquals(TestResources.getManagerClientId(), authenticatedToken.getDetails());
         Assert.assertEquals(securityContext, authenticatedToken.getCredentials());
         Assert.assertNotNull(authenticatedToken.getAuthorities());
         Assert.assertFalse(authenticatedToken.getAuthorities().isEmpty());
         Assert.assertEquals(1, authenticatedToken.getAuthorities().size());
-        Assert.assertEquals(ROLE_CREATE_CLIENT, authenticatedToken.getAuthorities().iterator().next().getAuthority());
+        Assert.assertEquals(TestResources.getRoleCreateClient(), authenticatedToken.getAuthorities().iterator().next().getAuthority());
         Assert.assertNotNull(authenticatedToken.getCredentials());
         Assert.assertEquals(securityContext, authenticatedToken.getCredentials());
     }
@@ -59,15 +57,15 @@ public class CustomKeycloakAuthenticationProviderTest {
     private KeycloakSecurityContext prepareForResourceRoleMappings() {
         ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", true);
         KeycloakSecurityContext                    securityContext = Mockito.mock(KeycloakSecurityContext.class);
-        KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(MANAGER_CLIENT_ID,
+        KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(TestResources.getManagerClientId(),
                                                                                              securityContext);
         AccessToken                                accessToken     = Mockito.mock(AccessToken.class);
         Mockito.when(securityContext.getAccessToken()).thenReturn(accessToken);
         Map<String, AccessToken.Access> accessMap = new HashMap<>();
         AccessToken.Access              access    = Mockito.mock(AccessToken.Access.class);
-        accessMap.put(RESOURCE_ACCESS, access);
+        accessMap.put(TestResources.getResourceAccess(), access);
         Set<String> roles = new HashSet<>();
-        roles.add(ROLE_CREATE_CLIENT);
+        roles.add(TestResources.getRoleCreateClient());
         Mockito.when(access.getRoles()).thenReturn(roles);
         Mockito.when(accessToken.getResourceAccess()).thenReturn(accessMap);
         Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
@@ -76,10 +74,10 @@ public class CustomKeycloakAuthenticationProviderTest {
         return securityContext;
     }
 
-    @Test
+//    @Test
     public void authenticateOKWithoutResourceRoleMappings() {
-        Authentication          authentication  = new UsernamePasswordAuthenticationToken(MANAGER_CLIENT_ID,
-                                                                                          MANAGER_CLIENT_SECRET);
+        Authentication          authentication  = new UsernamePasswordAuthenticationToken(TestResources.getManagerClientId(),
+                                                                                          TestResources.getManagerClientSecret());
         KeycloakSecurityContext securityContext = prepareForRealmAccess();
 
         Authentication authenticatedToken = authenticationProvider.authenticate(authentication);
@@ -87,14 +85,14 @@ public class CustomKeycloakAuthenticationProviderTest {
         Assert.assertNotNull(authenticatedToken);
         Assert.assertTrue(authenticatedToken instanceof KeycloakAuthenticationToken);
         Assert.assertNotNull(authenticatedToken.getPrincipal());
-        Assert.assertEquals(MANAGER_CLIENT_ID, ((KeycloakPrincipal) authenticatedToken.getPrincipal()).getName());
+        Assert.assertEquals(TestResources.getManagerClientId(), ((KeycloakPrincipal) authenticatedToken.getPrincipal()).getName());
         Assert.assertNotNull(authenticatedToken.getDetails());
-        Assert.assertEquals(MANAGER_CLIENT_ID, authenticatedToken.getDetails());
+        Assert.assertEquals(TestResources.getManagerClientId(), authenticatedToken.getDetails());
         Assert.assertEquals(securityContext, authenticatedToken.getCredentials());
         Assert.assertNotNull(authenticatedToken.getAuthorities());
         Assert.assertFalse(authenticatedToken.getAuthorities().isEmpty());
         Assert.assertEquals(1, authenticatedToken.getAuthorities().size());
-        Assert.assertEquals(ROLE_CREATE_CLIENT, authenticatedToken.getAuthorities().iterator().next().getAuthority());
+        Assert.assertEquals(TestResources.getRoleCreateClient(), authenticatedToken.getAuthorities().iterator().next().getAuthority());
         Assert.assertNotNull(authenticatedToken.getCredentials());
         Assert.assertEquals(securityContext, authenticatedToken.getCredentials());
     }
@@ -102,13 +100,13 @@ public class CustomKeycloakAuthenticationProviderTest {
     private KeycloakSecurityContext prepareForRealmAccess() {
         ReflectionTestUtils.setField(keycloakClientManager, "useResourceRoleMappings", false);
         KeycloakSecurityContext                    securityContext = Mockito.mock(KeycloakSecurityContext.class);
-        KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(MANAGER_CLIENT_ID,
+        KeycloakPrincipal<KeycloakSecurityContext> principal       = new KeycloakPrincipal<>(TestResources.getManagerClientId(),
                                                                                              securityContext);
         AccessToken                                accessToken     = Mockito.mock(AccessToken.class);
         Mockito.when(securityContext.getAccessToken()).thenReturn(accessToken);
         AccessToken.Access access = Mockito.mock(AccessToken.Access.class);
         Set<String>        roles  = new HashSet<>();
-        roles.add(ROLE_CREATE_CLIENT);
+        roles.add(TestResources.getRoleCreateClient());
         Mockito.when(access.getRoles()).thenReturn(roles);
         Mockito.when(accessToken.getRealmAccess()).thenReturn(access);
         Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
@@ -119,8 +117,8 @@ public class CustomKeycloakAuthenticationProviderTest {
 
     @Test
     public void authenticateFailed() {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(MANAGER_CLIENT_ID,
-                                                                                MANAGER_CLIENT_SECRET);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(TestResources.getManagerClientId(),
+                                                                                TestResources.getManagerClientSecret());
         Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
 
         Authentication authenticatedToken = authenticationProvider.authenticate(authentication);
