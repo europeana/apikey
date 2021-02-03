@@ -1,5 +1,6 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.apikey.exception.ClientTokenRetrievalException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
@@ -21,7 +22,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
         this.keycloakClientManager = keycloakClientManager;
     }
     // rename to client
-    public Authentication authenticateAdminUser(String clientId, String clientSecret) {
+    public Authentication authenticateAdminClient(String clientId, String clientSecret)  {
         LOG.debug("Authenticating client {}", clientId);
         KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakClientManager.authenticateClient(clientId,
                                                                                                         clientSecret);
@@ -36,7 +37,7 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
 
     @Override
     public Authentication authenticate(Authentication authentication) {
-        return authenticateAdminUser(authentication.getName(), authentication.getCredentials().toString());
+        return authenticateAdminClient(authentication.getName(), authentication.getCredentials().toString());
     }
 
     @Override

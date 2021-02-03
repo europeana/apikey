@@ -7,6 +7,7 @@ import eu.europeana.apikey.config.KeycloakProperties;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.apikey.exception.ClientTokenRetrievalException;
 import eu.europeana.apikey.exception.KCClientExistsException;
 import eu.europeana.apikey.exception.MissingKCClientException;
 import org.apache.commons.lang3.StringUtils;
@@ -109,9 +110,10 @@ public class KeycloakClientManager {
                 LOG.error("No access token retrieved for client {}!", clientId);
                 return null;
             }
-        } catch (RuntimeException anyException) {
+        } catch (RuntimeException e) {
+//            throw new ClientTokenRetrievalException("Retrieving access token failed for client: " + clientId, e);
             throw new AuthenticationServiceException("Retrieving access token failed for client " + clientId,
-                                                     anyException);
+                                                     e);
         }
 
         try {

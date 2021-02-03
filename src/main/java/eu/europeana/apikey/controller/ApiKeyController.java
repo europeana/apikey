@@ -191,7 +191,7 @@ public class ApiKeyController {
         }
 
         // retrieve access token for the manager client so we can use that the create a new client
-        KeycloakAuthenticationToken kcAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminUser(
+        KeycloakAuthenticationToken kcAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminClient(
                 managerClientId,
                 managerClientSecret);
         if (kcAuthToken == null) {
