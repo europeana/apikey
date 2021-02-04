@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
-import java.util.Collections;
 
 import static eu.europeana.apikey.config.ApikeyDefinitions.*;
 
@@ -40,7 +39,6 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.*;
 public class UserController {
 
     private static final Logger LOG      = LogManager.getLogger(UserController.class);
-    private static final String RESPONSE = "response";
 
     private final CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
     private final KeycloakUserManager                  keycloakUserManager;
@@ -141,7 +139,7 @@ public class UserController {
     @DeleteMapping(path = "/account")
     public ResponseEntity delete(
             @RequestParam(value = "debug", required = false, defaultValue = "false") boolean debug,
-            HttpServletRequest request) {
+            HttpServletRequest request) throws KCException, MissingDataException {
 
         boolean       kcDeleted   = false;
         boolean       setsDeleted = false;
@@ -152,7 +150,7 @@ public class UserController {
 
         try {
             if (StringUtils.isBlank(userToken)) {
-                return new ResponseEntity<>("No usertoken provided", HttpStatus.BAD_REQUEST);
+                throw new KCException("No usertoken provided", HttpStatus.BAD_REQUEST.value());
             }
             userId = keycloakUserManager.extractUserId(userToken);
             reportMsg.append(userId);
@@ -201,7 +199,7 @@ public class UserController {
                 if (!sendUserDeletedEmail(userEmail, kcDeleted, setsDeleted)) {
                     reportMsg.insert(0, "Error sending User delete request report to Slack: ");
                     LOG.error(reportMsg);
-                    return new ResponseEntity<>(reportMsg, HttpStatus.BAD_GATEWAY);
+                    throw new KCException(reportMsg.toString(), HttpStatus.BAD_GATEWAY.value());
                 } else {
                     reportMsg.insert(0,
                                      "Error sending User delete request report to Slack via HTTP Post webhook. " +
@@ -211,17 +209,12 @@ public class UserController {
             } else {
                 LOG.info(reportMsg);
             }
-        } catch (MissingDataException mde) {
-            LOG.error(mde.getMessage(), mde);
-            return new ResponseEntity<>(mde.getError(), HttpStatus.BAD_REQUEST);
         } catch (MissingKCUserException mke) {
-            return (handleErrorMessages(userId, userToken, "M", "", 404, debug));
+             handleErrorMessages(userId, userToken, "M", "", 404, debug);
         } catch (KCAuthException kca) {
-            return (handleErrorMessages(userId, userToken, "F", kca.getErrorAndCause(), 0, debug));
-        } catch (KCComException kce) {
-            return (handleErrorMessages(userId, userToken, "C", "", kce.getStatus(), debug));
-        } catch (Exception e) {
-            return (handleErrorMessages(userId, userToken, "U", "", 0, debug));
+             handleErrorMessages(userId, userToken, "F", kca.getErrorAndCause(), 0, debug);
+        } catch (KCCommunicationException kce) {
+             handleErrorMessages(userId, userToken, "C", "", kce.getStatus(), debug);
         }
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
@@ -237,18 +230,18 @@ public class UserController {
      *                     "M" if user cannot be found;
      *                     "C" in case of errors communicating with KeyCloak;
      *                     "F" if designated admin user isn't authorised; and
-     *                     "U" for unknown / unexpected errors
+     *                     default :  for unknown / unexpected errors
      * @param errorMessage additional information about the encountered error (if applicable)
      * @param debug        boolean TRUE: force sending an email message to Slack even when the HTTP Post request succeeds
-     * @return ResponseEntity with either HTTP NOT_FOUND (when user cannot be found) or HTTP BAD_GATEWAY (when there was
+     * @return EuropeanaApiErrorResponse with either HTTP NOT_FOUND (when user cannot be found) or HTTP BAD_GATEWAY (when there was
      * a problem communicating with Keycloak and / or when sending a message to Slack failed)
      */
-    private ResponseEntity<Object> handleErrorMessages(String userId,
-                                                       String userToken,
-                                                       String errorType,
-                                                       String errorMessage,
-                                                       int kcStatus,
-                                                       boolean debug) {
+    private void handleErrorMessages(String userId,
+                                     String userToken,
+                                     String errorType,
+                                     String errorMessage,
+                                     int kcStatus,
+                                     boolean debug) throws KCException {
         StringBuilder message = new StringBuilder();
         String        today   = LocalDate.now().toString();
         HttpStatus    returnStatus;
@@ -265,13 +258,9 @@ public class UserController {
                 message.append(String.format(SLACK_FORBIDDEN_MESSAGEBODY, today, userId, errorMessage));
                 returnStatus = HttpStatus.UNAUTHORIZED;
                 break;
-            case "U":
-                message.append(String.format(SLACK_SERVICE_UNAVAILABLE_MESSAGEBODY, today, userId));
-                returnStatus = HttpStatus.SERVICE_UNAVAILABLE;
-                break;
             default: // shouldn't happen, check if another errorType was added
                 message.append(String.format(SLACK_SERVICE_UNAVAILABLE_MESSAGEBODY, today, userId));
-                returnStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+                returnStatus = HttpStatus.SERVICE_UNAVAILABLE;
         }
 
         if (!sendMessage(message.toString(), debug) && !sendErrorEmail(userId, errorType, kcStatus)) {
@@ -280,7 +269,7 @@ public class UserController {
         }
 
         LOG.error("{} Supplied usertoken: {}", message, userToken);
-        return new ResponseEntity<>(message.toString(), returnStatus);
+        throw new KCException(message.toString(), returnStatus.value());
     }
 
     /**
@@ -362,7 +351,7 @@ public class UserController {
      *                  "M" if user cannot be found;
      *                  "C" in case of errors communicating with KeyCloak;
      *                  "F" if designated admin user isn't authorised; and
-     *                  "U" for unknown / unexpected errors
+     *                  default :  for unknown / unexpected errors
      * @param status    int value representing the HTTP return status of
      * @return boolean whether or not sending the message succeeded
      */
@@ -377,9 +366,6 @@ public class UserController {
                 break;
             case "F":
                 mailTemplate = kcForbiddenSlackMail;
-                break;
-            case "U":
-                mailTemplate = unavailableSlackMail;
                 break;
             default: // shouldn't happen but just in case
                 mailTemplate = unavailableSlackMail;

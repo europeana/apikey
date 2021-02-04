@@ -11,6 +11,7 @@ import org.springframework.context.annotation.PropertySource;
 
 @PropertySource(value = "classpath:build.properties", ignoreResourceNotFound = true)
 @SpringBootApplication
+        //(scanBasePackages = {"eu.europeana.api", "eu.europeana.apikey"})
 public class ApiKeyApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {

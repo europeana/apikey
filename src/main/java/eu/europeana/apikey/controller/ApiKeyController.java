@@ -1,6 +1,7 @@
 package eu.europeana.apikey.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.apikey.captcha.CaptchaManager;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyRequest;
@@ -127,7 +128,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> createKey(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+    public ResponseEntity<Object> createKey(@RequestBody ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         LOG.debug("User {} creates new API key ... ", kcAuthToken.getPrincipal());
         checkMandatoryFields(newKeyRequest);
@@ -172,7 +173,7 @@ public class ApiKeyController {
                  produces = MediaType.APPLICATION_JSON_VALUE,
                  consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> createCaptcha(HttpServletRequest httpServletRequest,
-                                                @RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+                                                @RequestBody ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         LOG.debug("Creating new API key secured by captcha...");
 
         // instead of checking manager credentials we check captcha token, but since a captcha can only be used once we
@@ -239,7 +240,7 @@ public class ApiKeyController {
     @PostMapping(path = "/keycloak",
                  produces = MediaType.APPLICATION_JSON_VALUE,
                  consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> createKeyAndClient(@RequestBody ApiKeyRequest newKeyRequest) throws ApiKeyException {
+    public ResponseEntity<Object> createKeyAndClient(@RequestBody ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         LOG.debug("User {} creates new combined API key / KeyCloak Client pair ...", kcAuthToken.getPrincipal());
         checkMandatoryFields(newKeyRequest);
@@ -293,7 +294,7 @@ public class ApiKeyController {
      * HTTP 201 upon successful ApiKey creation
      */
     @PostMapping(path = "/keycloak/{apiKey}")
-    public ResponseEntity<HttpStatus> addClient(@PathVariable String apiKey) throws ApiKeyException {
+    public ResponseEntity<HttpStatus> addClient(@PathVariable String apiKey) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken    = checkManagerCredentials();
         ApiKey                      existingApiKey = checkKeyExists(apiKey);
         LOG.debug("Verified that API key {} exists in database!", apiKey);
@@ -324,7 +325,7 @@ public class ApiKeyController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    private ResponseEntity<Object> createApikey(ApiKeyRequest newKeyRequest) throws ApiKeyException {
+    private ResponseEntity<Object> createApikey(ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         ApiKey newKey = prepareNewApiKey(newKeyRequest);
         this.apiKeyRepo.save(newKey);
         LOG.debug("New Apikey {} created", newKey.getApiKey());
@@ -390,7 +391,7 @@ public class ApiKeyController {
     @CrossOrigin(maxAge = 600)
     @JsonView(View.Public.class)
     @GetMapping(path = "/{apikey}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiKey read(@PathVariable("apikey") String apiKey) throws ApiKeyException {
+    public ApiKey read(@PathVariable("apikey") String apiKey) throws EuropeanaApiException {
         LOG.debug("Retrieving details for API key '{}' ...", apiKey);
         checkManagerOrOwnerCredentials(apiKey);
         return checkKeyExists(apiKey);
@@ -428,7 +429,7 @@ public class ApiKeyController {
                 produces = MediaType.APPLICATION_JSON_VALUE,
                 consumes = MediaType.APPLICATION_JSON_VALUE)
     public ApiKey update(@PathVariable("apikey") String apiKey, @RequestBody ApiKeyRequest updateKeyRequest) throws
-                                                                                                             ApiKeyException {
+                                                                                                   EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         checkMandatoryFields(updateKeyRequest);
         ApiKey key = checkKeyExists(apiKey);
@@ -473,7 +474,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{apikey}/disable")
-    public ResponseEntity<Object> disable(@PathVariable("apikey") String apiKey) throws ApiKeyException {
+    public ResponseEntity<Object> disable(@PathVariable("apikey") String apiKey) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
         ApiKey key = checkKeyExists(apiKey);
@@ -516,7 +517,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(path = "/{apikey}/enable")
-    public ApiKey enable(@PathVariable("apikey") String apiKey) throws ApiKeyException {
+    public ApiKey enable(@PathVariable("apikey") String apiKey) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
         ApiKey key = checkKeyExists(apiKey);
@@ -558,7 +559,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @DeleteMapping(path = "/{apikey}")
-    public ResponseEntity<Object> delete(@PathVariable("apikey") String apiKey) throws ApiKeyException {
+    public ResponseEntity<Object> delete(@PathVariable("apikey") String apiKey) throws EuropeanaApiException {
 
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
 
@@ -599,7 +600,7 @@ public class ApiKeyController {
      * @return HTTP 204 upon successful validation
      */
     @PostMapping(path = "/validate")
-    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) throws ApiKeyException {
+    public ResponseEntity<Object> validate(HttpServletRequest httpServletRequest) throws EuropeanaApiException {
 
         // When no apikey was supplied return 400
         String id = getAuthorizationHeader(httpServletRequest, APIKEY_PATTERN);
@@ -692,10 +693,10 @@ public class ApiKeyController {
         }
 
         if (!missingList.isEmpty()) {
-            throw new MissingDataException(MISSING_PARAMETER, retval + missingList + " not provided");
+            throw new MissingDataException(MISSING_PARAMETER + retval + missingList + " not provided");
         }
         if (!EmailValidator.getInstance().isValid(apiKeyUpdate.getEmail())) {
-            throw new MissingDataException(BAD_EMAIL_FORMAT, BAD_EMAIL_FORMAT);
+            throw new MissingDataException(BAD_EMAIL_FORMAT);
         }
     }
 

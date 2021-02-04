@@ -2,7 +2,7 @@ package eu.europeana.apikey.keycloak;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.apikey.config.KeycloakProperties;
-import eu.europeana.apikey.exception.KCComException;
+import eu.europeana.apikey.exception.KCCommunicationException;
 import eu.europeana.apikey.exception.MissingDataException;
 import eu.europeana.apikey.exception.MissingKCUserException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -25,7 +25,6 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.stereotype.Service;
 import org.springframework.http.*;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
@@ -143,12 +142,11 @@ public class KeycloakUserManager {
      * @param userId               identifying the user
      * @param adminSecurityContext admin level auth token (context) to authorize the request
      * @return true when user with id userId exists
-     * @throws KCComException         exception indicative of communication problems with Keycloak
+     * @throws KCCommunicationException         exception indicative of communication problems with Keycloak
      * @throws MissingKCUserException exception indicating a missing kc user
      */
     public UserRepresentation userDetails(String userId, KeycloakSecurityContext adminSecurityContext) throws
-                                                                                                       KCComException,
-                                                                                                       MissingKCUserException {
+                                                                         KCCommunicationException, MissingKCUserException {
         HttpGet httpGet = prepareGetUserRequest(userId, adminSecurityContext.getAccessTokenString());
         LOG.debug("Checking if userID {} exists...", userId);
         UserRepresentation user   = getUser(httpGet, userId);
@@ -211,9 +209,9 @@ public class KeycloakUserManager {
      * @param httpGet get request
      * @return a list of retrieved users
      * @throws MissingKCUserException in case the user cannot be found
-     * @throws KCComException in case keycloak refuses to communicate
+     * @throws KCCommunicationException in case keycloak refuses to communicate
      */
-    private UserRepresentation getUser(HttpGet httpGet, String userId) throws MissingKCUserException, KCComException {
+    private UserRepresentation getUser(HttpGet httpGet, String userId) throws MissingKCUserException, KCCommunicationException {
         LOG.debug("Sending user representation request to Keycloak...");
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received user representation from Keycloak");
@@ -228,14 +226,14 @@ public class KeycloakUserManager {
                           RECEIVED,
                           response.getStatusLine().getStatusCode(),
                           response.getStatusLine().getReasonPhrase());
-                throw new KCComException(ERROR_COMMUNICATING_WITH_KEYCLOAK,
-                                         response.getStatusLine().getReasonPhrase(),
+                throw new KCCommunicationException(ERROR_COMMUNICATING_WITH_KEYCLOAK + response.getStatusLine().getReasonPhrase(),
                                          response.getStatusLine().getStatusCode());
 
             }
         } catch (IOException e) {
             LOG.error("{}: IOException occurred: {}", ERROR_COMMUNICATING_WITH_KEYCLOAK, e.getMessage());
-            throw new KCComException(e);
+            throw new KCCommunicationException(ERROR_COMMUNICATING_WITH_KEYCLOAK + " - " + e.getMessage(),
+                                  HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
@@ -250,7 +248,7 @@ public class KeycloakUserManager {
         try {
             return keycloakTokenVerifier.retrieveUserToken(userTokenString).getSubject();
         } catch (VerificationException e) {
-            throw new MissingDataException("Error parsing usertoken", e.getMessage());
+            throw new MissingDataException("Error parsing usertoken - " + e.getMessage());
         }
     }
 

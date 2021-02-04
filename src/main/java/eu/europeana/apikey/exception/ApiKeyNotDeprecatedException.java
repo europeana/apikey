@@ -1,15 +1,15 @@
 package eu.europeana.apikey.exception;
 
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when trying to enable an API key that was not disabled/deprecated
  * @author Patrick Ehlert
  * Created on 18 nov 2019
+ * Modified on 4 Feb 2021
  */
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class ApiKeyNotDeprecatedException extends ApiKeyException {
+public class ApiKeyNotDeprecatedException extends EuropeanaApiException {
 
     public ApiKeyNotDeprecatedException(String id) {
         super("API key " + id + " is not deprecated!");
@@ -18,5 +18,10 @@ public class ApiKeyNotDeprecatedException extends ApiKeyException {
     @Override
     public boolean doLogStacktrace() {
         return false;
+    }
+
+    @Override
+    public HttpStatus getResponseStatus() {
+        return HttpStatus.BAD_REQUEST;
     }
 }
