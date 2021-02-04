@@ -1,6 +1,5 @@
 package eu.europeana.apikey.keycloak;
 
-import eu.europeana.apikey.exception.ClientTokenRetrievalException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
