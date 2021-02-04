@@ -33,7 +33,7 @@ public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Pri
         if (this == o) {
             return true;
         } else if (o != null && this.getClass() == o.getClass()) {
-            KeycloakPrincipal that = (KeycloakPrincipal) o;
+            KeycloakPrincipal<T> that = (KeycloakPrincipal<T>) o;
             return this.name.equals(that.name);
         } else {
             return false;

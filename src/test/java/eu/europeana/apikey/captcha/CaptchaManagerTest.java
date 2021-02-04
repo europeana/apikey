@@ -1,5 +1,6 @@
 package eu.europeana.apikey.captcha;
 
+import eu.europeana.apikey.TestResources;
 import eu.europeana.apikey.exception.ApiKeyException;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -24,12 +25,6 @@ import java.nio.charset.Charset;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class CaptchaManagerTest {
 
-    private static final String UNSUCCESSFUL_RESPONSE = "{\"success\": false,\"error-codes\": [\"invalid-input-response\"]}";
-
-    private static final String SUCCESSFUL_RESPONSE = "{\"success\": true,\"error-codes\": []}";
-
-    private static final String CAPTCHA_TOKEN = "token";
-
     @Mock
     private CloseableHttpClient httpClient;
 
@@ -48,21 +43,21 @@ public class CaptchaManagerTest {
     public void verifyCaptchaTokenWhenOK() throws IOException, ApiKeyException {
         prepareForTest(true);
 
-        Assert.assertTrue(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));
+        Assert.assertTrue(captchaManager.verifyCaptchaToken(TestResources.getCaptchaToken()));
     }
 
     @Test(expected = ApiKeyException.class)
     public void verifyCaptchaTokenWhenFalse() throws IOException, ApiKeyException {
         prepareForTest(false);
 
-        captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN);
+        captchaManager.verifyCaptchaToken(TestResources.getCaptchaToken());
     }
 
     @Test
     public void verifyCaptchaTokenWhenNull() throws IOException, ApiKeyException {
         prepareForNullVerificationResponse();
 
-        Assert.assertFalse(captchaManager.verifyCaptchaToken(CAPTCHA_TOKEN));
+        Assert.assertFalse(captchaManager.verifyCaptchaToken(TestResources.getCaptchaToken()));
     }
 
     private void prepareForNullVerificationResponse() throws IOException {
@@ -89,10 +84,10 @@ public class CaptchaManagerTest {
         Mockito.when(postResponse.getEntity()).thenReturn(postEntity);
         if (success) {
             Mockito.when(postEntity.getContent())
-                   .thenReturn(new ByteArrayInputStream(SUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
+                   .thenReturn(new ByteArrayInputStream(TestResources.getSuccessfulResponse().getBytes(Charset.forName("UTF-8"))));
         } else {
             Mockito.when(postEntity.getContent())
-                   .thenReturn(new ByteArrayInputStream(UNSUCCESSFUL_RESPONSE.getBytes(Charset.forName("UTF-8"))));
+                   .thenReturn(new ByteArrayInputStream(TestResources.getUnsuccessfulResponse().getBytes(Charset.forName("UTF-8"))));
         }
         Mockito.when(httpClient.execute(Mockito.anyObject())).thenAnswer(invocation -> {
             Object argument = invocation.getArguments()[0];

@@ -11,9 +11,9 @@ public class KeycloakSecurityContext implements Serializable {
 
     private static final long serialVersionUID = 6611924880256064860L;
 
-    private transient Keycloak              keycloak;
-    private transient AccessToken           accessToken;
-    private transient KeycloakTokenVerifier keycloakTokenVerifier;
+    private final transient Keycloak    keycloak;
+    private transient       AccessToken           accessToken;
+    private final transient KeycloakTokenVerifier keycloakTokenVerifier;
 
     private String accessTokenString;
 
