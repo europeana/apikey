@@ -20,7 +20,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // https://stackoverflow.com/questions/46870411/how-to-require-ssl-in-some-environments-using-spring-boot-2-0-0-m4
 //                .requestMatchers( r -> r.getHeader("X-Forwarded-Proto") != null).requiresSecure().and()
             .authorizeRequests()
-                .antMatchers(HttpMethod.DELETE,"/user/account").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
                 .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                 .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()

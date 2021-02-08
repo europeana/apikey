@@ -34,7 +34,7 @@ public final class Tools {
         // pass phrase. Note that the number 0 and the letter 'O' have been
         // removed to avoid confusion between the two. The same is true
         // of 'I', 1, and 'l'.
-        LOG.debug("generate new random passphrase with length: " + length);
+        LOG.debug("generate new random passphrase with length: {}", length);
         final char[] allowableCharacters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm',
                 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
                 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4',

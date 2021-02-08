@@ -101,27 +101,27 @@ public class KeycloakClientManager {
                                            .clientSecret(clientSecret)
                                            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                                            .build();
-        AccessTokenResponse accessTokenResponsen;
+        AccessTokenResponse accessTokenResponse;
         try {
             LOG.debug("Retrieving access token for client {}...", clientId);
-            accessTokenResponsen = keycloak.tokenManager().getAccessToken();
-            if (accessTokenResponsen == null) {
+            accessTokenResponse = keycloak.tokenManager().getAccessToken();
+            if (accessTokenResponse == null) {
                 LOG.error("No access token retrieved for client {}!", clientId);
                 return null;
             }
-        } catch (RuntimeException anyException) {
+        } catch (RuntimeException e) {
             throw new AuthenticationServiceException("Retrieving access token failed for client " + clientId,
-                                                     anyException);
+                                                     e);
         }
 
         try {
             LOG.debug("Verifying access token for client {}...", clientId);
-            AccessToken accessToken = keycloakTokenVerifier.verifyToken(accessTokenResponsen.getToken());
+            AccessToken accessToken = keycloakTokenVerifier.verifyToken(accessTokenResponse.getToken());
             if (accessToken != null) {
                 return new KeycloakPrincipal<>(clientId,
                                                new KeycloakSecurityContext(keycloak,
                                                                            accessToken,
-                                                                           accessTokenResponsen.getToken(),
+                                                                           accessTokenResponse.getToken(),
                                                                            keycloakTokenVerifier));
             }
         } catch (VerificationException e) {
