@@ -15,6 +15,11 @@ public class KCException extends EuropeanaApiException {
         this.status = status;
     }
 
+    public KCException(String msg, int status, Throwable t) {
+        super(msg, t);
+        this.status = status;
+    }
+
     @Override
     public boolean doLogStacktrace() {
         return false;
