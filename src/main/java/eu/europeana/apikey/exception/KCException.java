@@ -4,7 +4,7 @@ import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
 
 /**
- * Exception thrown when there problem with Keycloak and / or when sending a message to Slack failed
+ * Exception thrown when there problem communicating with Keycloak
  */
 public class KCException extends EuropeanaApiException {
 
