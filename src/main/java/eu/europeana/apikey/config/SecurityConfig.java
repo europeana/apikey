@@ -1,5 +1,6 @@
 package eu.europeana.apikey.config;
 
+import eu.europeana.apikey.keycloak.CustomEntryPoint;
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,7 +28,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .httpBasic().and()
             .requiresChannel().anyRequest().requiresSecure().and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-            .csrf().disable();
+            .csrf().disable()
+            .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
     }
 
     @Configuration

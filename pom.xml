@@ -33,7 +33,7 @@
 
         <commonsIO.version>2.8.0</commonsIO.version>
         <commonsLang3.version>3.11</commonsLang3.version>
-        <api-commons-version>0.3.0</api-commons-version>
+        <api-commons-version>0.3.2-SNAPSHOT</api-commons-version>
         <jodatime.version>2.10.6</jodatime.version>
         <springfox.version>2.8.0</springfox.version>
         <jjwt.version>0.9.1</jjwt.version>
