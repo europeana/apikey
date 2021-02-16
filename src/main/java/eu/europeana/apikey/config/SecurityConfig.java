@@ -15,7 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${europeana.apikey.ssl}")
+    @Value("${europeana.apikey.ssl:true}")
     private boolean useSsl;
 
     @Override
