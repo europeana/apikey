@@ -1,7 +1,7 @@
 package eu.europeana.apikey.config;
 
-import eu.europeana.apikey.keycloak.CustomEntryPoint;
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -15,21 +15,31 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    @Value("${europeana.apikey.ssl:true}")
+    private boolean useSsl;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-            // https://stackoverflow.com/questions/46870411/how-to-require-ssl-in-some-environments-using-spring-boot-2-0-0-m4
-//                .requestMatchers( r -> r.getHeader("X-Forwarded-Proto") != null).requiresSecure().and()
-            .authorizeRequests()
-                .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
-                .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
-                .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
-                .anyRequest().authenticated().and()
-            .httpBasic().and()
-            .requiresChannel().anyRequest().requiresSecure().and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-            .csrf().disable()
-            .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
+        if (useSsl){
+            http.authorizeRequests()
+                    .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                    .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
+                    .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                    .anyRequest().authenticated().and()
+                .httpBasic().and()
+                .requiresChannel().anyRequest().requiresSecure().and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .csrf().disable();
+        } else {
+            http.authorizeRequests()
+                    .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                    .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
+                    .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                    .anyRequest().authenticated().and()
+                .httpBasic().and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .csrf().disable();
+        }
     }
 
     @Configuration
