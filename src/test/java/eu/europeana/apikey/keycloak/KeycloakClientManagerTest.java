@@ -1,9 +1,9 @@
 package eu.europeana.apikey.keycloak;
 
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.apikey.TestResources;
 import eu.europeana.apikey.config.KeycloakProperties;
 import eu.europeana.apikey.domain.ApiKeyRequest;
-import eu.europeana.apikey.exception.ApiKeyException;
 import eu.europeana.apikey.util.PassGenerator;
 import eu.europeana.apikey.domain.ApiKey;
 import org.apache.commons.lang3.RandomUtils;
@@ -137,7 +137,7 @@ public class KeycloakClientManagerTest {
 
 
 //    @Test(timeout = 2000)
-    public void createClient() throws ApiKeyException, IOException {
+    public void createClient() throws EuropeanaApiException, IOException {
         ApiKeyRequest           apiKeyCreate    = prepareApiKeyCreate();
         KeycloakSecurityContext securityContext = prepareForCreateClient();
         String               publicKey       = pg.generate(RandomUtils.nextInt(8, 13));
@@ -336,8 +336,8 @@ public class KeycloakClientManagerTest {
         Assert.assertFalse(authorized);
     }
 
-    @Test(expected = ApiKeyException.class)
-    public void updateClientWhenClientMissing() throws IOException, ApiKeyException {
+    @Test(expected = EuropeanaApiException.class)
+    public void updateClientWhenClientMissing() throws IOException, EuropeanaApiException {
         ApiKeyRequest           apiKeyDetails   = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
 
@@ -345,7 +345,7 @@ public class KeycloakClientManagerTest {
     }
 
     @Test
-    public void updateClientWhenClientExists() throws IOException, ApiKeyException {
+    public void updateClientWhenClientExists() throws IOException, EuropeanaApiException {
         ApiKeyRequest           apiKeyUpdate    = prepareApiKeyUpdate();
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
 
@@ -400,26 +400,26 @@ public class KeycloakClientManagerTest {
         return new ApiKeyRequest(TestResources.getFirstName(), TestResources.getLastName(), TestResources.getEMAIL(), TestResources.getAppName(), TestResources.getCompany(), TestResources.getSector(), TestResources.getWebsite());
     }
 
-    @Test(expected = ApiKeyException.class)
-    public void invalidateClientWhenClientMissing() throws IOException, ApiKeyException {
+    @Test(expected = EuropeanaApiException.class)
+    public void invalidateClientWhenClientMissing() throws IOException, EuropeanaApiException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
         keycloakClientManager.disableClient(TestResources.getClientId(), securityContext);
     }
 
     @Test
-    public void invalidateClientWhenClientExists() throws IOException, ApiKeyException {
+    public void invalidateClientWhenClientExists() throws IOException, EuropeanaApiException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, true);
         keycloakClientManager.disableClient(TestResources.getClientId(), securityContext);
     }
 
-    @Test(expected = ApiKeyException.class)
-    public void reenableClientWhenClientMissing() throws IOException, ApiKeyException {
+    @Test(expected = EuropeanaApiException.class)
+    public void reenableClientWhenClientMissing() throws IOException, EuropeanaApiException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(false, true);
         keycloakClientManager.enableClient(TestResources.getClientId(), securityContext);
     }
 
     @Test
-    public void reenableClientWhenClientExists() throws IOException, ApiKeyException {
+    public void reenableClientWhenClientExists() throws IOException, EuropeanaApiException {
         KeycloakSecurityContext securityContext = prepareForUpdateClient(true, false);
         keycloakClientManager.enableClient(TestResources.getClientId(), securityContext);
     }

@@ -1,15 +1,15 @@
 package eu.europeana.apikey.exception;
 
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when there is not enough information, e.g. to create a new API key
  * @author Patrick Ehlert
  * Created on 18 nov 2019
+ * Modified on 4 Feb 2021
  */
-@ResponseStatus(HttpStatus.FORBIDDEN)
-public class ForbiddenException extends ApiKeyException {
+public class ForbiddenException extends EuropeanaApiException {
 
     public ForbiddenException() {
         super("Operation is not allowed by this user");
@@ -26,5 +26,10 @@ public class ForbiddenException extends ApiKeyException {
     @Override
     public boolean doLogStacktrace() {
         return false;
+    }
+
+    @Override
+    public HttpStatus getResponseStatus() {
+        return HttpStatus.FORBIDDEN;
     }
 }

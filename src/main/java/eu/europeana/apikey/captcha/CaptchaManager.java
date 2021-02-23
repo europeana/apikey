@@ -1,6 +1,6 @@
 package eu.europeana.apikey.captcha;
 
-import eu.europeana.apikey.exception.ApiKeyException;
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.apikey.exception.CaptchaException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -52,9 +52,9 @@ public class CaptchaManager {
      *
      * @param captchaToken Token to be verified.
      * @return true when verification successful, false when there was problem with verification response
-     * @throws ApiKeyException when there was false response, exception contains error code
+     * @throws EuropeanaApiException when there was false response, exception contains error code
      */
-    public boolean verifyCaptchaToken(String captchaToken) throws ApiKeyException {
+    public boolean verifyCaptchaToken(String captchaToken) throws EuropeanaApiException {
         String verificationResponse = getVerificationResponse(captchaToken);
         LOG.debug("Captcha verification response = {} ", verificationResponse);
         if (verificationResponse != null) {

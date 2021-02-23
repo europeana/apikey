@@ -1,18 +1,22 @@
 package eu.europeana.apikey.exception;
 
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when the captcha could not be validated
  * @author Patrick Ehlert
  * Created on 18 nov 2019
+ * Modified on 4 Feb 2021
  */
-@ResponseStatus(HttpStatus.UNAUTHORIZED)
-public class CaptchaException extends ApiKeyException {
+public class CaptchaException extends EuropeanaApiException {
 
     public CaptchaException(String message) {
-        super("Error validating captcha", message);
+        super("Error validating captcha " + message);
     }
 
+    @Override
+    public HttpStatus getResponseStatus() {
+        return HttpStatus.UNAUTHORIZED;
+    }
 }

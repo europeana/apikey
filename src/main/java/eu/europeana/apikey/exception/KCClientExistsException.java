@@ -1,15 +1,15 @@
 package eu.europeana.apikey.exception;
 
+import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when we try to create a keycloak client that already exists
  * @author Patrick Ehlert
  * Created on 21 jan 2020
+ * Modified on 4 Feb 2021
  */
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class KCClientExistsException extends ApiKeyException {
+public class KCClientExistsException extends EuropeanaApiException {
 
     public KCClientExistsException(String kcClientId) {
         super("There already is a keycloak client with id " + kcClientId);
@@ -18,5 +18,10 @@ public class KCClientExistsException extends ApiKeyException {
     @Override
     public boolean doLogStacktrace() {
         return false;
+    }
+
+    @Override
+    public HttpStatus getResponseStatus() {
+        return HttpStatus.BAD_REQUEST;
     }
 }
