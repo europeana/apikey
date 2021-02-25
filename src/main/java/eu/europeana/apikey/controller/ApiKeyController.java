@@ -167,6 +167,10 @@ public class ApiKeyController {
      * HTTP 403 if the requested resource is forbidden
      * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
+     *
+     * @throws EuropeanaApiException when mandatory data are missing; if the combination of email and appname do not
+     * already occur in the Apikey table; if the Captcha is missing or its verification failed; when the client
+     * who did the request cannot be authenticated
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
@@ -191,7 +195,7 @@ public class ApiKeyController {
             throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
         }
 
-        // retrieve access token for the manager client so we can use that the create a new client
+        // retrieve access token for the manager client so we can use that the create a new Apikey
         KeycloakAuthenticationToken kcAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminClient(
                 managerClientId,
                 managerClientSecret);
@@ -234,6 +238,9 @@ public class ApiKeyController {
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param newKeyRequest requestbody containing supplied values
+     * @throws EuropeanaApiException if supplied credentials aren't authorised; when mandatory data are missing;
+     * if the combination of email and appname do not already occur in the Apikey table; when a problem occurs creating
+     * the Client; when there is a problem sending the confirmation email to the associated email address
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -290,6 +297,9 @@ public class ApiKeyController {
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param apiKey apikey for which the client should be created
+     * @throws EuropeanaApiException if supplied credentials aren't authorised or when the Apikey wasn't found;
+     * when there is already a Keycloak Client added to the supplied Apikey; when a problem occurs creating the Client;
+     * when there is a problem sending the confirmation email to the associated email address
      * @return response with created ApiKey details
      * HTTP 201 upon successful ApiKey creation
      */
@@ -386,6 +396,7 @@ public class ApiKeyController {
      * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
      * <p>
      * @param apiKey string identifying the Apikey
+     * @throws EuropeanaApiException if supplied credentials aren't authorised or when the Apikey wasn't found
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -422,6 +433,8 @@ public class ApiKeyController {
      *
      * @param apiKey string identifying the Apikey
      * @param updateKeyRequest RequestBody containing supplied values
+     * @throws EuropeanaApiException if supplied credentials aren't authorised; when the Api key is disabled;
+     * in the case associated Client exists: when there is a problem updating that Client in Keycloak
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -470,6 +483,8 @@ public class ApiKeyController {
      * response header to help telling this HTTP 404 apart from one returned by the webserver for other reasons
      *
      * @param apiKey string identifying the Apikey
+     * @throws EuropeanaApiException if supplied credentials aren't authorised; when the Api key is already disabled;
+     * in the case associated Client exists: when there is a problem disabling that Client in Keycloak
      * @return HTTP 204 upon successful execution
      */
     @CrossOrigin(maxAge = 600)
@@ -512,7 +527,9 @@ public class ApiKeyController {
      * HTTP 403 if the requested resource is forbidden
      * HTTP 404 if the apikey is not found
      *
-     * @param apiKey string identifying the Apikey
+     * @param apiKey the Apikey to enable
+     * @throws EuropeanaApiException if supplied credentials aren't authorised; when the Api key is not deprecated;
+     * when an associated Client exists: when there is a problem enabling that Client in Keycloak
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      */
     @CrossOrigin(maxAge = 600)
@@ -554,7 +571,9 @@ public class ApiKeyController {
      * HTTP 403 if the requested resource is forbidden
      * HTTP 404 when the requested keycloak identifier is not found in the database
      *
-     * @param apiKey string identifying the ApiKey's "public key"
+     * @param apiKey the Api key string
+     * @throws EuropeanaApiException if supplied credentials aren't authorised; if Keycloak client cannot be deleted
+     * or when a problem occurs communicating with Keycloak
      * @return HTTP 204 upon successful execution
      */
     @CrossOrigin(maxAge = 600)
