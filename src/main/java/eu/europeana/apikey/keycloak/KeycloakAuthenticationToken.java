@@ -12,6 +12,12 @@ public final class KeycloakAuthenticationToken extends AbstractAuthenticationTok
 
     private final transient Principal principal;
 
+
+    public KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> principal) {
+        super(null);
+        this.principal = principal;
+    }
+
     KeycloakAuthenticationToken(KeycloakPrincipal<KeycloakSecurityContext> keycloakPrincipal,
                                 Collection<? extends GrantedAuthority> authorities) {
         super(authorities);

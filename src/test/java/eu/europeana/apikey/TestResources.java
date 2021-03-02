@@ -1,6 +1,8 @@
 package eu.europeana.apikey;
 
 import eu.europeana.apikey.config.KeycloakProperties;
+import eu.europeana.apikey.domain.ApiKey;
+import eu.europeana.apikey.domain.ApiKeyRequest;
 
 /**
  * Created by luthien on 26/01/2021.
@@ -100,6 +102,44 @@ public class TestResources {
                                                          + "]";
 
 
+    private static final String SUCCESSFULFIRSTNAME    = "Simon";
+    private static final String SUCCESSFULLASTNAME     = "Success";
+    private static final String SUCCESSFULEMAIL        = "successful.simon@gmail.com";
+    private static final String SUCCESSFULAPPNAME      = "Success-agenda";
+    private static final String SUCCESSFULCOMPANY      = "very-successful-org";
+    private static final String SUCCESSFULLYCREATEDKEY = "keytosuccess";
+
+
+    private static final String CAPTCHAFIRSTNAME    = "Carola";
+    private static final String CAPTCHALASTNAME     = "Captchame";
+    private static final String CAPTCHAEMAIL        = "captchameifyoudare@gmail.com";
+    private static final String CAPTCHAAPPNAME      = "Lalalillylooper";
+    private static final String CAPTCHACOMPANY      = "Carolaorganisation";
+    private static final String CAPTCHAKEY          = "captchakey";
+
+
+    private static final String UPDATEFIRSTNAME    = "Ulrike";
+    private static final String UPDATELASTNAME     = "Updatenmachtjaspass";
+    private static final String UPDATEEMAIL        = "updatenmachtspass@gmail.com";
+    private static final String UPDATEAPPNAME      = "Abersojadoch";
+    private static final String UPDATECOMPANY      = "Ulrikefoundation";
+    private static final String UPDATEKEY          = "updatekey";
+
+
+    private static final String EXISTING_API_KEY_1   = "apikey1";
+    private static final String EXISTING_API_KEY_2   = "apikey2";
+    private static final String UNREGISTERED_API_KEY = "apikey3";
+    private static final String DEPRECATED_API_KEY   = "apikey4";
+    private static final String NEW_API_KEY          = "apikey5";
+    private static final String CAPTCHA_API_KEY      = "apikey6";
+    private static final String MIGRATE_API_KEY      = "to-migrate";
+    private static final String NON_EXISTIG_API_KEY = "testing";
+    private static final String NEW_KEYCLOAKID      = "apikey7";
+
+    private static final String CAPTCHA_TOKEN = "token";
+
+    private static final String ACCESS_TOKEN_STRING           = "token1";
+    private static final String ACCESS_TOKEN_STRING_REFRESHED = "token2";
 
     private static final String TOKEN
                                                              = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ3Y1N6TDZ0a3RCNFhHcUtjbEZncnVaaHQtX3d5MkZUV0FlWUtaYWNSOTNnIn0.eyJqdGkiOiJmMzZlNWUwZS04Zjk1LTQzNmMtODNiOC1jOTRmNDcyZWRlNTQiLCJleHAiOjE1NTcyNjY1NjksIm5iZiI6MCwiaWF0IjoxNTU3MjMwNTY5LCJpc3MiOiJodHRwczovL2tleWNsb2FrLXNlcnZlci10ZXN0LmVhbmFkZXYub3JnL2F1dGgvcmVhbG1zL2V1cm9wZWFuYSIsImF1ZCI6InJlYWxtLW1hbmFnZW1lbnQiLCJzdWIiOiJkZTg5MGI1OS03NTFjLTRmNjMtYWUxYS1mODc5ODlkNDU1ZDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhcGkta2V5LXNlcnZpY2UiLCJhdXRoX3RpbWUiOjAsInNlc3Npb25fc3RhdGUiOiIzMGI2ZDkxNy0wMWIzLTRmMTItYmYyMi1lZjkxOWQ0ZjdiZDQiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkFQSSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFwaS1rZXktc2VydmljZSI6eyJyb2xlcyI6WyJ1bWFfcHJvdGVjdGlvbiJdfSwicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJ2aWV3LXJlYWxtIiwidmlldy1pZGVudGl0eS1wcm92aWRlcnMiLCJtYW5hZ2UtaWRlbnRpdHktcHJvdmlkZXJzIiwiaW1wZXJzb25hdGlvbiIsInJlYWxtLWFkbWluIiwiY3JlYXRlLWNsaWVudCIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctYXV0aG9yaXphdGlvbiIsInF1ZXJ5LWNsaWVudHMiLCJxdWVyeS11c2VycyIsIm1hbmFnZS1ldmVudHMiLCJtYW5hZ2UtcmVhbG0iLCJ2aWV3LWV2ZW50cyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJtYW5hZ2UtYXV0aG9yaXphdGlvbiIsIm1hbmFnZS1jbGllbnRzIiwicXVlcnktZ3JvdXBzIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsImNsaWVudElkIjoiYXBpLWtleS1zZXJ2aWNlIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJjbGllbnRIb3N0IjoiMTUwLjI1NC4xNjkuMTAwIiwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LWFwaS1rZXktc2VydmljZSIsImNsaWVudEFkZHJlc3MiOiIxNTAuMjU0LjE2OS4xMDAiLCJlbWFpbCI6InNlcnZpY2UtYWNjb3VudC1hcGkta2V5LXNlcnZpY2VAcGxhY2Vob2xkZXIub3JnIn0.UoENMoInw81KRWkRW7divlPpGjKTgluZaU2cyZOqw7TU92cg7b2ELFBtv-Myc1rmap2Ha-VaKRc5cVsR_wwIiqYPELkwSTqC8yMNjEJdfg0MQyDnCtxP_72ehgP9YRhMrR1JB1TeXMChhwn1BDpdRQYdZjxRQCSArGy_lQHlDjU5hLJbdV3ZWjq8-l-uIWuJiviMHG2I3J34ioyKEEi6Xo7OhclXjcQ-OmPYRBTnGZBu908IFH9b23NxOOssPZxzYr3n6Qf9HPoaJ_VEja1OOeHDCCJcBtw4ww8TnkcRaA1llugBSS5iO9Fku_CZqEEeMkG3OdUpyn7Cuzahuac5KA";
@@ -122,27 +162,25 @@ public class TestResources {
     private static final String ROLE_CREATE_CLIENT    = "realm-create-client";
     private static final String RESOURCE_ACCESS       = "access";
 
-    private static final String ACCESS_TOKEN_STRING           = "token1";
-    private static final String ACCESS_TOKEN_STRING_REFRESHED = "token2";
-
-    private static final String EXISTING_API_KEY     = "apikey1";
-    private static final String UNREGISTERED_API_KEY = "apikey2";
-
     private static final String UNSUCCESSFUL_RESPONSE
             = "{\"success\": false,\"error-codes\": [\"invalid-input-response\"]}";
 
     private static final String SUCCESSFUL_RESPONSE = "{\"success\": true,\"error-codes\": []}";
 
-    private static final String CAPTCHA_TOKEN      = "token";
-    private static final String DEPRECATED_API_KEY = "apikey3";
 
-
-    public static KeycloakProperties getKeycloakProperties(){
+    public static KeycloakProperties getKeycloakProperties() {
         return new KeycloakProperties("https://keycloak-cf-test.eanadev.org/auth",
                                       "europeana",
                                       true,
                                       TestResources.getRealmPublicKey());
     }
+
+    public static ApiKeyRequest getSuccessfulApiKeyRequest(){return new ApiKeyRequest(SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY);}
+    public static ApiKeyRequest getCaptchaApiKeyRequest(){return new ApiKeyRequest(CAPTCHAFIRSTNAME, CAPTCHALASTNAME, CAPTCHAEMAIL, CAPTCHAAPPNAME, CAPTCHACOMPANY);}
+    public static ApiKeyRequest getUpdateApiKeyRequest(){return new ApiKeyRequest(UPDATEFIRSTNAME, UPDATELASTNAME, UPDATEEMAIL, UPDATEAPPNAME, UPDATECOMPANY);}
+    public static ApiKey getSuccessfullyCreatedApiKey(){return new ApiKey(SUCCESSFULLYCREATEDKEY, SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY);}
+    public static ApiKey getCaptchaCreatedApiKey(){return new ApiKey(CAPTCHAKEY, CAPTCHAFIRSTNAME, CAPTCHALASTNAME, CAPTCHAEMAIL, CAPTCHAAPPNAME, CAPTCHACOMPANY);}
+    public static ApiKey getUpdatedCreatedApiKey(){return new ApiKey(UPDATEKEY, UPDATEFIRSTNAME, UPDATELASTNAME, UPDATEEMAIL, UPDATEAPPNAME, UPDATECOMPANY);}
 
     public static String getCredentialRepresentation() {
         return CREDENTIAL_REPRESENTATION;
@@ -200,10 +238,6 @@ public class TestResources {
         return ACCESS_TOKEN_STRING_REFRESHED;
     }
 
-    public static String getExistingApiKey() {
-        return EXISTING_API_KEY;
-    }
-
     public static String getUnregisteredApiKey() {
         return UNREGISTERED_API_KEY;
     }
@@ -254,5 +288,49 @@ public class TestResources {
 
     public static String getResourceAccess() {
         return RESOURCE_ACCESS;
+    }
+
+    public static String getExistingApiKey1() {
+        return EXISTING_API_KEY_1;
+    }
+
+    public static String getExistingApiKey2() {
+        return EXISTING_API_KEY_2;
+    }
+
+    public static String getNewApiKey() {
+        return NEW_API_KEY;
+    }
+
+    public static String getCaptchaApiKey() {
+        return CAPTCHA_API_KEY;
+    }
+
+    public static String getMigrateApiKey() {
+        return MIGRATE_API_KEY;
+    }
+
+    public static String getNonExistigApiKey() {
+        return NON_EXISTIG_API_KEY;
+    }
+
+    public static String getNewKeycloakid() {
+        return NEW_KEYCLOAKID;
+    }
+
+    public static String getTOKEN() {
+        return TOKEN;
+    }
+
+    public static String getWEBSITE() {
+        return WEBSITE;
+    }
+
+    public static String getSECTOR() {
+        return SECTOR;
+    }
+
+    public static String getCOMPANY() {
+        return COMPANY;
     }
 }

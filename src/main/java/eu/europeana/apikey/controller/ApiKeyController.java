@@ -335,7 +335,7 @@ public class ApiKeyController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    private ResponseEntity<Object> createApikey(ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
+    ResponseEntity<Object> createApikey(ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         ApiKey newKey = prepareNewApiKey(newKeyRequest);
         this.apiKeyRepo.save(newKey);
         LOG.debug("New Apikey {} created", newKey.getApiKey());
