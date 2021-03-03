@@ -8,6 +8,7 @@ import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.apikey.ApiKeyApplication;
 import eu.europeana.apikey.TestResources;
 import eu.europeana.apikey.captcha.CaptchaManager;
+import eu.europeana.apikey.config.ApikeyDefinitions;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyRequest;
 import eu.europeana.apikey.keycloak.*;
@@ -18,19 +19,30 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -47,10 +59,13 @@ import static org.junit.Assert.fail;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
+//@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+//@RunWith(JUnitPlatform.class)
+@ActiveProfiles("test")
 @RunWith(SpringRunner.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiKeyApplication.class)
+@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 @TestPropertySource(locations = "classpath:apikey-test.properties")
 public class ApiKeyControllerTest {
 
@@ -63,19 +78,18 @@ public class ApiKeyControllerTest {
     @Mock
     private CaptchaManager captchaManager;
 
-    @Mock
+    @Autowired
     private MailService emailService;
 
-    @Mock
-    private SimpleMailMessage apiKeyCreatedMail;
+
 
     @Mock
     private KeycloakClientManager keycloakClientManager;
 
-    private MockMvc       mvc;
-    private ApiKeyRequest successRequest = TestResources.getSuccessfulApiKeyRequest();
-    private ApiKeyRequest captchaApiKeyRequest = TestResources.getCaptchaApiKeyRequest();
-    private ApiKeyRequest updatedApiKeyRequest = TestResources.getUpdateApiKeyRequest();
+    private       MockMvc       mvc;
+    private final ApiKeyRequest successRequest       = TestResources.getSuccessfulApiKeyRequest();
+    private final ApiKeyRequest captchaApiKeyRequest = TestResources.getCaptchaApiKeyRequest();
+    private final ApiKeyRequest updatedApiKeyRequest = TestResources.getUpdateApiKeyRequest();
 
 
     ApiKeyController apiKeyController;
@@ -90,27 +104,28 @@ public class ApiKeyControllerTest {
 
         ReflectionTestUtils.setField(apiKeyController, "managerClientId", TestResources.getClientId());
         ReflectionTestUtils.setField(apiKeyController, "managerClientSecret", TestResources.getClientSecret());
+        ReflectionTestUtils.setField(apiKeyController, "apiKeyCreatedMsg", new SimpleMailMessage());
 
         mvc = MockMvcBuilders
                 .standaloneSetup(apiKeyController)
                 .build();
 
-        ApiKey apiKey = new ApiKey(TestResources.getExistingApiKey1(), "Edward", "Existing", "edflopps@mail.com", "ThisAppExists", "ExistingFoundation");
-        apiKey.setKeycloakId(TestResources.getExistingApiKey1());
-        apiKeyRepo.saveAndFlush(apiKey);
-
-        apiKey = new ApiKey(TestResources.getExistingApiKey2(), "Elsbeth", "Existingtoo", "twinspizzel@mail.com", "ThisAppExistsToo", "ExistingCompany");
-        apiKey.setKeycloakId(TestResources.getExistingApiKey2());
-        apiKeyRepo.saveAndFlush(apiKey);
-
-        apiKey = new ApiKey(TestResources.getDeprecatedApiKey(), "Dazoozie", "Deprecated", "nononononever@mail.com", "DeprecatedAppAlas", "DeprecatableOrganisation");
-        apiKey.setKeycloakId(TestResources.getDeprecatedApiKey());
-        apiKey.setDeprecationDate(new Date());
-        apiKeyRepo.saveAndFlush(apiKey);
-
-        apiKey = new ApiKey(TestResources.getMigrateApiKey(), "Minko", "Migrator", "migrate@mail.com", "MigratedApp", "MigratableOrganisation");
-        apiKey.setKeycloakId(TestResources.getMigrateApiKey());
-        apiKey.setDeprecationDate(new Date());
+//        ApiKey apiKey = new ApiKey(TestResources.getExistingApiKey1(), "Edward", "Existing", "edflopps@mail.com", "ThisAppExists", "ExistingFoundation");
+//        apiKey.setKeycloakId(TestResources.getExistingApiKey1());
+//        apiKeyRepo.saveAndFlush(apiKey);
+//
+//        apiKey = new ApiKey(TestResources.getExistingApiKey2(), "Elsbeth", "Existingtoo", "twinspizzel@mail.com", "ThisAppExistsToo", "ExistingCompany");
+//        apiKey.setKeycloakId(TestResources.getExistingApiKey2());
+//        apiKeyRepo.saveAndFlush(apiKey);
+//
+//        apiKey = new ApiKey(TestResources.getDeprecatedApiKey(), "Dazoozie", "Deprecated", "nononononever@mail.com", "DeprecatedAppAlas", "DeprecatableOrganisation");
+//        apiKey.setKeycloakId(TestResources.getDeprecatedApiKey());
+//        apiKey.setDeprecationDate(new Date());
+//        apiKeyRepo.saveAndFlush(apiKey);
+//
+//        apiKey = new ApiKey(TestResources.getMigrateApiKey(), "Minko", "Migrator", "migrate@mail.com", "MigratedApp", "MigratableOrganisation");
+//        apiKey.setKeycloakId(TestResources.getMigrateApiKey());
+//        apiKey.setDeprecationDate(new Date());
     }
 
 
@@ -127,8 +142,12 @@ public class ApiKeyControllerTest {
     @Test
     public void testCreateApiKeySuccess() throws Exception {
         prepareForAuthentication(true, false);
-        ApiKeyRequest successRequest = TestResources.getSuccessfulApiKeyRequest();
-
+        ApiKey successfullyCreatedApikey = TestResources.getSuccessfullyCreatedApiKey();
+        Mockito.when(apiKeyController.generatePublicKey()).thenReturn(successfullyCreatedApikey.getApiKey());
+//        Mockito.when(emailService.sendApiKeyEmail(Mockito.any(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(null);
+        //, Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
+//        Mockito.doNothing().when(apiKeyCreatedMsg.setTo(Mockito.anyString()));
+//        Mockito.when(apiKeyController.prepareNewApiKey(Mockito.any())).thenReturn(successfullyCreatedApikey);
         mvc.perform(post("/apikey").secure(true)
                 .header(HttpHeaders.AUTHORIZATION,
                         "Basic " + (TestResources.getClientId() + ":" + TestResources.getClientSecret()))
@@ -680,4 +699,17 @@ public class ApiKeyControllerTest {
     @org.junit.jupiter.api.Test
     void checkKeyEmailAppNameExist() {
     }
+
+
+    @Profile("test")
+    @Configuration
+    public class ApikeyControllerTestSetup {
+
+        @Bean
+        @Primary
+        public MailService emailService(){
+            return Mockito.mock(MailService.class);
+        }
+    }
+
 }

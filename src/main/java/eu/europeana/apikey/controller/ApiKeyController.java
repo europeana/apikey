@@ -344,7 +344,7 @@ public class ApiKeyController {
         return new ResponseEntity<>(newKey, HttpStatus.CREATED);
     }
 
-    private ApiKey prepareNewApiKey(ApiKeyRequest newKeyRequest) {
+    ApiKey prepareNewApiKey(ApiKeyRequest newKeyRequest) {
         String newPublicKey = generatePublicKey();
         ApiKey newKey = new ApiKey(newPublicKey,
                                    newKeyRequest.getFirstName(),
@@ -747,7 +747,7 @@ public class ApiKeyController {
      *
      * @return newly generated public ApiKey
      */
-    private String generatePublicKey() {
+    String generatePublicKey() {
         String        id;
         PassGenerator pg = new PassGenerator();
         do {
