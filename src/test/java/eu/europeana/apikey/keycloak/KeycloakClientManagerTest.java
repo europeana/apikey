@@ -16,7 +16,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.keycloak.admin.client.Keycloak;
@@ -28,10 +27,7 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
@@ -122,7 +118,7 @@ public class KeycloakClientManagerTest {
             Mockito.when(keycloak.tokenManager()).thenReturn(tokenManager);
             AccessTokenResponse tokenResponse = Mockito.mock(AccessTokenResponse.class);
             Mockito.when(tokenManager.getAccessToken()).thenReturn(tokenResponse);
-            Mockito.when(tokenResponse.getToken()).thenReturn(TestResources.getAccessTokenString());
+            Mockito.when(tokenResponse.getToken()).thenReturn(TestResources.getCaptchaToken());
 
     //        Mockito.when(KeycloakTokenVerifier.verifyToken(Mockito.anyString())).thenReturn(accessToken);
 
@@ -131,7 +127,7 @@ public class KeycloakClientManagerTest {
             Assert.assertNotNull(principal);
             Assert.assertNotNull(principal.getKeycloakSecurityContext());
             Assert.assertEquals(accessToken, principal.getKeycloakSecurityContext().getAccessToken());
-            Assert.assertEquals(TestResources.getAccessTokenString(), principal.getKeycloakSecurityContext().getAccessTokenString());
+            Assert.assertEquals(TestResources.getCaptchaToken(), principal.getKeycloakSecurityContext().getAccessTokenString());
         }
     }
 
@@ -218,7 +214,7 @@ public class KeycloakClientManagerTest {
     }
 
     private ApiKeyRequest prepareApiKeyCreate() {
-        return new ApiKeyRequest(TestResources.getFirstName(), TestResources.getLastName(), TestResources.getEMAIL(), TestResources.getAppName(), TestResources.getCompany());
+        return new ApiKeyRequest(TestResources.getFirstName(), TestResources.getLastName(), TestResources.getEmail(), TestResources.getAppName(), TestResources.getCompany());
     }
 
     private AccessToken prepareVerifier() throws VerificationException {
@@ -397,7 +393,7 @@ public class KeycloakClientManagerTest {
     }
 
     private ApiKeyRequest prepareApiKeyUpdate() {
-        return new ApiKeyRequest(TestResources.getFirstName(), TestResources.getLastName(), TestResources.getEMAIL(), TestResources.getAppName(), TestResources.getCompany(), TestResources.getSector(), TestResources.getWebsite());
+        return new ApiKeyRequest(TestResources.getFirstName(), TestResources.getLastName(), TestResources.getEmail(), TestResources.getAppName(), TestResources.getCompany(), TestResources.getSector(), TestResources.getWebsite());
     }
 
     @Test(expected = EuropeanaApiException.class)

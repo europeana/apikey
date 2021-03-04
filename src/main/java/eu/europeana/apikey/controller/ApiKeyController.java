@@ -195,6 +195,7 @@ public class ApiKeyController {
             throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
         }
 
+        // TODO remove this pointless check
         // retrieve access token for the manager client so we can use that the create a new Apikey
         KeycloakAuthenticationToken kcAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminClient(
                 managerClientId,
@@ -369,7 +370,7 @@ public class ApiKeyController {
      * @param valuePattern       pattern of the Authorization header to retrieve the value
      * @return value of the Authorization header
      */
-    private String getAuthorizationHeader(HttpServletRequest httpServletRequest, String valuePattern) {
+    String getAuthorizationHeader(HttpServletRequest httpServletRequest, String valuePattern) {
         String authorization = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization != null) {
             try {

@@ -13,7 +13,7 @@ public class ApikeyDefinitions {
     public static final String APIKEY_MISSING                        = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
     public static final String APIKEY_PATTERN                        = "APIKEY\\s+([^\\s]+)";
     public static final String CAPTCHA_PATTERN                       = "Bearer\\s+([^\\s]+)";
-    public static final String CAPTCHA_MISSING                       = "Missing Captcha token in the header. Correct syntax: Authorization: Bearer CAPTCHA_TOKEN";
+    public static final String CAPTCHA_MISSING                       = "Missing or malformed Captcha token. Correct syntax header is: Authorization: Bearer CAPTCHA_TOKEN";
     public static final String CAPTCHA_VERIFICATION_FAILED           = "Captcha verification failed.";
     public static final String ERROR_COMMUNICATING_WITH_KEYCLOAK     = "Error communicating with Keycloak";
     public static final String RECEIVED                              = ": received ";

@@ -29,7 +29,7 @@ public class KeycloakSecurityContextTest {
     public void prepareForTests() {
         securityContext = new KeycloakSecurityContext(keycloak,
                                                       accessToken,
-                                                      TestResources.getAccessTokenString(),
+                                                      TestResources.getCaptchaToken(),
                                                       keycloakTokenVerifier);
     }
 
@@ -63,7 +63,7 @@ public class KeycloakSecurityContextTest {
         Mockito.when(accessToken.isExpired()).thenReturn(false);
         String tokenString = securityContext.getAccessTokenString();
         Assert.assertNotNull(tokenString);
-        Assert.assertEquals(TestResources.getAccessTokenString(), tokenString);
+        Assert.assertEquals(TestResources.getCaptchaToken(), tokenString);
     }
 
     private AccessToken prepareForExpired() throws VerificationException {
