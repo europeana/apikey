@@ -8,41 +8,27 @@ import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.apikey.ApiKeyApplication;
 import eu.europeana.apikey.TestResources;
 import eu.europeana.apikey.captcha.CaptchaManager;
-import eu.europeana.apikey.config.ApikeyDefinitions;
 import eu.europeana.apikey.domain.ApiKey;
 import eu.europeana.apikey.domain.ApiKeyRequest;
+import eu.europeana.apikey.exception.ForbiddenException;
 import eu.europeana.apikey.keycloak.*;
 import eu.europeana.apikey.mail.MailService;
 import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -52,25 +38,37 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.fail;
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 //@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 //@RunWith(JUnitPlatform.class)
-@ActiveProfiles("test")
-@RunWith(SpringRunner.class)
+
+//@ActiveProfiles("test")
+//@RunWith(SpringRunner.class)
+//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiKeyApplication.class)
+//@AutoConfigureMockMvc
+//@ExtendWith(MockitoExtension.class)
+//@TestPropertySource(locations = "classpath:apikey-test.properties")
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiKeyApplication.class)
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
+@RunWith(SpringRunner.class)
 @TestPropertySource(locations = "classpath:apikey-test.properties")
 public class ApiKeyControllerTest {
 
-    @Autowired
-    private ApiKeyRepo apiKeyRepo;
+    private static final String CLIENT_ID        = "client";
+    private static final String CLIENT_SECRET    = "secret";
+    private static final String EXISTING_API_KEY = "apikey1";
 
     @Mock
     private CustomKeycloakAuthenticationProvider customKeycloakAuthenticationProvider;
@@ -79,100 +77,127 @@ public class ApiKeyControllerTest {
     private CaptchaManager captchaManager;
 
     @Autowired
-    private MailService emailService;
-
-
+    private ApiKeyRepo apiKeyRepo;
 
     @Mock
-    private KeycloakClientManager keycloakClientManager;
+    private KeycloakClientManager keycloakManager;
+    private ApiKeyController      apiKeyController;
+    private MockMvc               mvc;
+    private SimpleMailMessage     apiKeyCreatedMsg;
+    private SimpleMailMessage     apiKeyAndClientCreatedMsg;
+    private SimpleMailMessage     clientAddedMsg;
+    private MailService           emailService;
 
-    private       MockMvc       mvc;
-    private final ApiKeyRequest successRequest       = TestResources.getSuccessfulApiKeyRequest();
-    private final ApiKeyRequest captchaApiKeyRequest = TestResources.getCaptchaApiKeyRequest();
-    private final ApiKeyRequest updatedApiKeyRequest = TestResources.getUpdateApiKeyRequest();
 
+    private ApiKey successfullyCreatedApikey = TestResources.getSuccessfullyCreatedApiKey();
+    private ApiKey captchaCreatedApikey      = TestResources.getCaptchaCreatedApiKey();
+    private ApiKey updatedApikey             = TestResources.getUpdatedApiKey();
 
-    ApiKeyController apiKeyController;
+//    @Before
+//    public void setup() {
+//
+//        apiKeyController = Mockito.spy(new ApiKeyController(apiKeyRepo,
+//                                                            captchaManager,
+//                                                            customKeycloakAuthenticationProvider,
+//                                                            keycloakClientManager));
+//
+//        ReflectionTestUtils.setField(apiKeyController, "managerClientId", TestResources.getClientId());
+//        ReflectionTestUtils.setField(apiKeyController, "managerClientSecret", TestResources.getClientSecret());
+//        ReflectionTestUtils.setField(apiKeyController, "apiKeyCreatedMsg", new SimpleMailMessage());
+//
+//        mvc = MockMvcBuilders
+//                .standaloneSetup(apiKeyController)
+//                .build();
+//
+////        ApiKey apiKey = new ApiKey(TestResources.getExistingApiKey1(), "Edward", "Existing", "edflopps@mail.com", "ThisAppExists", "ExistingFoundation");
+////        apiKey.setKeycloakId(TestResources.getExistingApiKey1());
+////        apiKeyRepo.saveAndFlush(apiKey);
+////
+////        apiKey = new ApiKey(TestResources.getExistingApiKey2(), "Elsbeth", "Existingtoo", "twinspizzel@mail.com", "ThisAppExistsToo", "ExistingCompany");
+////        apiKey.setKeycloakId(TestResources.getExistingApiKey2());
+////        apiKeyRepo.saveAndFlush(apiKey);
+////
+////        apiKey = new ApiKey(TestResources.getDeprecatedApiKey(), "Dazoozie", "Deprecated", "nononononever@mail.com", "DeprecatedAppAlas", "DeprecatableOrganisation");
+////        apiKey.setKeycloakId(TestResources.getDeprecatedApiKey());
+////        apiKey.setDeprecationDate(new Date());
+////        apiKeyRepo.saveAndFlush(apiKey);
+////
+////        apiKey = new ApiKey(TestResources.getMigrateApiKey(), "Minko", "Migrator", "migrate@mail.com", "MigratedApp", "MigratableOrganisation");
+////        apiKey.setKeycloakId(TestResources.getMigrateApiKey());
+////        apiKey.setDeprecationDate(new Date());
+//    }
+
 
     @Before
     public void setup() {
+        emailService = Mockito.mock(MailService.class);
+        apiKeyCreatedMsg = Mockito.spy(SimpleMailMessage.class);
+        apiKeyAndClientCreatedMsg = Mockito.spy(SimpleMailMessage.class);
+        clientAddedMsg = Mockito.spy(SimpleMailMessage.class);
 
         apiKeyController = Mockito.spy(new ApiKeyController(apiKeyRepo,
                                                             captchaManager,
                                                             customKeycloakAuthenticationProvider,
-                                                            keycloakClientManager));
+                                                            keycloakManager));
+        ReflectionTestUtils.setField(apiKeyController, "emailService", emailService);
+        ReflectionTestUtils.setField(apiKeyController, "managerClientId", CLIENT_ID);
+        ReflectionTestUtils.setField(apiKeyController, "managerClientSecret", CLIENT_SECRET);
+        ReflectionTestUtils.setField(apiKeyController, "apiKeyCreatedMsg", apiKeyCreatedMsg);
+        ReflectionTestUtils.setField(apiKeyController, "apiKeyAndClientCreatedMsg", apiKeyAndClientCreatedMsg);
+        ReflectionTestUtils.setField(apiKeyController, "clientAddedMsg", clientAddedMsg);
 
-        ReflectionTestUtils.setField(apiKeyController, "managerClientId", TestResources.getClientId());
-        ReflectionTestUtils.setField(apiKeyController, "managerClientSecret", TestResources.getClientSecret());
-        ReflectionTestUtils.setField(apiKeyController, "apiKeyCreatedMsg", new SimpleMailMessage());
-
-        mvc = MockMvcBuilders
-                .standaloneSetup(apiKeyController)
-                .build();
-
-//        ApiKey apiKey = new ApiKey(TestResources.getExistingApiKey1(), "Edward", "Existing", "edflopps@mail.com", "ThisAppExists", "ExistingFoundation");
-//        apiKey.setKeycloakId(TestResources.getExistingApiKey1());
-//        apiKeyRepo.saveAndFlush(apiKey);
-//
-//        apiKey = new ApiKey(TestResources.getExistingApiKey2(), "Elsbeth", "Existingtoo", "twinspizzel@mail.com", "ThisAppExistsToo", "ExistingCompany");
-//        apiKey.setKeycloakId(TestResources.getExistingApiKey2());
-//        apiKeyRepo.saveAndFlush(apiKey);
-//
-//        apiKey = new ApiKey(TestResources.getDeprecatedApiKey(), "Dazoozie", "Deprecated", "nononononever@mail.com", "DeprecatedAppAlas", "DeprecatableOrganisation");
-//        apiKey.setKeycloakId(TestResources.getDeprecatedApiKey());
-//        apiKey.setDeprecationDate(new Date());
-//        apiKeyRepo.saveAndFlush(apiKey);
-//
-//        apiKey = new ApiKey(TestResources.getMigrateApiKey(), "Minko", "Migrator", "migrate@mail.com", "MigratedApp", "MigratableOrganisation");
-//        apiKey.setKeycloakId(TestResources.getMigrateApiKey());
-//        apiKey.setDeprecationDate(new Date());
+        mvc = MockMvcBuilders.standaloneSetup(apiKeyController).build();
+//        apiKey.setKeycloakId(EXISTING_API_KEY);
+        apiKeyRepo.saveAndFlush(TestResources.getExistingApiKey1());
+        apiKeyRepo.saveAndFlush(TestResources.getExistingApiKey2());
+        apiKeyRepo.saveAndFlush(TestResources.getUnregisteredApiKey());
+        apiKeyRepo.saveAndFlush(TestResources.getMigratedApiKey());
+//        createApiKeyRequest = new ApiKeyRequest("Damon", "Salvatore", "damon@gmail.com", "DSApp", "DSCompany");
     }
 
 
-//    private String firstName;
-//    private String lastName;
-//    private String email;
-//    private String appName;
-//    private String company;
-//    private String sector;
-//    private String website;
-
-
-    // CREATE API KEY TESTS
     @Test
-    public void testCreateApiKeySuccess() throws Exception {
+    public void createApiKey() throws Exception {
         prepareForAuthentication(true, false);
-        ApiKey successfullyCreatedApikey = TestResources.getSuccessfullyCreatedApiKey();
         Mockito.when(apiKeyController.generatePublicKey()).thenReturn(successfullyCreatedApikey.getApiKey());
-//        Mockito.when(emailService.sendApiKeyEmail(Mockito.any(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(null);
-        //, Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
-//        Mockito.doNothing().when(apiKeyCreatedMsg.setTo(Mockito.anyString()));
-//        Mockito.when(apiKeyController.prepareNewApiKey(Mockito.any())).thenReturn(successfullyCreatedApikey);
+
         mvc.perform(post("/apikey").secure(true)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + (TestResources.getClientId() + ":" + TestResources.getClientSecret()))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(convertApiKeyInJson(successRequest))
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.header().string("Content-Type", (MediaType.APPLICATION_JSON_VALUE)))
-                .andExpect(MockMvcResultMatchers.content().json(convertApiKeyInJson(ApiKey.class)));
+                                   .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .content(convertApiKeyInJson(TestResources.getSuccessfulApiKeyRequest())))
+           .andDo(MockMvcResultHandlers.print())
+           .andExpect(status().isCreated())
+           .andExpect(MockMvcResultMatchers.header().string("Content-Type", (MediaType.APPLICATION_JSON_VALUE)))
+           .andExpect(jsonPath("$.apiKey").value(successfullyCreatedApikey.getApiKey()))
+           .andExpect(jsonPath("$.firstName").value(successfullyCreatedApikey.getFirstName()))
+           .andExpect(jsonPath("$.lastName").value(successfullyCreatedApikey.getLastName()))
+           .andExpect(jsonPath("$.email").value(successfullyCreatedApikey.getEmail()))
+           .andExpect(jsonPath("$.appName").value(successfullyCreatedApikey.getAppName()))
+           .andExpect(jsonPath("$.company").value(successfullyCreatedApikey.getCompany()))
+           .andExpect(jsonPath("$.website").value(successfullyCreatedApikey.getWebsite()))
+           .andExpect(jsonPath("$.sector").value(successfullyCreatedApikey.getSector()));
     }
-/*
+
+
     @Test
     public void testCreateApiKeyForbiddenException() throws Exception {
         prepareForAuthentication(false, false);
+        Mockito.when(apiKeyController.generatePublicKey()).thenReturn(successfullyCreatedApikey.getApiKey());
 
+        try {
         mvc.perform(post("/apikey").secure(true)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + (TestResources.getClientId() + ":" + TestResources.getClientSecret()))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(convertApiKeyInJson(successApiKeyRequest))
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isForbidden());
+                                   .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .content(convertApiKeyInJson(TestResources.getSuccessfulApiKeyRequest())))
+           .andReturn().getResolvedException().getMessage();
+        } catch (ForbiddenException f) {
+            throw new Exception();
+        }
+//           .andExpect(status().isForbidden());
+//           .andExpect(result -> assertTrue(result.getResolvedException() instanceof ForbiddenException))
+//           .andExpect(result -> assertEquals("Operation is not allowed by this user", result.getResolvedException().getMessage()));
     }
+
 
     @Test
     public void testCreateApiKeyMandatoryFieldsMissing() throws Exception {
@@ -180,7 +205,7 @@ public class ApiKeyControllerTest {
 
         // first name , lastname , email , appname and company missing
         ApiKeyRequest apiKeyRequest = new ApiKeyRequest();
-        String expectedErrorMessage = "Required parameter(s): ['firstName', 'lastName', 'email', 'appName', 'company'] not provided";
+        String expectedErrorMessage = "Missing parameter. Required parameter(s): ['firstName', 'lastName', 'email', 'appName', 'company'] not provided";
 
         String actualErrorMessage = mvc.perform(post("/apikey").secure(true)
                 .header(HttpHeaders.AUTHORIZATION,
@@ -194,7 +219,7 @@ public class ApiKeyControllerTest {
 
         checkErrorMessages(actualErrorMessage, expectedErrorMessage);
     }
-
+/*
     @Test
     public void testCreateApiKeyInvalidEmailFormat() throws Exception {
         prepareForAuthentication(true, false);
@@ -566,29 +591,58 @@ public class ApiKeyControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 */
+
+    private String convertApiKeyInJson(Object object) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+        ObjectWriter ow = mapper.writer().withDefaultPrettyPrinter();
+        return ow.writeValueAsString(object);
+    }
+
     /**
-     * Method to mock Authrorisation and other Authentication required for Test
+     * Method to mock Authroization and other Authentication required for Test
      *
      * @param isManagerClientAuthorized to set the isManagerClientAuthorized response
-     * @param  prepareForCaptcha if we want the test to be ready for captcha
+     * @param prepareForCaptcha         if we want the test to be ready for captcha
      */
-
-    private void prepareForAuthentication(boolean isManagerClientAuthorized, boolean prepareForCaptcha) throws EuropeanaApiException {
-        KeycloakPrincipal           principal = Mockito.mock(KeycloakPrincipal.class);
-        KeycloakAuthenticationToken token     = new KeycloakAuthenticationToken(principal);
+    private void prepareForAuthentication(boolean isManagerClientAuthorized, boolean prepareForCaptcha) throws
+                                                                                                        EuropeanaApiException {
+        KeycloakPrincipal<KeycloakSecurityContext> principal   = Mockito.mock(KeycloakPrincipal.class);
+        List<GrantedAuthority>                     authorities = new ArrayList<>();
+        KeycloakAuthenticationToken token = new KeycloakAuthenticationToken(principal, authorities);
         SecurityContextHolder.getContext().setAuthentication(token);
-
-        Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString())).thenReturn(principal);
-        Mockito.when(keycloakClientManager.isManagerClientAuthorized(Mockito.any())).thenReturn(isManagerClientAuthorized);
-//        Mockito.when(keycloakClientManager.recreateClient(Mockito.any(), Mockito.anyString(), Mockito.any())).thenReturn(TestResources.getNewKeycloakid());
+        Mockito.when(keycloakManager.authenticateClient(Mockito.anyString(), Mockito.anyString()))
+               .thenReturn(principal);
+        Mockito.when(keycloakManager.isManagerClientAuthorized(Mockito.any())).thenReturn(isManagerClientAuthorized);
         // prepares mocks for captcha
-        if(prepareForCaptcha) {
+        if (prepareForCaptcha) {
             Mockito.when(captchaManager.verifyCaptchaToken(Mockito.anyString())).thenReturn(true);
-            Mockito.when(customKeycloakAuthenticationProvider.authenticateAdminClient(Mockito.any(), Mockito.any())).thenReturn(token);
+            Mockito.when(customKeycloakAuthenticationProvider.authenticate(Mockito.any())).thenReturn(token);
         }
     }
 
 
+//    /**
+//     * Method to mock Authrorisation and other Authentication required for Test
+//     *
+//     * @param isManagerClientAuthorized to set the isManagerClientAuthorized response
+//     * @param  prepareForCaptcha if we want the test to be ready for captcha
+//     */
+//
+//    private void prepareForAuthentication(boolean isManagerClientAuthorized, boolean prepareForCaptcha) throws EuropeanaApiException {
+//        KeycloakPrincipal           principal = Mockito.mock(KeycloakPrincipal.class);
+//        KeycloakAuthenticationToken token     = new KeycloakAuthenticationToken(principal);
+//        SecurityContextHolder.getContext().setAuthentication(token);
+//
+//        Mockito.when(keycloakClientManager.authenticateClient(Mockito.anyString(), Mockito.anyString())).thenReturn(principal);
+//        Mockito.when(keycloakClientManager.isManagerClientAuthorized(Mockito.any())).thenReturn(isManagerClientAuthorized);
+////        Mockito.when(keycloakClientManager.recreateClient(Mockito.any(), Mockito.anyString(), Mockito.any())).thenReturn(TestResources.getNewKeycloakid());
+//        // prepares mocks for captcha
+//        if(prepareForCaptcha) {
+//            Mockito.when(captchaManager.verifyCaptchaToken(Mockito.anyString())).thenReturn(true);
+//            Mockito.when(customKeycloakAuthenticationProvider.authenticateAdminClient(Mockito.any(), Mockito.any())).thenReturn(token);
+//        }
+//    }
 
 
     /**
@@ -597,63 +651,50 @@ public class ApiKeyControllerTest {
      * @param actualErrorMessage
      * @param expectedErrorMessage
      */
-    private void checkErrorMessages (String actualErrorMessage, String expectedErrorMessage) {
+    private void checkErrorMessages(String actualErrorMessage, String expectedErrorMessage) {
         Assert.assertNotNull(actualErrorMessage);
-        Assert.assertTrue(StringUtils.equals(actualErrorMessage, expectedErrorMessage));
+        assertTrue(StringUtils.equals(actualErrorMessage, expectedErrorMessage));
     }
 
-    /**
-     * Converts the Object to json String
-     *
-     * @param object object to be converted in jsonString
-     * @return json String
-     * @throws JsonProcessingException
-     */
-    private String convertApiKeyInJson(Object object) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-        ObjectWriter ow = mapper.writer().withDefaultPrettyPrinter();
-        return ow.writeValueAsString(object);
-    }
-
-    @Test
-    public void validateExistingApiKey() throws Exception {
-        Optional<ApiKey> optionalExistingApiKey = apiKeyRepo.findById(TestResources.getExistingApiKey1());
-        if (optionalExistingApiKey.isEmpty()) {
-            fail();
-        }
-
-        // post validate request
-        mvc.perform(post("/apikey/validate").secure(true)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "APIKEY " + optionalExistingApiKey.get().getApiKey())
-                .contentType(MediaType.APPLICATION_JSON)
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isNoContent());
-    }
+//    @Test
+//    public void validateExistingApiKey() throws Exception {
+//        Optional<ApiKey> optionalExistingApiKey = apiKeyRepo.findById(TestResources.getExistingApiKey1());
+//        if (optionalExistingApiKey.isEmpty()) {
+//            fail();
+//        }
+//
+//        // post validate request
+//        mvc.perform(post("/apikey/validate").secure(true)
+//                                            .header(HttpHeaders.AUTHORIZATION,
+//                                                    "APIKEY " + optionalExistingApiKey.get().getApiKey())
+//                                            .contentType(MediaType.APPLICATION_JSON)
+//                                            .with(csrf()))
+//           .andDo(MockMvcResultHandlers.print())
+//           .andExpect(MockMvcResultMatchers.status().isNoContent());
+//    }
 
     @Test
     public void validateWhenApiKeyNotSupplied() throws Exception {
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "APIKEY ")
-                .contentType(MediaType.APPLICATION_JSON)
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+                                            .header(HttpHeaders.AUTHORIZATION, "APIKEY ")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .with(csrf()))
+           .andDo(MockMvcResultHandlers.print())
+           .andExpect(status().isBadRequest());
     }
 
-    @Test
-    public void validateUnregisteredApiKey() throws Exception {
-        // post validate request
-        mvc.perform(post("/apikey/validate").secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "APIKEY " + TestResources.getUnregisteredApiKey())
-                .contentType(MediaType.APPLICATION_JSON)
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
-    }
+//    @Test
+//    public void validateUnregisteredApiKey() throws Exception {
+//        // post validate request
+//        mvc.perform(post("/apikey/validate").secure(true)
+//                                            .header(HttpHeaders.AUTHORIZATION,
+//                                                    "APIKEY " + TestResources.getUnregisteredApiKey())
+//                                            .contentType(MediaType.APPLICATION_JSON)
+//                                            .with(csrf()))
+//           .andDo(MockMvcResultHandlers.print())
+//           .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+//    }
 
     @Test
     public void validateDeprecatedApiKey() throws Exception {
@@ -664,12 +705,12 @@ public class ApiKeyControllerTest {
 
         // post validate request
         mvc.perform(post("/apikey/validate").secure(true)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "APIKEY " + optionalDeprecatedApiKey.get().getApiKey())
-                .contentType(MediaType.APPLICATION_JSON)
-                .with(csrf()))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isGone());
+                                            .header(HttpHeaders.AUTHORIZATION,
+                                                    "APIKEY " + optionalDeprecatedApiKey.get().getApiKey())
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .with(csrf()))
+           .andDo(MockMvcResultHandlers.print())
+           .andExpect(status().isGone());
     }
 
     @org.junit.jupiter.api.Test
@@ -701,15 +742,15 @@ public class ApiKeyControllerTest {
     }
 
 
-    @Profile("test")
-    @Configuration
-    public class ApikeyControllerTestSetup {
-
-        @Bean
-        @Primary
-        public MailService emailService(){
-            return Mockito.mock(MailService.class);
-        }
-    }
+//    @Profile("test")
+//    @Configuration
+//    public class ApikeyControllerTestSetup {
+//
+//        @Bean
+//        @Primary
+//        public MailService emailService(){
+//            return Mockito.mock(MailService.class);
+//        }
+//    }
 
 }

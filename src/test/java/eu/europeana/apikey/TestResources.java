@@ -102,33 +102,60 @@ public class TestResources {
                                                          + "]";
 
 
+    private static final String SUCCESSFULLYCREATEDKEY = "keytosuccess";
     private static final String SUCCESSFULFIRSTNAME    = "Simon";
     private static final String SUCCESSFULLASTNAME     = "Success";
-    private static final String SUCCESSFULEMAIL        = "successful.simon@gmail.com";
-    private static final String SUCCESSFULAPPNAME      = "Success-agenda";
-    private static final String SUCCESSFULCOMPANY      = "very-successful-org";
-    private static final String SUCCESSFULLYCREATEDKEY = "keytosuccess";
+    private static final String SUCCESSFULEMAIL        = "successful.simon@hugely.successful.org";
+    private static final String SUCCESSFULAPPNAME      = "SuccessAgenda";
+    private static final String SUCCESSFULCOMPANY      = "VerySuccessfulOrg";
+    private static final String SUCCESSFULSECTOR       = "Successsector";
+    private static final String SUCCESSFULWEBSITE      = "https://hugely.successful.org";
 
-
+    private static final String CAPTCHAKEY          = "captchakey";
     private static final String CAPTCHAFIRSTNAME    = "Carola";
     private static final String CAPTCHALASTNAME     = "Captchame";
     private static final String CAPTCHAEMAIL        = "captchameifyoudare@gmail.com";
     private static final String CAPTCHAAPPNAME      = "Lalalillylooper";
     private static final String CAPTCHACOMPANY      = "Carolaorganisation";
-    private static final String CAPTCHAKEY          = "captchakey";
 
-
+    private static final String UPDATEKEY          = "updatekey";
     private static final String UPDATEFIRSTNAME    = "Ulrike";
     private static final String UPDATELASTNAME     = "Updatenmachtjaspass";
     private static final String UPDATEEMAIL        = "updatenmachtspass@gmail.com";
     private static final String UPDATEAPPNAME      = "Abersojadoch";
     private static final String UPDATECOMPANY      = "Ulrikefoundation";
-    private static final String UPDATEKEY          = "updatekey";
+
+    private static final String EXISTINGKEY1   = "existingkey1";
+    private static final String EXISTINGFIRSTNAME1   = "Edward";
+    private static final String EXISTINGLASTNAME1   = "Existing";
+    private static final String EXISTINGEMAIL1   = "edflopps@mail.com";
+    private static final String EXISTINGAPPNAME1   = "ThisAppExists";
+    private static final String EXISTINGCOMPANY1   = "ExistingFoundation";
+    
+    private static final String EXISTINGKEY2   = "existingkey2";
+    private static final String EXISTINGFIRSTNAME2   = "Elsbeth";
+    private static final String EXISTINGLASTNAME2   = "Existingtoo";
+    private static final String EXISTINGEMAIL2   = "twinspizzlefix@sneeze.org";
+    private static final String EXISTINGAPPNAME2   = "ThisAppExistsToo";
+    private static final String EXISTINGCOMPANY2   = "ExistingCompany";
+
+    private static final String UNREGISTEREDKEY = "unregisteredkey";
+    private static final String UNREGISTEREDFIRSTNAME = "Dwight D.";
+    private static final String UNREGISTEREDLASTNAME = "Deprecated";
+    private static final String UNREGISTEREDEMAIL = "nononononever@kritzle.me";
+    private static final String UNREGISTEREDAPPNAME = "UnregisteredAppAndDeprecatedToo";
+    private static final String UNREGISTEREDCOMPANY = "UnregistrableOrganisation";
 
 
-    private static final String EXISTING_API_KEY_1   = "apikey1";
-    private static final String EXISTING_API_KEY_2   = "apikey2";
-    private static final String UNREGISTERED_API_KEY = "apikey3";
+    private static final String MIGRATEDKEY = "migratedkey";
+    private static final String MIGRATEDFIRSTNAME = "Minko";
+    private static final String MIGRATEDLASTNAME = "The Migrator";
+    private static final String MIGRATEDEMAIL = "migrate@migrate.yes";
+    private static final String MIGRATEDAPPNAME = "MigratedApp";
+    private static final String MIGRATEDCOMPANY = "MigratableBusiness";
+    private static final String MIGRATEDSECTOR = "A Completely Different Sector Altogether";
+    
+    
     private static final String DEPRECATED_API_KEY   = "apikey4";
     private static final String NEW_API_KEY          = "apikey5";
     private static final String CAPTCHA_API_KEY      = "apikey6";
@@ -175,12 +202,30 @@ public class TestResources {
                                       TestResources.getRealmPublicKey());
     }
 
-    public static ApiKeyRequest getSuccessfulApiKeyRequest(){return new ApiKeyRequest(SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY);}
+    public static ApiKeyRequest getSuccessfulApiKeyRequest(){
+        return new ApiKeyRequest(SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY, SUCCESSFULSECTOR, SUCCESSFULWEBSITE);
+    }
     public static ApiKeyRequest getCaptchaApiKeyRequest(){return new ApiKeyRequest(CAPTCHAFIRSTNAME, CAPTCHALASTNAME, CAPTCHAEMAIL, CAPTCHAAPPNAME, CAPTCHACOMPANY);}
     public static ApiKeyRequest getUpdateApiKeyRequest(){return new ApiKeyRequest(UPDATEFIRSTNAME, UPDATELASTNAME, UPDATEEMAIL, UPDATEAPPNAME, UPDATECOMPANY);}
-    public static ApiKey getSuccessfullyCreatedApiKey(){return new ApiKey(SUCCESSFULLYCREATEDKEY, SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY);}
+    public static ApiKey getSuccessfullyCreatedApiKey(){
+        ApiKey successfullyCreatedApiKey = new ApiKey(SUCCESSFULLYCREATEDKEY, SUCCESSFULFIRSTNAME, SUCCESSFULLASTNAME, SUCCESSFULEMAIL, SUCCESSFULAPPNAME, SUCCESSFULCOMPANY);
+        successfullyCreatedApiKey.setSector(SUCCESSFULSECTOR);
+        successfullyCreatedApiKey.setWebsite(SUCCESSFULWEBSITE);
+        return successfullyCreatedApiKey;
+    }
     public static ApiKey getCaptchaCreatedApiKey(){return new ApiKey(CAPTCHAKEY, CAPTCHAFIRSTNAME, CAPTCHALASTNAME, CAPTCHAEMAIL, CAPTCHAAPPNAME, CAPTCHACOMPANY);}
-    public static ApiKey getUpdatedCreatedApiKey(){return new ApiKey(UPDATEKEY, UPDATEFIRSTNAME, UPDATELASTNAME, UPDATEEMAIL, UPDATEAPPNAME, UPDATECOMPANY);}
+    public static ApiKey getUpdatedApiKey(){return new ApiKey(UPDATEKEY, UPDATEFIRSTNAME, UPDATELASTNAME, UPDATEEMAIL, UPDATEAPPNAME, UPDATECOMPANY);}
+    public static ApiKey getExistingApiKey1(){return new ApiKey(EXISTINGKEY1, EXISTINGFIRSTNAME1, EXISTINGLASTNAME1, EXISTINGEMAIL1, EXISTINGAPPNAME1, EXISTINGCOMPANY1);}
+    public static ApiKey getExistingApiKey2(){return new ApiKey(EXISTINGKEY2, EXISTINGFIRSTNAME2, EXISTINGLASTNAME2, EXISTINGEMAIL2, EXISTINGAPPNAME2, EXISTINGCOMPANY2);}
+    public static ApiKey getUnregisteredApiKey(){return new ApiKey(UNREGISTEREDKEY, UNREGISTEREDFIRSTNAME, UNREGISTEREDLASTNAME, UNREGISTEREDEMAIL, UNREGISTEREDAPPNAME, UNREGISTEREDCOMPANY);}
+    public static ApiKey getMigratedApiKey(){
+        ApiKey migratedApiKey = new ApiKey(MIGRATEDKEY, MIGRATEDFIRSTNAME, MIGRATEDLASTNAME, MIGRATEDEMAIL, MIGRATEDAPPNAME, MIGRATEDCOMPANY);
+        migratedApiKey.setSector(MIGRATEDSECTOR);
+        return migratedApiKey;
+    }
+
+
+
 
     public static String getCredentialRepresentation() {
         return CREDENTIAL_REPRESENTATION;
@@ -238,10 +283,6 @@ public class TestResources {
         return ACCESS_TOKEN_STRING_REFRESHED;
     }
 
-    public static String getUnregisteredApiKey() {
-        return UNREGISTERED_API_KEY;
-    }
-
     public static String getUnsuccessfulResponse() {
         return UNSUCCESSFUL_RESPONSE;
     }
@@ -288,14 +329,6 @@ public class TestResources {
 
     public static String getResourceAccess() {
         return RESOURCE_ACCESS;
-    }
-
-    public static String getExistingApiKey1() {
-        return EXISTING_API_KEY_1;
-    }
-
-    public static String getExistingApiKey2() {
-        return EXISTING_API_KEY_2;
     }
 
     public static String getNewApiKey() {

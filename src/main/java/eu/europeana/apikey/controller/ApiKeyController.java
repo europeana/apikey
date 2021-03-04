@@ -747,7 +747,7 @@ public class ApiKeyController {
      *
      * @return newly generated public ApiKey
      */
-    String generatePublicKey() {
+    protected String generatePublicKey() {
         String        id;
         PassGenerator pg = new PassGenerator();
         do {
