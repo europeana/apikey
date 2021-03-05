@@ -66,12 +66,6 @@ public class ApiKeyController {
     @Autowired
     private MailService emailService;
 
-    @Value("${keycloak.manager-client-id}")
-    private String managerClientId;
-
-    @Value("${keycloak.manager-client-secret}")
-    private String managerClientSecret;
-
     @Autowired
     @Qualifier("apikeyTemplate")
     private SimpleMailMessage apiKeyCreatedMsg;
@@ -193,15 +187,6 @@ public class ApiKeyController {
         // Captcha verification, when failed return 401
         if (!captchaManager.verifyCaptchaToken(captchaToken)) {
             throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
-        }
-
-        // TODO remove this pointless check
-        // retrieve access token for the manager client so we can use that the create a new Apikey
-        KeycloakAuthenticationToken kcAuthToken = (KeycloakAuthenticationToken) customKeycloakAuthenticationProvider.authenticateAdminClient(
-                managerClientId,
-                managerClientSecret);
-        if (kcAuthToken == null) {
-            throw new ForbiddenException();
         }
         return createApikey(newKeyRequest);
     }

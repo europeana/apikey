@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-//@SpringBootTest(classes = {KeycloakTokenVerifier.class})
 @RunWith(MockitoJUnitRunner.class)
 public class KeycloakSecurityContextTest {
     @Mock
