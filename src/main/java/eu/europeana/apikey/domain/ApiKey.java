@@ -17,7 +17,7 @@ import static eu.europeana.apikey.util.Tools.nvl;
  * API key as it is used internally and stored in the database
  * Created by luthien on 18/04/2017.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Entity
 @Table(name = "apikey")
 public class ApiKey {
@@ -28,10 +28,9 @@ public class ApiKey {
     @JsonView(View.Public.class)
     private String apiKey;
 
-    @NotNull
     @Column(name = "keycloakid")
     @JsonProperty("keycloakId")
-    @JsonIgnore
+    @JsonView(View.Public.class)
     private String keycloakId;
 
     @NotNull
@@ -126,7 +125,7 @@ public class ApiKey {
      */
     public ApiKey(String apiKey, String firstName, String lastName, String email, String appName, String company) {
         this.apiKey           = apiKey;
-        this.keycloakId       = "";
+        this.keycloakId       = null;
         this.firstName        = firstName;
         this.lastName         = lastName;
         this.email            = email;
