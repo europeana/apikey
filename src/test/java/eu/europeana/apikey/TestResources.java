@@ -111,6 +111,15 @@ public class TestResources {
     private static final String SUCCESSFULSECTOR       = "Successsector";
     private static final String SUCCESSFULWEBSITE      = "https://hugely.successful.org";
 
+    private static final String SUCCESSFULLYCREATEDKEY1 = "keycloacksuccess";
+    private static final String SUCCESSFULFIRSTNAME1    = "Keycloack";
+    private static final String SUCCESSFULLASTNAME1    = "Success";
+    private static final String SUCCESSFULEMAIL1        = "successful.keycloack@hugely.successful.org";
+    private static final String SUCCESSFULAPPNAME1      = "SuccessKeycloack";
+    private static final String SUCCESSFULCOMPANY1      = "VerySuccessfulOrg";
+    private static final String SUCCESSFULSECTOR1       = "Successsector";
+    private static final String SUCCESSFULWEBSITE1      = "https://hugely.successful.org";
+
     private static final String CAPTCHAKEY       = "captchakey";
     private static final String CAPTCHAFIRSTNAME = "Carola";
     private static final String CAPTCHALASTNAME  = "Captchame";
@@ -130,6 +139,8 @@ public class TestResources {
     private static final String EXISTINGEMAIL1     = "edflopps@mail.com";
     private static final String EXISTINGAPPNAME1   = "ThisAppExists";
     private static final String EXISTINGCOMPANY1   = "ExistingFoundation";
+    private static final String EXISTINGKEYCLOACKID= "ExistingKeycloackID";
+
 
     private static final String UPDATEFIRSTNAME1 = "Ulrike";
     private static final String UPDATELASTNAME1  = "Updatenmachtjaspass";
@@ -143,6 +154,9 @@ public class TestResources {
     private static final String EXISTINGEMAIL2     = "twinspizzlefix@sneeze.org";
     private static final String EXISTINGAPPNAME2   = "ThisAppExistsToo";
     private static final String EXISTINGCOMPANY2   = "ExistingCompany";
+
+    public static final String EXISTING2KEYCLOACKID= "Existing2KeycloackID";
+
 
     private static final String UNREGISTEREDKEY       = "unregisteredkey";
     private static final String UNREGISTEREDFIRSTNAME = "Dwight D.";
@@ -267,17 +281,31 @@ public class TestResources {
         return successfullyCreatedApiKey;
     }
 
+    public static ApiKey getSuccessfulKeycloackApiKeyRequest() {
+        ApiKey successfullyCreatedApiKey = new ApiKey(SUCCESSFULLYCREATEDKEY1,
+                SUCCESSFULFIRSTNAME1,
+                SUCCESSFULLASTNAME1,
+                SUCCESSFULEMAIL1,
+                SUCCESSFULAPPNAME1,
+                SUCCESSFULCOMPANY1);
+        successfullyCreatedApiKey.setSector(SUCCESSFULSECTOR1);
+        successfullyCreatedApiKey.setWebsite(SUCCESSFULWEBSITE1);
+        return successfullyCreatedApiKey;
+    }
+
     public static ApiKey getCaptchaCreatedApiKey() {
         return new ApiKey(CAPTCHAKEY, CAPTCHAFIRSTNAME, CAPTCHALASTNAME, CAPTCHAEMAIL, CAPTCHAAPPNAME, CAPTCHACOMPANY);
     }
 
     public static ApiKey getExistingApiKey1() {
-        return new ApiKey(EXISTINGKEY1,
+       ApiKey apikey = new ApiKey(EXISTINGKEY1,
                           EXISTINGFIRSTNAME1,
                           EXISTINGLASTNAME1,
                           EXISTINGEMAIL1,
                           EXISTINGAPPNAME1,
                           EXISTINGCOMPANY1);
+       apikey.setKeycloakId(EXISTINGKEYCLOACKID);
+       return apikey;
     }
 
     public static ApiKey getUpdatedApiKey1() {

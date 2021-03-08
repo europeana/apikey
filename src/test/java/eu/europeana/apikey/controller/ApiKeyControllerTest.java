@@ -17,8 +17,11 @@ import eu.europeana.apikey.repos.ApiKeyRepo;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,8 +86,6 @@ public class ApiKeyControllerTest {
                                                             customKeycloakAuthenticationProvider,
                                                             keycloakManager));
         ReflectionTestUtils.setField(apiKeyController, "emailService", emailService);
-        ReflectionTestUtils.setField(apiKeyController, "managerClientId", CLIENT_ID);
-        ReflectionTestUtils.setField(apiKeyController, "managerClientSecret", CLIENT_SECRET);
         ReflectionTestUtils.setField(apiKeyController, "apiKeyCreatedMsg", apiKeyCreatedMsg);
         ReflectionTestUtils.setField(apiKeyController, "apiKeyAndClientCreatedMsg", apiKeyAndClientCreatedMsg);
         ReflectionTestUtils.setField(apiKeyController, "clientAddedMsg", clientAddedMsg);
@@ -482,6 +483,142 @@ public class ApiKeyControllerTest {
                                        .getMessage();
         checkErrorMessages(actualErrorMessage, expectedErrorMessage);
     }
+
+    // keycloak Test
+    @Test
+    public void testCreateKeyAndClientMissingDataException() throws Exception {
+        prepareForAuthentication(true, false);
+        String expectedErrorMessage = "Missing parameter. Required parameter(s): ['firstName', 'lastName', 'email', 'appName', 'company'] not provided";
+        String actualErrorMessage = mvc.perform(post("/apikey/keycloak")
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(convertApiKeyInJson(new ApiKeyRequest())))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResolvedException()
+                .getMessage();
+
+        checkErrorMessages(actualErrorMessage, expectedErrorMessage);
+    }
+
+    @Test
+    public void testCreateKeyAndClientApiKeyExistException() throws Exception {
+        prepareForAuthentication(true, false);
+        String expectedErrorMessage = "There already is an API key registered with application name "
+                + TestResources.getExistingApiKeyRequest1().getAppName()
+                + " and email "
+                + TestResources.getExistingApiKeyRequest1().getEmail()
+                + ".";
+        String actualErrorMessage = mvc.perform(post("/apikey/keycloak")
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(convertApiKeyInJson(TestResources.getExistingApiKey1())))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResolvedException()
+                .getMessage();
+
+        checkErrorMessages(actualErrorMessage, expectedErrorMessage);
+    }
+
+    @Test
+    public void testCreateKeyAndClientSuccess() throws Exception {
+        prepareForAuthentication(true, false);
+
+        when(apiKeyController.generatePublicKey()).thenReturn(TestResources.getSuccessfulKeycloackApiKeyRequest().getApiKey());
+        ClientRepresentation clientRepresentation = Mockito.spy(ClientRepresentation.class);
+        when(keycloakManager.createClient(Mockito.any(), Mockito.any())).thenReturn(clientRepresentation);
+        when(clientRepresentation.getId()).thenReturn("testKeycloackID");
+
+        mvc.perform(post("/apikey/keycloak").secure(true)
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(convertApiKeyInJson(TestResources.getSuccessfulKeycloackApiKeyRequest())))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isCreated())
+                .andExpect(MockMvcResultMatchers.header().string("Content-Type", (MediaType.APPLICATION_JSON_VALUE)))
+                .andExpect(jsonPath("$.apiKey").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getApiKey()))
+                .andExpect(jsonPath("$.firstName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getFirstName()))
+                .andExpect(jsonPath("$.lastName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getLastName()))
+                .andExpect(jsonPath("$.email").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getEmail()))
+                .andExpect(jsonPath("$.appName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getAppName()))
+                .andExpect(jsonPath("$.company").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getCompany()))
+                .andExpect(jsonPath("$.website").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getWebsite()))
+                .andExpect(jsonPath("$.sector").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getSector()));
+    }
+
+    @Test
+    public void testKeycloackAddClientKCIDNotEmptyException() throws Exception {
+        prepareForAuthentication(true, false);
+
+        ApiKey           actuallyExistingApikey1    = null;
+        Optional<ApiKey> potentiallyExistingApiKey1 = apiKeyRepo.findById(TestResources.getExistingApiKey1().getApiKey());
+        if (potentiallyExistingApiKey1.isEmpty()) {
+            fail();
+        } else {
+            actuallyExistingApikey1 = potentiallyExistingApiKey1.get();
+        }
+
+        String expectedErrorMessage = "ApiKey " + actuallyExistingApikey1.getApiKey() +
+                " already has a keycloak client id set ("+actuallyExistingApikey1.getKeycloakId() + ")";
+
+        String actualErrorMessage = mvc.perform(post("/apikey/keycloak/{apiKey}", actuallyExistingApikey1.getApiKey())
+                .secure(true)
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest()).andReturn()
+                .getResolvedException()
+                .getMessage();
+
+        checkErrorMessages(actualErrorMessage, expectedErrorMessage);
+    }
+
+    @Test
+    public void testKeycloackAddClientSuccess() throws Exception {
+        prepareForAuthentication(true, false);
+
+        ClientRepresentation clientRepresentation = Mockito.spy(ClientRepresentation.class);
+        when(keycloakManager.createClient(Mockito.any(), Mockito.any())).thenReturn(clientRepresentation);
+        when(clientRepresentation.getId()).thenReturn(TestResources.EXISTING2KEYCLOACKID);
+
+        ApiKey           actuallyExistingApikey1    = null;
+        Optional<ApiKey> potentiallyExistingApiKey1 = apiKeyRepo.findById(TestResources.getExistingApiKey2().getApiKey());
+        if (potentiallyExistingApiKey1.isEmpty()) {
+            fail();
+        } else {
+            actuallyExistingApikey1 = potentiallyExistingApiKey1.get();
+        }
+
+        mvc.perform(post("/apikey/keycloak/{apiKey}", actuallyExistingApikey1.getApiKey())
+                .secure(true)
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isCreated());
+    }
+
+
+    @Test
+    public void testValidateApikey() throws Exception {
+        prepareForAuthentication(true, false);
+
+        String expectedErrorMessage = "No API key in header. Correct header syntax 'Authorization: APIKEY <your_key_here>'";
+
+        String actualErrorMessage = mvc.perform(post("/apikey/validate")
+                .secure(true)
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest()).andReturn()
+                .getResolvedException()
+                .getMessage();
+
+        checkErrorMessages(actualErrorMessage, expectedErrorMessage);
+    }
+
 
     private String convertApiKeyInJson(Object object) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();

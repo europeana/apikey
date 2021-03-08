@@ -290,7 +290,7 @@ public class ApiKeyController {
      * HTTP 201 upon successful ApiKey creation
      */
     @PostMapping(path = "/keycloak/{apiKey}")
-    public ResponseEntity<HttpStatus> addClient(@PathVariable String apiKey) throws EuropeanaApiException {
+    public ResponseEntity<HttpStatus> addClient(@PathVariable("apiKey") String apiKey) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken    = checkManagerCredentials();
         ApiKey                      existingApiKey = checkKeyExists(apiKey);
         LOG.debug("Verified that API key {} exists in database!", apiKey);
