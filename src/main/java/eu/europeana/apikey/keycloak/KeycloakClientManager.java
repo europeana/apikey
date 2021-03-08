@@ -94,7 +94,7 @@ public class KeycloakClientManager {
      * @param clientSecret client secret used to authenticate the client in Keycloak
      * @return security context with configured admin client together with access and refresh tokens
      */
-    KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
+    public KeycloakPrincipal<KeycloakSecurityContext> authenticateClient(String clientId, String clientSecret) {
         Keycloak keycloak = KeycloakBuilder.builder()
                                            .realm(kcProperties.getRealm())
                                            .serverUrl(kcProperties.getAuthServerUrl())
@@ -428,7 +428,7 @@ public class KeycloakClientManager {
      * @param token access token object
      * @return collection of granted authorities to authorize resource access
      */
-    Collection<GrantedAuthority> getAuthorities(AccessToken token) {
+    public Collection<GrantedAuthority> getAuthorities(AccessToken token) {
         List<GrantedAuthority> result = new ArrayList<>();
         if (kcProperties.isUseResourceRoleMappings()) {
             token.getResourceAccess().forEach((s, access) -> {

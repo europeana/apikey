@@ -56,7 +56,6 @@ public class CaptchaManagerTest {
     @Test
     public void verifyCaptchaTokenWhenNull() throws IOException, EuropeanaApiException {
         prepareForNullVerificationResponse();
-
         Assert.assertFalse(captchaManager.verifyCaptchaToken(TestResources.getCaptchaToken()));
     }
 

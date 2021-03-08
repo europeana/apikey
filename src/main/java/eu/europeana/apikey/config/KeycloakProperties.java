@@ -22,8 +22,6 @@ public class KeycloakProperties {
     private boolean useResourceRoleMappings;
     private String  realmPublicKey;
     private String  masterPublicKey;
-    private String  managerClientId;
-    private String  managerClientSecret;
 
     public KeycloakProperties() {
     }
@@ -82,21 +80,5 @@ public class KeycloakProperties {
 
     public void setMasterPublicKey(String masterPublicKey) {
         this.masterPublicKey = masterPublicKey;
-    }
-
-    public String getManagerClientId() {
-        return managerClientId;
-    }
-
-    public void setManagerClientId(String managerClientId) {
-        this.managerClientId = managerClientId;
-    }
-
-    public String getManagerClientSecret() {
-        return managerClientSecret;
-    }
-
-    public void setManagerClientSecret(String managerClientSecret) {
-        this.managerClientSecret = managerClientSecret;
     }
 }
