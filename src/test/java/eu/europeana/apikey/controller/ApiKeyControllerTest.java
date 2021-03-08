@@ -527,30 +527,30 @@ public class ApiKeyControllerTest {
     public void testCreateKeyAndClientSuccess() throws Exception {
         prepareForAuthentication(true, false);
 
-        when(apiKeyController.generatePublicKey()).thenReturn(TestResources.getSuccessfulKeycloackApiKeyRequest().getApiKey());
+        when(apiKeyController.generatePublicKey()).thenReturn(TestResources.getSuccessfulKeycloakApiKeyRequest().getApiKey());
         ClientRepresentation clientRepresentation = Mockito.spy(ClientRepresentation.class);
         when(keycloakManager.createClient(Mockito.any(), Mockito.any())).thenReturn(clientRepresentation);
-        when(clientRepresentation.getId()).thenReturn("testKeycloackID");
+        when(clientRepresentation.getId()).thenReturn("testKeycloakID");
 
         mvc.perform(post("/apikey/keycloak").secure(true)
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(convertApiKeyInJson(TestResources.getSuccessfulKeycloackApiKeyRequest())))
+                .content(convertApiKeyInJson(TestResources.getSuccessfulKeycloakApiKeyRequest())))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().string("Content-Type", (MediaType.APPLICATION_JSON_VALUE)))
-                .andExpect(jsonPath("$.apiKey").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getApiKey()))
-                .andExpect(jsonPath("$.firstName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getFirstName()))
-                .andExpect(jsonPath("$.lastName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getLastName()))
-                .andExpect(jsonPath("$.email").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getEmail()))
-                .andExpect(jsonPath("$.appName").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getAppName()))
-                .andExpect(jsonPath("$.company").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getCompany()))
-                .andExpect(jsonPath("$.website").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getWebsite()))
-                .andExpect(jsonPath("$.sector").value(TestResources.getSuccessfulKeycloackApiKeyRequest().getSector()));
+                .andExpect(jsonPath("$.apiKey").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getApiKey()))
+                .andExpect(jsonPath("$.firstName").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getFirstName()))
+                .andExpect(jsonPath("$.lastName").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getLastName()))
+                .andExpect(jsonPath("$.email").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getEmail()))
+                .andExpect(jsonPath("$.appName").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getAppName()))
+                .andExpect(jsonPath("$.company").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getCompany()))
+                .andExpect(jsonPath("$.website").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getWebsite()))
+                .andExpect(jsonPath("$.sector").value(TestResources.getSuccessfulKeycloakApiKeyRequest().getSector()));
     }
 
     @Test
-    public void testKeycloackAddClientKCIDNotEmptyException() throws Exception {
+    public void testKeycloakAddClientKCIDNotEmptyException() throws Exception {
         prepareForAuthentication(true, false);
 
         ApiKey           actuallyExistingApikey1    = null;
@@ -577,12 +577,12 @@ public class ApiKeyControllerTest {
     }
 
     @Test
-    public void testKeycloackAddClientSuccess() throws Exception {
+    public void testKeycloakAddClientSuccess() throws Exception {
         prepareForAuthentication(true, false);
 
         ClientRepresentation clientRepresentation = Mockito.spy(ClientRepresentation.class);
         when(keycloakManager.createClient(Mockito.any(), Mockito.any())).thenReturn(clientRepresentation);
-        when(clientRepresentation.getId()).thenReturn(TestResources.EXISTING2KEYCLOACKID);
+        when(clientRepresentation.getId()).thenReturn(TestResources.EXISTING2KeycloakID);
 
         ApiKey           actuallyExistingApikey1    = null;
         Optional<ApiKey> potentiallyExistingApiKey1 = apiKeyRepo.findById(TestResources.getExistingApiKey2().getApiKey());

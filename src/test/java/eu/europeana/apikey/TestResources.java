@@ -111,11 +111,11 @@ public class TestResources {
     private static final String SUCCESSFULSECTOR       = "Successsector";
     private static final String SUCCESSFULWEBSITE      = "https://hugely.successful.org";
 
-    private static final String SUCCESSFULLYCREATEDKEY1 = "keycloacksuccess";
-    private static final String SUCCESSFULFIRSTNAME1    = "Keycloack";
+    private static final String SUCCESSFULLYCREATEDKEY1 = "keycloaksuccess";
+    private static final String SUCCESSFULFIRSTNAME1    = "Keycloak";
     private static final String SUCCESSFULLASTNAME1    = "Success";
-    private static final String SUCCESSFULEMAIL1        = "successful.keycloack@hugely.successful.org";
-    private static final String SUCCESSFULAPPNAME1      = "SuccessKeycloack";
+    private static final String SUCCESSFULEMAIL1        = "successful.keycloak@hugely.successful.org";
+    private static final String SUCCESSFULAPPNAME1      = "SuccessKeycloak";
     private static final String SUCCESSFULCOMPANY1      = "VerySuccessfulOrg";
     private static final String SUCCESSFULSECTOR1       = "Successsector";
     private static final String SUCCESSFULWEBSITE1      = "https://hugely.successful.org";
@@ -139,7 +139,7 @@ public class TestResources {
     private static final String EXISTINGEMAIL1     = "edflopps@mail.com";
     private static final String EXISTINGAPPNAME1   = "ThisAppExists";
     private static final String EXISTINGCOMPANY1   = "ExistingFoundation";
-    private static final String EXISTINGKEYCLOACKID= "ExistingKeycloackID";
+    private static final String EXISTINGKeycloakID= "ExistingKeycloakID";
 
 
     private static final String UPDATEFIRSTNAME1 = "Ulrike";
@@ -155,7 +155,7 @@ public class TestResources {
     private static final String EXISTINGAPPNAME2   = "ThisAppExistsToo";
     private static final String EXISTINGCOMPANY2   = "ExistingCompany";
 
-    public static final String EXISTING2KEYCLOACKID= "Existing2KeycloackID";
+    public static final String EXISTING2KeycloakID= "Existing2KeycloakID";
 
 
     private static final String UNREGISTEREDKEY       = "unregisteredkey";
@@ -281,7 +281,7 @@ public class TestResources {
         return successfullyCreatedApiKey;
     }
 
-    public static ApiKey getSuccessfulKeycloackApiKeyRequest() {
+    public static ApiKey getSuccessfulKeycloakApiKeyRequest() {
         ApiKey successfullyCreatedApiKey = new ApiKey(SUCCESSFULLYCREATEDKEY1,
                 SUCCESSFULFIRSTNAME1,
                 SUCCESSFULLASTNAME1,
@@ -304,7 +304,7 @@ public class TestResources {
                           EXISTINGEMAIL1,
                           EXISTINGAPPNAME1,
                           EXISTINGCOMPANY1);
-       apikey.setKeycloakId(EXISTINGKEYCLOACKID);
+       apikey.setKeycloakId(EXISTINGKeycloakID);
        return apikey;
     }
 
