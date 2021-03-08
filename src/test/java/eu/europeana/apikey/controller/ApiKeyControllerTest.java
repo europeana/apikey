@@ -490,7 +490,7 @@ public class ApiKeyControllerTest {
         prepareForAuthentication(true, false);
         String expectedErrorMessage = "Missing parameter. Required parameter(s): ['firstName', 'lastName', 'email', 'appName', 'company'] not provided";
         String actualErrorMessage = mvc.perform(post("/apikey/keycloak")
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(convertApiKeyInJson(new ApiKeyRequest())))
                 .andDo(MockMvcResultHandlers.print())
@@ -511,7 +511,7 @@ public class ApiKeyControllerTest {
                 + TestResources.getExistingApiKeyRequest1().getEmail()
                 + ".";
         String actualErrorMessage = mvc.perform(post("/apikey/keycloak")
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(convertApiKeyInJson(TestResources.getExistingApiKey1())))
                 .andDo(MockMvcResultHandlers.print())
@@ -533,7 +533,7 @@ public class ApiKeyControllerTest {
         when(clientRepresentation.getId()).thenReturn("testKeycloakID");
 
         mvc.perform(post("/apikey/keycloak").secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(convertApiKeyInJson(TestResources.getSuccessfulKeycloakApiKeyRequest())))
                 .andDo(MockMvcResultHandlers.print())
@@ -566,7 +566,7 @@ public class ApiKeyControllerTest {
 
         String actualErrorMessage = mvc.perform(post("/apikey/keycloak/{apiKey}", actuallyExistingApikey1.getApiKey())
                 .secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest()).andReturn()
@@ -594,7 +594,7 @@ public class ApiKeyControllerTest {
 
         mvc.perform(post("/apikey/keycloak/{apiKey}", actuallyExistingApikey1.getApiKey())
                 .secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated());
@@ -609,7 +609,7 @@ public class ApiKeyControllerTest {
 
         String actualErrorMessage = mvc.perform(post("/apikey/validate")
                 .secure(true)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + (CLIENT_ID + ":" + CLIENT_SECRET))
+                .header(HttpHeaders.AUTHORIZATION, TestResources.getBasicauth())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest()).andReturn()
