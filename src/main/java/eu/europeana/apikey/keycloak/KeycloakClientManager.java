@@ -207,8 +207,7 @@ public class KeycloakClientManager {
         String appNameClientId = (StringUtils.isNotBlank(apiKeyUpdate.getAppName()) ? apiKeyUpdate.getAppName() : clientRepresentation
                 .getClientId());
         String companySector = (StringUtils.isNotBlank(apiKeyUpdate.getCompany()) ? apiKeyUpdate.getCompany() : "N/A") +
-                               (StringUtils.isNotBlank(apiKeyUpdate.getSector()) ?
-                                ", sector: " + apiKeyUpdate.getSector() : "");
+                               (StringUtils.isNotBlank(apiKeyUpdate.getSector()) ?  ", sector: " + apiKeyUpdate.getSector() : "");
 
         clientRepresentation.setName(String.format(CLIENT_NAME, appNameClientId, companySector));
         clientRepresentation.setDescription(String.format(CLIENT_DESCRIPTION,
