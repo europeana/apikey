@@ -1,5 +1,6 @@
 package eu.europeana.apikey.config;
 
+import eu.europeana.apikey.keycloak.CustomEntryPoint;
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +31,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .httpBasic().and()
                 .requiresChannel().anyRequest().requiresSecure().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable();
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
         } else {
             http.authorizeRequests()
                     .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
@@ -40,7 +42,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable();
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
         }
     }
 
