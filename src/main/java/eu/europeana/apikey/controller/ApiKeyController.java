@@ -529,6 +529,8 @@ public class ApiKeyController {
 
         ApiKey key = checkIfKeyExists(apiKey);
         if (key.getDeprecationDate() == null) {
+            message = String.format(APIKEY_NOT_DEPRECATED, apiKey);
+            LOG.info(message);
             throw new ApiKeyNotDeprecatedException(apiKey);
         }
         key.setDeprecationDate(null);
@@ -611,6 +613,7 @@ public class ApiKeyController {
         // When no apikey was supplied return 400
         String id = getAuthorizationHeader(httpServletRequest, APIKEY_PATTERN);
         if (StringUtils.isBlank(id)) {
+            LOG.info(APIKEY_MISSING);
             throw new MissingKeyException(APIKEY_MISSING);
         }
         LOG.debug("Validating API key {}...", id);
@@ -754,6 +757,7 @@ public class ApiKeyController {
     protected void checkKeyEmailAppNameExist(String email, String appName) throws ApiKeyExistsException {
         List<ApiKey> apiKeyList = this.apiKeyRepo.findByEmailAndAppName(email, appName);
         if (!apiKeyList.isEmpty()) {
+            LOG.info(String.format(EMAIL_APPNAME_EXISTS, email, appName));
             throw new ApiKeyExistsException(email, appName);
         }
     }
