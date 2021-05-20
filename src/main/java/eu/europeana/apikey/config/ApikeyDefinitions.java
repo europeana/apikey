@@ -8,8 +8,10 @@ public class ApikeyDefinitions {
 
     public static final String TO_MIGRATE_KEYCLOAKID                 = "to-migrate";
     public static final String MISSING_PARAMETER                     = "Missing parameter. ";
-    public static final String BAD_EMAIL_FORMAT                      = "Email is not properly formatted.";
+    public static final String BAD_EMAIL_FORMAT                      = "Email %s is not properly formatted.";
     public static final String APIKEY_NOT_REGISTERED                 = "API key %s is not registered";
+    public static final String APIKEY_DEPRECATED                     = "API key %s is deprecated";
+    public static final String CLIENT_NO_MANAGER                     = "Client %s is not authorised to manage Apikeys";
     public static final String APIKEY_MISSING                        = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
     public static final String APIKEY_PATTERN                        = "APIKEY\\s+([^\\s]+)";
     public static final String CAPTCHA_PATTERN                       = "Bearer\\s+([^\\s]+)";
