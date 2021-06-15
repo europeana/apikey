@@ -111,8 +111,9 @@ public class KeycloakClientManager {
                 return null;
             }
         } catch (RuntimeException e) {
-            throw new AuthenticationServiceException("Retrieving access token failed for client " + clientId,
-                                                     e);
+            String message = String.format(RETRIEVE_TOKEN_FAILED_FOR, clientId);
+            LOG.info(message);
+            throw new AuthenticationServiceException(message, e);
         }
 
         try {
@@ -126,7 +127,9 @@ public class KeycloakClientManager {
                                                                            keycloakTokenVerifier));
             }
         } catch (VerificationException e) {
-            throw new KeycloakAuthenticationException("Authentication failed for client " + clientId, e);
+            String message = String.format(AUTH_FAILED_CLIENT, clientId);
+            LOG.info(message);
+            throw new KeycloakAuthenticationException(message, e);
         }
         LOG.error("Verifying access token failed for client {}!", clientId);
         return null;
@@ -267,9 +270,10 @@ public class KeycloakClientManager {
             clientRepresentation.setEnabled(true);
             updateClient(clientRepresentation, securityContext);
         } else {
-            LOG.warn("API key {} of client {} is already enabled",
+            LOG.info(CLIENT_IS_ALREADY,
                      clientRepresentation.getClientId(),
-                     clientRepresentation.getId());
+                     clientRepresentation.getId(),
+                     "enabled");
         }
     }
 
@@ -286,9 +290,10 @@ public class KeycloakClientManager {
             clientRepresentation.setEnabled(false);
             updateClient(clientRepresentation, securityContext);
         } else {
-            LOG.warn("API key {} of client {} is already disabled",
+            LOG.info(CLIENT_IS_ALREADY,
                      clientRepresentation.getClientId(),
-                     clientRepresentation.getId());
+                     clientRepresentation.getId(),
+                     "disabled");
         }
     }
 
@@ -310,10 +315,12 @@ public class KeycloakClientManager {
                                                                                   ClientRepresentation.class);
                 return mapper.readValue(is, mapCollectionType);
             }
-            throw new KCException(
-                    ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() + " - " +
-                    response.getStatusLine().getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            String message = ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() + " - " +
+            response.getStatusLine().getReasonPhrase();
+            LOG.error(message);
+            throw new KCException(message, HttpStatus.INTERNAL_SERVER_ERROR.value());
         } catch (IOException e) {
+            LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK);
             throw new KCException(ERROR_COMMUNICATING_WITH_KEYCLOAK, HttpStatus.INTERNAL_SERVER_ERROR.value(), e);
         }
     }
@@ -344,14 +351,16 @@ public class KeycloakClientManager {
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             LOG.debug("Received getClientSecret for {} from Keycloak", clientId);
             if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
-                throw new KCException(
-                        ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
-                        " - " + response.getStatusLine().getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+                String message = ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
+                                 " - " + response.getStatusLine().getReasonPhrase();
+                LOG.error(message);
+                throw new KCException(message, HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
             try (InputStream is = response.getEntity().getContent()) {
                 secret = mapper.readValue(is, CredentialRepresentation.class).getValue();
             }
         } catch (IOException e) {
+            LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK);
             throw new KCException(ERROR_COMMUNICATING_WITH_KEYCLOAK, HttpStatus.INTERNAL_SERVER_ERROR.value(), e);
         }
 
@@ -375,6 +384,7 @@ public class KeycloakClientManager {
         LOG.debug("Retrieving client representation for {}...", clientId);
         List<ClientRepresentation> clients = getClients(httpGet);
         if (clients == null || clients.isEmpty()) {
+            LOG.error("Could not retrieve client with clientId {}", clientId);
             throw new MissingKCClientException(clientId);
         }
         return clients.get(0);
@@ -392,11 +402,13 @@ public class KeycloakClientManager {
         try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
             LOG.debug("Received response for client {} from Keycloak: {}", clientRep.getId(), response);
             if (response.getStatusLine().getStatusCode() != expectedHttpStatus) {
-                throw new KCException(
-                        ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
-                        " - " + response.getStatusLine().getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+                String message = ERROR_COMMUNICATING_WITH_KEYCLOAK + RECEIVED + response.getStatusLine().getStatusCode() +
+                                 " - " + response.getStatusLine().getReasonPhrase();
+                LOG.error(message);
+                throw new KCException(message, HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
         } catch (IOException e) {
+            LOG.error(ERROR_COMMUNICATING_WITH_KEYCLOAK);
             throw new KCException(ERROR_COMMUNICATING_WITH_KEYCLOAK, HttpStatus.INTERNAL_SERVER_ERROR.value(), e);
         }
     }
@@ -415,8 +427,9 @@ public class KeycloakClientManager {
         try {
             entity = new StringEntity(mapper.writeValueAsString(clientRepresentation), "UTF-8");
         } catch (JsonProcessingException e) {
-            throw new KCException("Problem with creating client representation for the request",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(), e);
+            String message = "Problem with creating client representation for the request";
+            LOG.error(message);
+            throw new KCException(message, HttpStatus.INTERNAL_SERVER_ERROR.value(), e);
         }
         httpRequest.setEntity(entity);
     }
@@ -444,6 +457,14 @@ public class KeycloakClientManager {
         return result;
     }
 
+    /**
+     * Check whether the client with a given clientId (apiKey) exists in Keycloak, and if so, return its id
+     *
+     * @param apiKey Apikey, matches client.clientId
+     * @param kcSecurityContext security context
+     * @return String with client.Id value if client is found, null if not found
+     * @throws EuropeanaApiException when an error occured retrieving the client info from Keycloak
+     */
     public String checkifClientExists(String apiKey, KeycloakSecurityContext kcSecurityContext) throws EuropeanaApiException {
         HttpGet httpGet = prepareGetClientRequest(apiKey, kcSecurityContext.getAccessTokenString());
         LOG.debug("Checking if client with clientId {} exists...", apiKey);
@@ -451,6 +472,7 @@ public class KeycloakClientManager {
         if (clients != null && !clients.isEmpty()) {
             return clients.get(0).getId();
         } else {
+            LOG.info("No client with clientId {} was found", apiKey);
             return null;
         }
     }
@@ -462,7 +484,7 @@ public class KeycloakClientManager {
      * @param apiKey      api key to use as client-id
      * @param accessToken access token to authorize the request
      * @return true when apiKey belongs to a valid client
-     * @throws EuropeanaApiException if this goes not as intended
+     * @throws EuropeanaApiException when an error occured retrieving the client info from Keycloak
      */
     private boolean clientExists(String apiKey, String accessToken) throws EuropeanaApiException {
         HttpGet httpGet = prepareGetClientRequest(apiKey, accessToken);

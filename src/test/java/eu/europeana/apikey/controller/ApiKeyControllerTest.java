@@ -165,7 +165,7 @@ public class ApiKeyControllerTest {
     @Test
         public void testCreateApiKeyInvalidEmailFormat() throws Exception {
         prepareForAuthentication(true, false);
-        String expectedErrorMessage = "Email is not properly formatted.";
+        String expectedErrorMessage = "Email this.fails**com is not properly formatted.";
 
         String actualErrorMessage = mvc.perform(post("/apikey").secure(true)
                                                                .header(HttpHeaders.AUTHORIZATION,
