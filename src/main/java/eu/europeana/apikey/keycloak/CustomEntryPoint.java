@@ -4,10 +4,8 @@ import eu.europeana.api.commons.error.EuropeanaGlobalExceptionHandler;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * Class to handle custom error handling for spring security exceptions
@@ -16,8 +14,8 @@ import java.io.IOException;
 public class CustomEntryPoint implements AuthenticationEntryPoint {
 
     @Override
-    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) throws IOException, ServletException {
+    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) {
         EuropeanaGlobalExceptionHandler europeanaGlobalExceptionHandler = new EuropeanaGlobalExceptionHandler();
-        europeanaGlobalExceptionHandler.handleAuthenticationError(e, httpServletRequest, httpServletResponse);
+        europeanaGlobalExceptionHandler.handleAuthenticationError(e, httpServletRequest);
     }
 }
