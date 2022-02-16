@@ -34,7 +34,7 @@
         <jodatime.version>2.10.6</jodatime.version>
         <springfox.version>3.0.0</springfox.version>
         <jjwt.version>0.9.1</jjwt.version>
-        <postgresql.version>42.2.16</postgresql.version>
+        <postgresql.version>42.3.3</postgresql.version>
         <json.version>20200518</json.version>
         <commons-validator.version>1.7</commons-validator.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
