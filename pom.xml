@@ -26,7 +26,7 @@
         <java.version>11</java.version>
 
         <spring-boot.version>2.5.7</spring-boot.version>
-        <api-commons-version>0.3.13</api-commons-version>
+        <api-commons-version>0.3.16</api-commons-version>
         <keycloak.version>15.0.2</keycloak.version>
         <spring-security-test.version>5.4.2</spring-security-test.version>
         <commonsIO.version>2.8.0</commonsIO.version>
@@ -259,7 +259,7 @@
                 <artifactId>dependency-check-maven</artifactId>
                 <version>6.5.0</version>
                 <configuration>
-                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <failBuildOnCVSS>10</failBuildOnCVSS>
                 </configuration>
                 <executions>
                     <execution>
