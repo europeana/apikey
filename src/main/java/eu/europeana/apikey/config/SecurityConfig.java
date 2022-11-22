@@ -3,6 +3,7 @@ package eu.europeana.apikey.config;
 import eu.europeana.apikey.keycloak.CustomEntryPoint;
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -23,6 +24,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         if (useSsl){
             http.authorizeRequests()
+                  //  .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                     .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
@@ -31,6 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
                     .antMatchers(HttpMethod.GET, "/console").permitAll()
                     .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+                  //  .antMatchers(HttpMethod.GET, "/googlea6365b758a9850fb.html").permitAll()
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .requiresChannel().anyRequest().requiresSecure().and()
@@ -39,6 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
         } else {
             http.authorizeRequests()
+                   // .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                     .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
@@ -47,6 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
                     .antMatchers(HttpMethod.GET, "/console").permitAll()
                     .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+                  //  .antMatchers(HttpMethod.GET, "/googlea6365b758a9850fb.html").permitAll()
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
