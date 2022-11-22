@@ -27,6 +27,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
                     .antMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+                    // for Swagger UI
+                    .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
+                    .antMatchers(HttpMethod.GET, "/console").permitAll()
+                    .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .requiresChannel().anyRequest().requiresSecure().and()
@@ -39,6 +43,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
                     .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
                     .antMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+                    // for Swagger UI
+                    .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
+                    .antMatchers(HttpMethod.GET, "/console").permitAll()
+                    .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
