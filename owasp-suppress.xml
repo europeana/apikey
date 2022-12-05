@@ -8,5 +8,13 @@
         <packageUrl regex="true">^pkg:maven/org.springframework/spring-web@.*$</packageUrl>
         <cve>CVE-2016-1000027</cve>
     </suppress>
-
+    <!-- SnakeYaml's Constructor() class does not restrict types which can be
+    instantiated during deserialization.But this exists even in the latest version. -->
+    <suppress>
+        <notes><![CDATA[
+      file name: snakeyaml-1.33.jar
+      ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.yaml/snakeyaml@.*$</packageUrl>
+        <cve>CVE-2022-1471</cve>
+    </suppress>
 </suppressions>
