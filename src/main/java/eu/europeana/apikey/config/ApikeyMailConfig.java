@@ -6,11 +6,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @Configuration
 @EnableWebMvc
-class ApikeyMailConfig extends WebMvcConfigurerAdapter {
+class ApikeyMailConfig {
 
     private static final String APIKEY_USAGE = "The API key can be used for regular API request, see https://pro.europeana.eu/resources/apis/intro#access";
     private static final String SECRET_USAGE = "while the API key and Secret key together authenticate the Keycloak Client used to authenticate for " +
