@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Deserialization of untrusted data is unsafe, but we only do that from trusted sources -->
+    <suppress>
+        <notes><![CDATA[
+      file name: spring-web-5.3.23.jar
+      ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.springframework/spring-web@.*$</packageUrl>
+        <cve>CVE-2016-1000027</cve>
+    </suppress>
+    <!-- SnakeYaml's Constructor() class does not restrict types which can be
+    instantiated during deserialization.But this exists even in the latest version. -->
+    <suppress>
+        <notes><![CDATA[
+      file name: snakeyaml-1.33.jar
+      ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.yaml/snakeyaml@.*$</packageUrl>
+        <cve>CVE-2022-1471</cve>
+    </suppress>
+</suppressions>

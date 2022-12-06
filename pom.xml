@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -25,25 +27,27 @@
     <properties>
         <java.version>11</java.version>
 
-        <spring-boot.version>2.5.7</spring-boot.version>
-        <api-commons-version>0.3.13</api-commons-version>
-        <keycloak.version>15.0.2</keycloak.version>
-        <spring-security-test.version>5.4.2</spring-security-test.version>
+        <spring-boot.version>2.6.13</spring-boot.version>
+        <api-commons-version>0.3.16</api-commons-version>
+        <keycloak.version>19.0.3</keycloak.version>
         <commonsIO.version>2.8.0</commonsIO.version>
         <commonsLang3.version>3.11</commonsLang3.version>
         <jodatime.version>2.10.6</jodatime.version>
-        <springfox.version>3.0.0</springfox.version>
+        <springdoc.version>1.6.13</springdoc.version>
         <jjwt.version>0.9.1</jjwt.version>
-        <postgresql.version>42.2.16</postgresql.version>
+        <postgresql.version>42.5.0</postgresql.version>
         <json.version>20200518</json.version>
         <commons-validator.version>1.7</commons-validator.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
         <javassist.version>3.27.0-GA</javassist.version>
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
-        <log4j2.version>2.17.1</log4j2.version>
+
+        <!-- tmp set specific non-vulnerable Spring security version, until Spring-Boot is up-to-date -->
+        <spring-security.version>5.7.5</spring-security.version>
 
         <junit.version>5.7.1</junit.version>
         <mockito.version>3.8.0</mockito.version>
+        <spring-security-test.version>5.7.5</spring-security-test.version>
     </properties>
 
     <dependencyManagement>
@@ -91,27 +95,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
-        <!-- All log4j components specifically added to override spring-boot-starter-log4j2 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-jul</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -125,16 +108,23 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <version>${springfox.version}</version>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
+
 
         <!-- Api commons error module -->
         <dependency>
             <groupId>eu.europeana.api.commons</groupId>
             <artifactId>commons-error</artifactId>
             <version>${api-commons-version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mongodb</groupId>
+                    <artifactId>mongo-java-driver</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Keycloak integration -->
@@ -147,6 +137,28 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-security-adapter</artifactId>
             <version>${keycloak.version}</version>
+        </dependency>
+
+        <!-- Tmp - use non-vulnerable version of spring-security until Spring Framework is updated-->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>${spring-security.version}</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -257,9 +269,12 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>6.5.0</version>
+                <version>7.3.0</version>
                 <configuration>
-                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <failBuildOnCVSS>8</failBuildOnCVSS>
+                    <suppressionFiles>
+                        <suppressionFile>owasp-suppress.xml</suppressionFile>
+                    </suppressionFiles>
                 </configuration>
                 <executions>
                     <execution>
