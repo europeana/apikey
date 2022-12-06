@@ -35,7 +35,7 @@
         <jodatime.version>2.10.6</jodatime.version>
         <springdoc.version>1.6.13</springdoc.version>
         <jjwt.version>0.9.1</jjwt.version>
-        <postgresql.version>42.5.0</postgresql.version>
+        <postgresql.version>42.5.1</postgresql.version>
         <json.version>20200518</json.version>
         <commons-validator.version>1.7</commons-validator.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
