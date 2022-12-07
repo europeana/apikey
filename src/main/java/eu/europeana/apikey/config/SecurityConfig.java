@@ -17,47 +17,27 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${europeana.apikey.ssl:true}")
-    private boolean useSsl;
+//    @Value("${europeana.apikey.ssl:true}")
+//    private boolean useSsl;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        if (useSsl){
-            http.authorizeRequests()
-                  //  .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                    .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
-                    .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
-                    .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
-                    .antMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-                    // for Swagger UI
-                    .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
-                    .antMatchers(HttpMethod.GET, "/console").permitAll()
-                    .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
-                  //  .antMatchers(HttpMethod.GET, "/googlea6365b758a9850fb.html").permitAll()
-                    .anyRequest().authenticated().and()
-                .httpBasic().and()
-                .requiresChannel().anyRequest().requiresSecure().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
-        } else {
-            http.authorizeRequests()
-                   // .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                    .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
-                    .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
-                    .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
-                    .antMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-                    // for Swagger UI
-                    .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
-                    .antMatchers(HttpMethod.GET, "/console").permitAll()
-                    .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
-                  //  .antMatchers(HttpMethod.GET, "/googlea6365b758a9850fb.html").permitAll()
-                    .anyRequest().authenticated().and()
-                .httpBasic().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
-        }
+        http.authorizeRequests()
+               // .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                .antMatchers(HttpMethod.OPTIONS, "/apikey/captcha").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey/captcha").permitAll()
+                .antMatchers(HttpMethod.POST, "/apikey/validate").permitAll()
+                .antMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+                // for Swagger UI
+                .antMatchers(HttpMethod.GET, "/v3/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/console").permitAll()
+                .antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+              //  .antMatchers(HttpMethod.GET, "/googlea6365b758a9850fb.html").permitAll()
+                .anyRequest().authenticated().and()
+            .httpBasic().and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+            .csrf().disable()
+            .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
     }
 
     @Configuration
