@@ -1,9 +1,7 @@
 package eu.europeana.apikey.config;
 
-import eu.europeana.apikey.keycloak.CustomEntryPoint;
 import eu.europeana.apikey.keycloak.CustomKeycloakAuthenticationProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -38,8 +36,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .httpBasic().and()
                 .requiresChannel().anyRequest().requiresSecure().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
+                .csrf().disable();
         } else {
             http.authorizeRequests()
                    // .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
@@ -55,8 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .anyRequest().authenticated().and()
                 .httpBasic().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new CustomEntryPoint());
+                .csrf().disable();
         }
     }
 
