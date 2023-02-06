@@ -5,6 +5,7 @@ metadata:
   annotations:
     cert-manager.io/issuer: letsencrypt-production
     nginx.ingress.kubernetes.io/server-alias: ${K8S_SERVER_ALIASES}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: public-iks-k8s-nginx
   tls:
