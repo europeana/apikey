@@ -13,7 +13,7 @@ import javax.annotation.PostConstruct;
 
 @Component
 @PropertySource("classpath:apikey.properties")
-@PropertySource(value = "classpath:apikey-user.properties", ignoreResourceNotFound = true)
+@PropertySource(value = "classpath:apikey.user.properties", ignoreResourceNotFound = true)
 @ConfigurationProperties(prefix = "keycloak")
 public class KeycloakProperties {
 
