@@ -14,14 +14,14 @@ spec:
           livenessProbe:
             httpGet:
               scheme: HTTPS
-              port: 8080
+              port: 443
               path: /actuator/info
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
             httpGet:
               scheme: HTTPS
-              port: 8080
+              port: 443
               path: /actuator/info
             initialDelaySeconds: 30
             periodSeconds: 30
