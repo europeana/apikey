@@ -12,13 +12,15 @@ spec:
           ports:
             - containerPort: 8080
           livenessProbe:
-            httpsGet:
+            httpGet:
+              scheme: https
               port: 8080
               path: /actuator/info
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
-            httpsGet:
+            httpGet:
+              scheme: https
               port: 8080
               path: /actuator/info
             initialDelaySeconds: 30
