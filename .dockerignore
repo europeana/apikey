@@ -1,4 +1,4 @@
 # Send only unzipped war directory to Docker
 **
 !/target/apikey/
-*.user.properties
+**/*.user.properties
