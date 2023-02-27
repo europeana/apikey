@@ -9,6 +9,3 @@ ADD https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/$ELASTIC_APM
 
 # Copy unzipped directory so we can mount config files in Kubernetes pod
 COPY target/apikey/ ./ROOT/
-
-# Remove properties file and credentials. Don't fail if either file is missing
-RUN rm -f ./ROOT/WEB-INF/classes/apikey.user.properties
