@@ -124,7 +124,7 @@ public class ApiKeyController {
      * @throws EuropeanaApiException Europeana commons exception abstraction
      */
     @CrossOrigin(maxAge = 600)
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> createKey(@RequestBody ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         KeycloakAuthenticationToken kcAuthToken = checkManagerCredentials();
         LOG.debug("User {} creates new API key ... ", kcAuthToken.getPrincipal());
@@ -171,8 +171,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PostMapping(path = "/captcha",
-                 produces = MediaType.APPLICATION_JSON_VALUE,
-                 consumes = MediaType.APPLICATION_JSON_VALUE)
+                 produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> createCaptcha(HttpServletRequest httpServletRequest,
                                                 @RequestBody ApiKeyRequest newKeyRequest) throws EuropeanaApiException {
         LOG.debug("Creating new API key secured by captcha...");
@@ -430,8 +429,7 @@ public class ApiKeyController {
      */
     @CrossOrigin(maxAge = 600)
     @PutMapping(value = "/{apikey}",
-                produces = MediaType.APPLICATION_JSON_VALUE,
-                consumes = MediaType.APPLICATION_JSON_VALUE)
+                produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiKey update(@PathVariable("apikey") String apiKey, @RequestBody ApiKeyRequest updateKeyRequest) throws
                                                                                                    EuropeanaApiException {
         ApiKeyRequest updateApiKey = checkMandatoryFieldsAndTrim(updateKeyRequest);
