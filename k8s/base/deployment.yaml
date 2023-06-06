@@ -17,12 +17,14 @@ spec:
               path: /actuator/info
             initialDelaySeconds: 60
             periodSeconds: 30
+            timeoutSeconds: 10            # To resolve context deadline exceeded error
           readinessProbe:
             httpGet:
               port: 8080
               path: /actuator/info
             initialDelaySeconds: 60
             periodSeconds: 30
+            timeoutSeconds: 10      # To resolve context deadline exceeded error
           volumeMounts:
             - name: secret
               mountPath: "/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/apikey.user.properties"
