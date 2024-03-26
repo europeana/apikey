@@ -41,7 +41,7 @@
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
 
         <!-- tmp set specific non-vulnerable Spring security version, until Spring-Boot is up-to-date -->
-        <spring-security.version>5.7.11</spring-security.version>
+        <spring-security.version>5.7.12</spring-security.version>
 
         <junit.version>5.7.1</junit.version>
         <mockito.version>3.8.0</mockito.version>
