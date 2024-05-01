@@ -23,9 +23,10 @@
     </scm>
 
     <properties>
+        <dependency-check-maven.version>9.1.0</dependency-check-maven.version>
         <java.version>11</java.version>
 
-        <spring-boot.version>2.7.11</spring-boot.version>
+        <spring-boot.version>2.7.18</spring-boot.version>
         <api-commons-version>0.3.19</api-commons-version>
         <keycloak.version>19.0.3</keycloak.version>
         <commonsIO.version>2.8.0</commonsIO.version>
@@ -267,8 +268,10 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>8.4.3</version>
+                <version>${dependency-check-maven.version}</version>
                 <configuration>
+                    <nvdApiKeyEnvironmentVariable>${env.NVDAPIKEY}</nvdApiKeyEnvironmentVariable>
+                    <nvdApiKey>e0cb6c7e-b39c-4d48-9fd4-3776dd916b11</nvdApiKey>
                     <failBuildOnCVSS>8</failBuildOnCVSS>
                     <suppressionFiles>
                         <suppressionFile>owasp-suppress.xml</suppressionFile>

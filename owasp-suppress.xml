@@ -25,4 +25,17 @@
         <packageUrl regex="true">^pkg:maven/com\.github\.fge/json\-patch@.*$</packageUrl>
         <cve>CVE-2021-4279</cve>
     </suppress>
+
+<!--    the CVE 2024-22262 exists even in the latest version of spring-web, hence suppressing it. The spring web is transitive dependency coming from spring-boot-starter-web-->
+<!--    another cve is for the exactly same reason not sure why we have duplicate CVE-->
+    <suppress>
+        <notes><![CDATA[
+   file name: spring-web-5.3.31.jar
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.springframework/spring-web@.*$</packageUrl>
+        <cve>CVE-2024-22262</cve>
+        <cve>CVE-2024-22243</cve>
+    </suppress>
+
+
 </suppressions>
