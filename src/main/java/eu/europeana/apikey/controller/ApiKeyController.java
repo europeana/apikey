@@ -48,7 +48,7 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.*;
  * Major refactoring by M. Helinski and Patrick Ehlert in September-November 2019
  * Upgraded to java 11 & spring boot 2 by luthien in December 2019
  * Another major refactoring to remove automatic link between apikey & client and add support to delete Keycloak
- * users - autumn 2020 (see EA-2156, EA-2234)
+ * users - by luthien in autumn 2020 (see EA-2156, EA-2234)
  */
 @RestController
 @RequestMapping("/apikey")
