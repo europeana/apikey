@@ -28,25 +28,21 @@
 
         <spring-boot.version>2.7.18</spring-boot.version>
         <api-commons-version>0.3.19</api-commons-version>
-        <keycloak.version>19.0.3</keycloak.version>
-        <commonsIO.version>2.8.0</commonsIO.version>
-        <commonsLang3.version>3.11</commonsLang3.version>
-        <jodatime.version>2.10.6</jodatime.version>
-        <springdoc.version>1.6.13</springdoc.version>
-        <jjwt.version>0.9.1</jjwt.version>
-        <postgresql.version>42.5.5</postgresql.version>
-        <json.version>20230227</json.version>
-        <commons-validator.version>1.7</commons-validator.version>
-        <jaxb-api.version>2.3.1</jaxb-api.version>
-        <javassist.version>3.27.0-GA</javassist.version>
-        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
-
+        <keycloak.version>20.0.5</keycloak.version>
+        <commonsIO.version>2.16.1</commonsIO.version>
+        <commonsLang3.version>3.14.0</commonsLang3.version>
+        <jodatime.version>2.12.7</jodatime.version>
+        <springdoc.version>1.8.0</springdoc.version>
+        <postgresql.version>42.7.3</postgresql.version>
+        <json.version>20240303</json.version>
+        <commons-validator.version>1.8.0</commons-validator.version>
         <!-- tmp set specific non-vulnerable Spring security version, until Spring-Boot is up-to-date -->
         <spring-security.version>5.7.12</spring-security.version>
 
-        <junit.version>5.7.1</junit.version>
+        <junit-platform-runner.version>1.11.0-M1</junit-platform-runner.version>
+<!--        this version is badly outdated (currently at 5.11.0) but that version won't work with this code.-->
         <mockito.version>3.8.0</mockito.version>
-        <spring-security-test.version>5.7.8</spring-security-test.version>
+        <spring-security-test.version>6.2.4</spring-security-test.version>
     </properties>
 
     <dependencyManagement>
@@ -192,7 +188,7 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-runner</artifactId>
-            <version>1.8.0-M1</version>
+            <version>${junit-platform-runner.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -265,26 +261,26 @@
 
             <!-- This will be active when running the verify or install goal
                  To skip (e.g. during debugging) use 'mvn clean package')-->
-<!--            <plugin>-->
-<!--                <groupId>org.owasp</groupId>-->
-<!--                <artifactId>dependency-check-maven</artifactId>-->
-<!--                <version>${dependency-check-maven.version}</version>-->
-<!--                <configuration>-->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${dependency-check-maven.version}</version>
+                <configuration>
 <!--                    <nvdApiKeyEnvironmentVariable>${env.NVDAPIKEY}</nvdApiKeyEnvironmentVariable>-->
-<!--                    <nvdApiKey>e0cb6c7e-b39c-4d48-9fd4-3776dd916b11</nvdApiKey>-->
-<!--                    <failBuildOnCVSS>8</failBuildOnCVSS>-->
-<!--                    <suppressionFiles>-->
-<!--                        <suppressionFile>owasp-suppress.xml</suppressionFile>-->
-<!--                    </suppressionFiles>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>check</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+                    <nvdApiKey>e0cb6c7e-b39c-4d48-9fd4-3776dd916b11</nvdApiKey>
+                    <failBuildOnCVSS>8</failBuildOnCVSS>
+                    <suppressionFiles>
+                        <suppressionFile>owasp-suppress.xml</suppressionFile>
+                    </suppressionFiles>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
