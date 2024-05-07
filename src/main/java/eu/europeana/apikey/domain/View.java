@@ -9,7 +9,7 @@ package eu.europeana.apikey.domain;
  */
 public class View {
     /**
-     * The interface Public.
+     * Public constructor .
      */
     public interface Public {}
 }

@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
  * Exception thrown when there are problems communicating with Keycloak
  */
 public class KCException extends EuropeanaApiException {
-
+    /**
+     * Status indicator
+     */
     private int status;
 
     /**

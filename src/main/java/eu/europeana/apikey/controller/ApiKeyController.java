@@ -82,10 +82,10 @@ public class ApiKeyController {
     /**
      * Constructor
      *
-     * @param apiKeyRepo                           description
-     * @param captchaManager                       description
-     * @param customKeycloakAuthenticationProvider description
-     * @param keycloakClientManager                description
+     * @param apiKeyRepo                           Repository class instance
+     * @param captchaManager                       captcha manager class instance
+     * @param customKeycloakAuthenticationProvider Custom keycloak auth provider class instance
+     * @param keycloakClientManager                Keycloak client manager class instance
      */
     @Autowired
     public ApiKeyController(ApiKeyRepo apiKeyRepo,
@@ -670,7 +670,7 @@ public class ApiKeyController {
      * Check manager credentials keycloak authentication token.
      *
      * @return the keycloak authentication token
-     * @throws ForbiddenException the forbidden exception
+     * @throws ForbiddenException forbidden exception
      */
     protected KeycloakAuthenticationToken checkManagerCredentials() throws ForbiddenException {
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
@@ -687,7 +687,7 @@ public class ApiKeyController {
      * Check manager or owner credentials.
      *
      * @param id the id
-     * @throws ForbiddenException the forbidden exception
+     * @throws ForbiddenException forbidden exception
      */
     protected void checkManagerOrOwnerCredentials(String id) throws ForbiddenException {
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) SecurityContextHolder.getContext()
@@ -702,7 +702,7 @@ public class ApiKeyController {
      *
      * @param apiKeyUpdate the api key update
      * @return the api key request
-     * @throws MissingDataException the missing data exception
+     * @throws MissingDataException missing data exception
      */
     protected ApiKeyRequest checkMandatoryFieldsAndTrim(ApiKeyRequest apiKeyUpdate) throws MissingDataException {
         String            retval      = "Required parameter(s): ";

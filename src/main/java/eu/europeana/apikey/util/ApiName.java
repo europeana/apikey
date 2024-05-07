@@ -4,10 +4,22 @@
 
 package eu.europeana.apikey.util;
 
+/**
+ * The enum Api name.
+ */
 public enum ApiName {
 
+    /**
+     * Search api name.
+     */
     SEARCH("search", ""),
+    /**
+     * Entity api name.
+     */
     ENTITY("entity", ""),
+    /**
+     * Annotation api name.
+     */
     ANNOTATION("annotation", "");
 
     private String name;

@@ -168,12 +168,12 @@ public class ApiKey {
      * Constructor with all required fields. Note that there can be old API keys stored in the database that do not have
      * an appName or company
      *
-     * @param apiKey
-     * @param firstName
-     * @param lastName
-     * @param email
-     * @param appName
-     * @param company
+     * @param apiKey Apikey string
+     * @param firstName  User's first name
+     * @param lastName  User's second name
+     * @param email User's email address
+     * @param appName Name of application the key is intended for
+     * @param company Name of institute or company
      */
     public ApiKey(String apiKey, String firstName, String lastName, String email, String appName, String company) {
         this.apiKey           = apiKey;
