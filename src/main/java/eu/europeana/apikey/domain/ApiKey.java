@@ -267,7 +267,7 @@ public class ApiKey {
 
     /**
      *
-     * @param website sets name or URL to website associated with this API Key
+     * @param website sets name or URL to website associated with this API Key.
      */
     public void setWebsite(String website) {
         this.website = website;
