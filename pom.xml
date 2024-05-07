@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>apikey</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <packaging>war</packaging>
 
     <name>ApiKey Authentication Service</name>
