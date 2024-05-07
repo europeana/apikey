@@ -17,10 +17,23 @@ public class CustomKeycloakAuthenticationProvider extends KeycloakAuthentication
 
     private final KeycloakClientManager keycloakClientManager;
 
+    /**
+     * Instantiates a new Custom keycloak authentication provider.
+     *
+     * @param keycloakClientManager the keycloak client manager
+     */
     public CustomKeycloakAuthenticationProvider(KeycloakClientManager keycloakClientManager) {
         this.keycloakClientManager = keycloakClientManager;
     }
-    // rename to client
+
+    /**
+     * Authenticate admin client authentication.
+     *
+     * @param clientId     the client id
+     * @param clientSecret the client secret
+     * @return the authentication
+     */
+// rename to client
     public Authentication authenticateAdminClient(String clientId, String clientSecret)  {
         LOG.debug("Authenticating client {}", clientId);
         KeycloakPrincipal<KeycloakSecurityContext> principal = keycloakClientManager.authenticateClient(clientId,

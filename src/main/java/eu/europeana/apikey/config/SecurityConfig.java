@@ -11,6 +11,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
+/**
+ * The type Security config.
+ */
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -56,6 +59,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         }
     }
 
+    /**
+     * The type Web security configuration.
+     */
     @Configuration
     static class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
@@ -66,6 +72,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         private final CustomKeycloakAuthenticationProvider authenticationProvider;
 
+        /**
+         * Instantiates a new Web security configuration.
+         *
+         * @param authenticationProvider the authentication provider
+         */
         public WebSecurityConfiguration(CustomKeycloakAuthenticationProvider authenticationProvider) {
             this.authenticationProvider = authenticationProvider;
         }

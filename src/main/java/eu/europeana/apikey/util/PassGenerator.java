@@ -9,7 +9,6 @@ import java.security.SecureRandom;
  * Created by luthien on 03/07/2017.
  * Generates pronounceable passwords. A cleaned up and deappletified version of
  * the Java Password Generator on www.multicians.org/thvv/gpw.html
- *
  */
 public class PassGenerator {
     private static final Logger LOG = LogManager.getLogger(PassGenerator.class);
@@ -19,7 +18,7 @@ public class PassGenerator {
     /**
      * Generates a new password.
      *
-     * @param  length the required password length
+     * @param length the required password length
      * @return the shiny new password
      */
     public String generate(int length) {
@@ -99,6 +98,9 @@ public class PassGenerator {
      * First half of tris data array. Necessary because of java size limit...
      */
     private static class TrisData1 {
+        /**
+         * The Data.
+         */
         static final short data[][][] = { /* [13][26][26] */
          /* A A */{{2, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0},
          /* A B */{37, 25, 2, 5, 38, 0, 0, 2, 46, 1, 0, 304, 0, 2, 49, 0, 0, 24, 24, 0, 19, 0, 0, 0, 14, 0},
@@ -444,6 +446,9 @@ public class PassGenerator {
      * Second half of tris data array. Necessary because of java size limit...
      */
     private static class TrisData2 {
+        /**
+         * The Data.
+         */
         static final short data[][][] = { /* [13][26][26] */
       /* N A */{{2, 24, 33, 23, 6, 3, 30, 6, 20, 0, 9, 115, 29, 59, 2, 31, 0, 94, 28, 159, 19, 10, 5, 0, 1, 5},
       /* N B */{5, 0, 1, 0, 20, 0, 0, 0, 1, 0, 0, 4, 0, 0, 7, 0, 0, 4, 1, 0, 10, 0, 0, 0, 0, 0},

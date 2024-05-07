@@ -23,10 +23,20 @@ public class KeycloakTokenVerifier {
      */
     private PublicKey publicKey;
 
+    /**
+     * Instantiates a new Keycloak token verifier.
+     *
+     * @param realmPublicKey the realm public key
+     */
     protected KeycloakTokenVerifier(String realmPublicKey) {
         generatePublicKey(realmPublicKey);
     }
 
+    /**
+     * Instantiates a new Keycloak token verifier.
+     *
+     * @param kcProperties the kc properties
+     */
     public KeycloakTokenVerifier(KeycloakProperties kcProperties) {
         this(kcProperties.getRealmPublicKey());
     }
@@ -59,7 +69,7 @@ public class KeycloakTokenVerifier {
      *
      * @param tokenString base64 encoded JWT token
      * @return access token object
-     * @throws VerificationException
+     * @throws VerificationException the verification exception
      */
     AccessToken verifyToken(String tokenString) throws VerificationException {
         TokenVerifier<AccessToken> verifier = TokenVerifier.create(tokenString, AccessToken.class);
@@ -71,7 +81,7 @@ public class KeycloakTokenVerifier {
      *
      * @param tokenString base64 encoded JWT token
      * @return user token
-     * @throws VerificationException
+     * @throws VerificationException the verification exception
      */
     AccessToken retrieveUserToken(String tokenString) throws VerificationException {
         return TokenVerifier.create(tokenString, AccessToken.class).getToken();

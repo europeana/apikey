@@ -9,6 +9,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The type Web mvc config.
+ */
 @Configuration(proxyBeanMethods = false)
 public class WebMvcConfig implements WebMvcConfigurer {
 
@@ -18,7 +21,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
         WebMvcConfigurer.super.configureMessageConverters(converters);
     }
 
-    // APPLICATION_OCTET_STREAM is added as supported media type only to process empty content-type values.
+    /**
+     * Jackson message converter mapping jackson 2 http message converter.
+     *
+     * @return the mapping jackson 2 http message converter
+     */
+// APPLICATION_OCTET_STREAM is added as supported media type only to process empty content-type values.
     //See : EA-1823
     public MappingJackson2HttpMessageConverter jacksonMessageConverter() {
         MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();

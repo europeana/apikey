@@ -13,6 +13,11 @@ public enum ApiName {
     private String name;
     private String uri;
 
+    /**
+     *
+     * @param name name of API
+     * @param uri URL of API
+     */
     ApiName(String name, String uri) {
         this.name = name;
         this.uri = uri;

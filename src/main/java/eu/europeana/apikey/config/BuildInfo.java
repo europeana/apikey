@@ -25,18 +25,38 @@ public class BuildInfo {
     @Value("${info.build.number}")
     private String buildNumber;
 
+    /**
+     * Gets app name.
+     *
+     * @return the app name
+     */
     public String getAppName() {
         return appName;
     }
 
+    /**
+     * Gets app description.
+     *
+     * @return the app description
+     */
     public String getAppDescription() {
         return appDescription;
     }
 
+    /**
+     * Gets app version.
+     *
+     * @return the app version
+     */
     public String getAppVersion() {
         return appVersion;
     }
 
+    /**
+     * Gets build number.
+     *
+     * @return the build number
+     */
     public String getBuildNumber() {
         return buildNumber;
     }

@@ -3,17 +3,19 @@ package eu.europeana.apikey.util;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * The type Classpath resource utils.
+ */
 public class ClasspathResourceUtils {
 
     private ClasspathResourceUtils(){}
 
     /**
      * Get a resource in classpath as a String
-     * @param   path well, the path, obviously.
-     * @return  String containing resource
      *
-     * based on http://stackoverflow.com/a/5445161/204788
-     *
+     * @param path well, the path, obviously.
+     * @return String containing resource based on http://stackoverflow.com/a/5445161/204788
+     * @throws IOException the io exception
      */
     public static String getResourceContentFromPath(String path) throws IOException{
         try(

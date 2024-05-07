@@ -7,6 +7,9 @@ import org.keycloak.representations.AccessToken;
 
 import java.io.Serializable;
 
+/**
+ * The type Keycloak security context.
+ */
 public class KeycloakSecurityContext implements Serializable {
 
     private static final long serialVersionUID = 6611924880256064860L;
@@ -17,6 +20,14 @@ public class KeycloakSecurityContext implements Serializable {
 
     private String accessTokenString;
 
+    /**
+     * Instantiates a new Keycloak security context.
+     *
+     * @param keycloak              the keycloak
+     * @param accessToken           the access token
+     * @param accessTokenString     the access token string
+     * @param keycloakTokenVerifier the keycloak token verifier
+     */
     KeycloakSecurityContext(Keycloak keycloak,
                             AccessToken accessToken,
                             String accessTokenString,
@@ -27,6 +38,11 @@ public class KeycloakSecurityContext implements Serializable {
         this.keycloakTokenVerifier = keycloakTokenVerifier;
     }
 
+    /**
+     * Gets access token.
+     *
+     * @return the access token
+     */
     AccessToken getAccessToken() {
         refreshToken();
         return accessToken;
@@ -45,6 +61,11 @@ public class KeycloakSecurityContext implements Serializable {
         }
     }
 
+    /**
+     * Gets access token string.
+     *
+     * @return the access token string
+     */
     String getAccessTokenString() {
         refreshToken();
         return accessTokenString;

@@ -14,14 +14,20 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * Global exception handler that catches all errors and logs the interesting ones
- * @author Patrick Ehlert
- * Created on 18 nov 2019
- * Modified on 4 Feb 2021
- * @author  Srishti Singh
+ *
+ * @author Patrick Ehlert Created on 18 nov 2019 Modified on 4 Feb 2021
+ * @author Srishti Singh
  */
 @ControllerAdvice
 public class GlobalExceptionHandler extends EuropeanaGlobalExceptionHandler {
 
+    /**
+     * Handle exception response entity.
+     *
+     * @param e           the e
+     * @param httpRequest the http request
+     * @return the response entity
+     */
     @ExceptionHandler
     public ResponseEntity<EuropeanaApiErrorResponse> handleException(
             HttpMessageNotReadableException e, HttpServletRequest httpRequest) {
@@ -37,6 +43,13 @@ public class GlobalExceptionHandler extends EuropeanaGlobalExceptionHandler {
                 .body(response);
     }
 
+    /**
+     * Handle invalid media type response entity.
+     *
+     * @param e           the e
+     * @param httpRequest the http request
+     * @return the response entity
+     */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<EuropeanaApiErrorResponse> handleInvalidMediaType(
             HttpMediaTypeNotSupportedException e, HttpServletRequest httpRequest) {

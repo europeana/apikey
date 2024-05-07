@@ -66,16 +66,27 @@ public class KeycloakClientManager {
     private final        KeycloakProperties    kcProperties;
     private              CloseableHttpClient   httpClient;
 
+    /**
+     * Instantiates a new Keycloak client manager.
+     *
+     * @param kcProperties the kc properties
+     */
     public KeycloakClientManager(KeycloakProperties kcProperties) {
         this.kcProperties = kcProperties;
         this.keycloakTokenVerifier = new KeycloakTokenVerifier(kcProperties.getRealmPublicKey());
     }
 
+    /**
+     * Init.
+     */
     @PostConstruct
     public void init() {
         httpClient = HttpClients.createDefault();
     }
 
+    /**
+     * Clean.
+     */
     @PreDestroy
     public void clean() {
         try {
@@ -137,19 +148,19 @@ public class KeycloakClientManager {
 
     /**
      * Creates a new Keycloak client linked to the provided Apikey. This method is used:
-     *
+     * <p>
      * - when creating a combined Apikey and Client;
      * - and when adding a Client to an existing Apikey.
      * The required data are supplied by the ApiKey object.
-     *
+     * <p>
      * When a client is successfully created in Keycloak, the Client secret (aka Secret Key) is retrieved from Keycloak
      * with the getClientSecret() method and passed back to the Controller, so that it can be sent to the user.
      * The Client ID is stored as KeycloakID in the database record of the linked Apikey.
      *
      * @param securityContext security context with access token
-     * @param key             Apikey to link the Client to be created to, and to copy some data from that are added
-     *                        to the Keycloak Client
+     * @param key             Apikey to link the Client to be created to, and to copy some data from that are added                        to the Keycloak Client
      * @return ClientRepresentation representing the newly created client in Keycloak, including Secret (Key)
+     * @throws EuropeanaApiException the europeana api exception
      */
     public ClientRepresentation createClient(KeycloakSecurityContext securityContext, ApiKey key) throws
                                                                                                   EuropeanaApiException {
@@ -190,10 +201,10 @@ public class KeycloakClientManager {
     /**
      * Updates the client representation with the new values supplied with the update request.
      *
-     * @param securityContext   security context with access token
-     * @param apiKeyUpdate      registration data to be updated
-     * @param apiKey            passed separately because the ApiKeyRequest does not contain it
-     * @return changed client representation
+     * @param securityContext security context with access token
+     * @param apiKeyUpdate    registration data to be updated
+     * @param apiKey          passed separately because the ApiKeyRequest does not contain it
+     * @throws EuropeanaApiException the europeana api exception
      */
     public void updateClient(KeycloakSecurityContext securityContext, ApiKeyRequest apiKeyUpdate, String apiKey) throws
                                                                                                                  EuropeanaApiException {
@@ -460,7 +471,7 @@ public class KeycloakClientManager {
     /**
      * Check whether the client with a given clientId (apiKey) exists in Keycloak, and if so, return its id
      *
-     * @param apiKey Apikey, matches client.clientId
+     * @param apiKey            Apikey, matches client.clientId
      * @param kcSecurityContext security context
      * @return String with client.Id value if client is found, null if not found
      * @throws EuropeanaApiException when an error occured retrieving the client info from Keycloak

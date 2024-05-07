@@ -5,11 +5,17 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Exception thrown when trying to create a new API key for an application name and email address that is already in use
- * @author Patrick Ehlert
- * Created on 18 nov 2019
+ *
+ * @author Patrick Ehlert Created on 18 nov 2019
  */
 public class ApiKeyExistsException extends EuropeanaApiException {
 
+    /**
+     * Instantiates a new Api key exists exception.
+     *
+     * @param email   the email
+     * @param appName the app name
+     */
     public ApiKeyExistsException(String email, String appName) {
         super("There already is an API key registered with application name " + appName + " and email " + email+ ".");
     }

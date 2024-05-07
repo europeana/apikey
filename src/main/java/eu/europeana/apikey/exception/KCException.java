@@ -10,11 +10,24 @@ public class KCException extends EuropeanaApiException {
 
     private int status;
 
+    /**
+     * Instantiates a new Kc exception.
+     *
+     * @param msg    the msg
+     * @param status the status
+     */
     public KCException(String msg, int status) {
         super(msg);
         this.status = status;
     }
 
+    /**
+     * Instantiates a new Kc exception.
+     *
+     * @param msg    the msg
+     * @param status the status
+     * @param t      the t
+     */
     public KCException(String msg, int status, Throwable t) {
         super(msg, t);
         this.status = status;
@@ -30,6 +43,11 @@ public class KCException extends EuropeanaApiException {
         return HttpStatus.valueOf(status);
     }
 
+    /**
+     * Gets status.
+     *
+     * @return the status
+     */
     public int getStatus() {
         return status;
     }

@@ -5,11 +5,16 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Exception thrown when no API key was specified (in a validate request)
- * @author Patrick Ehlert
- * Created on 18 nov 2019
+ *
+ * @author Patrick Ehlert Created on 18 nov 2019
  */
 public class MissingKeyException extends EuropeanaApiException {
 
+    /**
+     * Instantiates a new Missing key exception.
+     *
+     * @param details the details
+     */
     public MissingKeyException(String details) {
         super("No API key in header. " + details);
     }

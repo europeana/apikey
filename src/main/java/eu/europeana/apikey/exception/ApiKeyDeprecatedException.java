@@ -8,6 +8,11 @@ import org.springframework.http.HttpStatus;
  */
 public class ApiKeyDeprecatedException extends EuropeanaApiException {
 
+    /**
+     * Instantiates a new Api key deprecated exception.
+     *
+     * @param id the id
+     */
     public ApiKeyDeprecatedException(String id) {
         super("The API key " + id + " is deprecated!");
     }

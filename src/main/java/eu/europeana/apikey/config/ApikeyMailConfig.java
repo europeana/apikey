@@ -7,6 +7,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+/**
+ * The type Apikey mail config.
+ */
 @Configuration
 @EnableWebMvc
 class ApikeyMailConfig {
@@ -39,6 +42,11 @@ class ApikeyMailConfig {
     @Value("${europeana.mail.bcc}")
     private String copyTo;
 
+    /**
+     * Apikey created mail simple mail message.
+     *
+     * @return the simple mail message
+     */
     @Bean("apikeyTemplate")
     public SimpleMailMessage apikeyCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -57,6 +65,11 @@ class ApikeyMailConfig {
         return message;
     }
 
+    /**
+     * Apikey and client created mail simple mail message.
+     *
+     * @return the simple mail message
+     */
     @Bean("apikeyAndClientTemplate")
     public SimpleMailMessage apikeyAndClientCreatedMail() {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -76,6 +89,11 @@ class ApikeyMailConfig {
         return message;
     }
 
+    /**
+     * Client added mail simple mail message.
+     *
+     * @return the simple mail message
+     */
     @Bean("clientTemplate")
     public SimpleMailMessage clientAddedMail() {
         SimpleMailMessage message = new SimpleMailMessage();

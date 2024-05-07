@@ -22,6 +22,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * The type Captcha manager.
+ */
 @Service
 public class CaptchaManager {
     private static final Logger LOG = LogManager.getLogger(CaptchaManager.class);
@@ -40,6 +43,9 @@ public class CaptchaManager {
 
     private CloseableHttpClient httpClient;
 
+    /**
+     * Init.
+     */
     @PostConstruct
     public void init() {
         httpClient = HttpClients.createDefault();
@@ -106,6 +112,9 @@ public class CaptchaManager {
         return builder.build();
     }
 
+    /**
+     * Close.
+     */
     @PreDestroy
     public void close() {
         try {

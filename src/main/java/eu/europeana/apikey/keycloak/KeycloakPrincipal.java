@@ -13,14 +13,31 @@ public class KeycloakPrincipal<T extends KeycloakSecurityContext> implements Pri
 
     private static final long serialVersionUID = 6491038532248885544L;
 
+    /**
+     * The Name.
+     */
     protected final String name;
+    /**
+     * The Context.
+     */
     protected final T      context;
 
+    /**
+     * Instantiates a new Keycloak principal.
+     *
+     * @param name    the name
+     * @param context the context
+     */
     KeycloakPrincipal(String name, T context) {
         this.name    = name;
         this.context = context;
     }
 
+    /**
+     * Gets keycloak security context.
+     *
+     * @return the keycloak security context
+     */
     T getKeycloakSecurityContext() {
         return this.context;
     }

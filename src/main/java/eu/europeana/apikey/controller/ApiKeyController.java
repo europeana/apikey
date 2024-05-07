@@ -46,8 +46,8 @@ import static eu.europeana.apikey.config.ApikeyDefinitions.*;
  * <p>
  * Created by luthien on 18/04/2017.
  * Major refactoring by M. Helinski and Patrick Ehlert in September-November 2019
- * Upgraded to java 11 & spring boot 2 by luthien in December 2019
- * Another major refactoring to remove automatic link between apikey & client and add support to delete Keycloak
+ * Upgraded to java 11 and spring boot 2 by luthien in December 2019
+ * Another major refactoring to remove automatic link between apikey and client and add support to delete Keycloak client
  * users - by luthien in autumn 2020 (see EA-2156, EA-2234)
  */
 @RestController
@@ -79,6 +79,14 @@ public class ApiKeyController {
     @Qualifier("clientTemplate")
     private SimpleMailMessage clientAddedMsg;
 
+    /**
+     * Constructor
+     *
+     * @param apiKeyRepo
+     * @param captchaManager
+     * @param customKeycloakAuthenticationProvider
+     * @param keycloakClientManager
+     */
     @Autowired
     public ApiKeyController(ApiKeyRepo apiKeyRepo,
                             CaptchaManager captchaManager,
@@ -97,28 +105,28 @@ public class ApiKeyController {
      * - email
      * - appName
      * - company
-     * <p>
+     *
      * The following fields are optional:
      * - website
      * - sector
-     * <p>
+     *
      * The ApiKey field is generated as a unique and random 'readable' lowercase string 8 to 12 characters long,
      * e.g. 'rhossindri', 'viancones' or 'ebobrent' and is checked for uniqueness against the registered ApiKeys values
      * in the Apikey table.
-     * <p>
+     *
      * If creating the Apikey is successful, an email containing the Apikey is sent to the email address supplied
      * in this request.
-     * <p>
+     *
      * Note that this method does not create a Keycloak client.
-     * <p>
+     *
      *
      * @param newKeyRequest requestbody containing supplied values
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 400 when a required parameter is missing or invalid OR if an apikey already exist for <email,appName>
      * HTTP 401 in case of an unauthorised request
      * HTTP 403 if the requested resource is forbidden
-     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
+     * HTTP 406 if a response MIME type other than application-JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
      * @throws ForbiddenException if the client doing the request isn't allowed to manage API keys
      * @throws EuropeanaApiException Europeana commons exception abstraction
@@ -140,29 +148,30 @@ public class ApiKeyController {
      * - email
      * - appName
      * - company
-     * <p>
+     *
      * The following fields are optional:
      * - website
      * - sector
-     * <p>
+     *
      * The ApiKey field is generated as a unique and random 'readable' lowercase string 8 to 12 characters long,
      * e.g. 'rhossindri', 'viancones' or 'ebobrent' and is checked for uniqueness against the registered ApiKeys values
      * in the Apikey table.
-     * <p>
+     *
      * If creating the Apikey is successful, an email containing the Apikey is sent to the email address supplied
      * in this request.
-     * <p>
+     *
      * This method is protected with a captcha token, that must be supplied in the Authorization header.
      * Note that this method does not create a Keycloak client.
-     * <p>
+     *
      *
      * @param newKeyRequest requestbody containing supplied values
+     * @param httpServletRequest httpServletRequest
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 400 when a required parameter is missing  invalid OR if an apikey already exist for <email,appName>
      * HTTP 401 in case of an unauthorised request
      * HTTP 403 if the requested resource is forbidden
-     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
+     * HTTP 406 if a response MIME type other than application-JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @throws EuropeanaApiException when mandatory data are missing; if the combination of email and appname do not
@@ -196,7 +205,7 @@ public class ApiKeyController {
     }
 
     /**
-     * Create a new API key / Keycloak Client pair, with the following mandatory values supplied in a JSON request body:
+     * Create a new API key - Keycloak Client pair, with the following mandatory values supplied in a JSON request body:
      * - firstName
      * - lastName
      * - email
@@ -221,10 +230,10 @@ public class ApiKeyController {
      * <p>
      *
      * HTTP 201 upon successful ApiKey creation
-     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 400 when a required parameter is missing or invalid OR if an apikey already exist for <email,appName>
      * HTTP 401 in case of an unauthorised request
      * HTTP 403 if the requested resource is forbidden
-     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
+     * HTTP 406 if a response MIME type other than application-JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param newKeyRequest requestbody containing supplied values
@@ -267,23 +276,23 @@ public class ApiKeyController {
     /**
      * Create a Keycloak client linked to the supplied Apikey.
      * When successful, a Keycloak client linked to the Apikey will be present on the Keycloak server.
-     * <p>
+     *
      * This Keycloak Client will be linked to the supplied Apikey in the following way (referring to database columns):
      * - the Client's 'client_id' column matches the Apikey's 'apikey' column
      * - the Client's 'id' column matches the Apikey's 'keycloakid' column
-     * <p>
+     *
      * Keycloak generates a Client secret (password) to be used together with the Apikey.
      * If creating the Client is successful, an email containing the Client secret is sent to the email address
      * supplied in this request.
-     * <p>
+     *
      *
      * TODO check error responses
      *
      * HTTP 201 upon successful Client creation
-     * HTTP 400 when a required parameter is missing / invalid OR if an apikey already exist for <email,appName>
+     * HTTP 400 when a required parameter is missing or invalid OR if an apikey already exist for <email,appName>
      * HTTP 401 in case of an unauthorised request
      * HTTP 403 if the requested resource is forbidden
-     * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
+     * HTTP 406 if a response MIME type other than application-JSON was requested in the Accept header
      * HTTP 415 if the submitted request does not contain a valid JSON body
      *
      * @param apiKey apikey for which the client should be created
@@ -378,13 +387,13 @@ public class ApiKeyController {
 
     /**
      * Retrieves the details associated with the registration of a given ApiKey
-     * <p>
+     *
      * Return statuses:
      * HTTP 200 upon successful execution
      * HTTP 401 When requested api key does not belong to the authenticated client or this client is not a manager client
      * HTTP 404 when the requested ApiKey is not found in the database
      * HTTP 406 if a response MIME type other than application/JSON was requested in the Accept header
-     * <p>
+     *
      * @param apiKey string identifying the Apikey
      * @throws EuropeanaApiException if supplied credentials aren't authorised or when the Apikey wasn't found
      * @return JSON response containing the fields annotated with @JsonView(View.Public.class) in ApiKey.java
@@ -603,6 +612,7 @@ public class ApiKeyController {
      * HTTP 410 when the requested ApiKey is deprecated (i.e. has a past deprecationdate)
      *
      * @param httpServletRequest request
+     * @throws EuropeanaApiException
      * @return HTTP 204 upon successful validation
      */
     @PostMapping(path = "/validate")
@@ -732,7 +742,12 @@ public class ApiKeyController {
     }
 
 
-
+    /**
+     *
+     * @param id Apikey to check
+     * @return
+     * @throws ApiKeyNotFoundException
+     */
     protected ApiKey checkIfKeyExists(String id) throws ApiKeyNotFoundException {
         Optional<ApiKey> optionalApiKey = apiKeyRepo.findById(id);
         if (optionalApiKey.isEmpty()) {
@@ -743,7 +758,11 @@ public class ApiKeyController {
         return optionalApiKey.get();
     }
 
-
+    /**
+     *
+     * @param key Apikey to check
+     * @throws ApiKeyDeprecatedException
+     */
     protected void checkKeyDeprecated(ApiKey key) throws ApiKeyDeprecatedException {
         if (key.getDeprecationDate() != null && key.getDeprecationDate().before(new Date())) {
             message = String.format(APIKEY_DEPRECATED, key);
@@ -752,6 +771,12 @@ public class ApiKeyController {
         }
     }
 
+    /**
+     *
+     * @param email
+     * @param appName
+     * @throws ApiKeyExistsException
+     */
     protected void checkKeyEmailAppNameExist(String email, String appName) throws ApiKeyExistsException {
         List<ApiKey> apiKeyList = this.apiKeyRepo.findByEmailAndAppName(email, appName);
         if (!apiKeyList.isEmpty()) {

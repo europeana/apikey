@@ -8,6 +8,9 @@ import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * The type Spring doc config.
+ */
 @Configuration
 public class SpringDocConfig {
 
@@ -15,12 +18,18 @@ public class SpringDocConfig {
 
     /**
      * Initialize SpringDoc with API build information
+     *
      * @param buildInfo object for retrieving build information
      */
     public SpringDocConfig(BuildInfo buildInfo) {
         this.buildInfo = buildInfo;
     }
 
+    /**
+     * User service open api open api.
+     *
+     * @return the open api
+     */
     @Bean
     public OpenAPI userServiceOpenAPI() {
         return new OpenAPI().info(new Info().title(buildInfo.getAppName())

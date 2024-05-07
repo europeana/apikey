@@ -5,15 +5,28 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Exception thrown when we try to recreate a keycloak client for an apikey that already has a keycloakId set
- * @author Patrick Ehlert
- * Created on 21 jan 2020
+ *
+ * @author Patrick Ehlert Created on 21 jan 2020
  */
 public class KCIdNotEmptyException extends EuropeanaApiException {
 
+    /**
+     * Instantiates a new Kc id not empty exception.
+     *
+     * @param apiKey     the api key
+     * @param keycloakId the keycloak id
+     */
     public KCIdNotEmptyException(String apiKey, String keycloakId) {
         super("ApiKey " + apiKey + " already has a keycloak client id set (" + keycloakId + ")");
     }
 
+    /**
+     * Instantiates a new Kc id not empty exception.
+     *
+     * @param apiKey     the api key
+     * @param keycloakId the keycloak id
+     * @param action     the action
+     */
     public KCIdNotEmptyException(String apiKey, String keycloakId, String action) {
         super("Encountered a problem preparing to " + action + " Apikey: " + apiKey + ". There exists " +
               "an associated Keycloak client (id: " + keycloakId + ", clientId: " + apiKey +

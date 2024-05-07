@@ -19,6 +19,9 @@ import java.util.Objects;
 public class MailService {
     private static final Logger LOG = LogManager.getLogger(MailService.class);
 
+    /**
+     * The Email sender.
+     */
     @Autowired
     public JavaMailSender emailSender;
 
@@ -42,6 +45,15 @@ public class MailService {
         }
     }
 
+    /**
+     * Send api key email.
+     *
+     * @param template  the template
+     * @param firstName the first name
+     * @param lastName  the last name
+     * @param apiKey    the api key
+     * @throws SendMailException the send mail exception
+     */
     public void sendApiKeyEmail(SimpleMailMessage template,
                                 String firstName,
                                 String lastName,
@@ -50,6 +62,16 @@ public class MailService {
         sendSimpleMessage(template, messageBody);
     }
 
+    /**
+     * Send api key and client email.
+     *
+     * @param template     the template
+     * @param firstName    the first name
+     * @param lastName     the last name
+     * @param apiKey       the api key
+     * @param clientSecret the client secret
+     * @throws SendMailException the send mail exception
+     */
     public void sendApiKeyAndClientEmail(SimpleMailMessage template,
                                          String firstName,
                                          String lastName,
@@ -63,6 +85,17 @@ public class MailService {
         sendSimpleMessage(template, messageBody);
     }
 
+    /**
+     * Send deleted user email boolean.
+     *
+     * @param template     the template
+     * @param today        the today
+     * @param email        the email
+     * @param kcDeleted    the kc deleted
+     * @param setsDeleted  the sets deleted
+     * @param inThirtyDays the in thirty days
+     * @return the boolean
+     */
     public boolean sendDeletedUserEmail(SimpleMailMessage template,
                                         String today,
                                         String email,
@@ -84,6 +117,15 @@ public class MailService {
         return true;
     }
 
+    /**
+     * Send user problem email boolean.
+     *
+     * @param template the template
+     * @param today    the today
+     * @param userId   the user id
+     * @param status   the status
+     * @return the boolean
+     */
     public boolean sendUserProblemEmail(SimpleMailMessage template,
                                         String today,
                                         String userId,

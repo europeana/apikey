@@ -11,24 +11,51 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 
+/**
+ * The type Tools.
+ */
 public final class Tools {
 
     private Tools(){}
 
     private static final Logger LOG = LogManager.getLogger(Tools.class);
 
+    /**
+     * Nvl string.
+     *
+     * @param input the input
+     * @return the string
+     */
     public static String nvl(String input){
         return StringUtils.isEmpty(input) ? "" : input;
     }
 
+    /**
+     * Nvl string.
+     *
+     * @param input the input
+     * @return the string
+     */
     public static String nvl(Long input){
         return null == input ? "" : input.toString();
     }
 
+    /**
+     * Nvl string.
+     *
+     * @param input the input
+     * @return the string
+     */
     public static String nvl(Date input){
         return null == input ? "" : input.toString();
     }
 
+    /**
+     * Generate pass phrase string.
+     *
+     * @param length the length
+     * @return the string
+     */
     public static String generatePassPhrase(int length) {
         // This variable contains the list of allowable characters for the
         // pass phrase. Note that the number 0 and the letter 'O' have been
