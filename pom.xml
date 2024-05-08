@@ -25,7 +25,6 @@
     <properties>
         <dependency-check-maven.version>9.1.0</dependency-check-maven.version>
         <java.version>17</java.version>
-
         <spring-boot.version>2.7.18</spring-boot.version>
         <api-commons-version>0.3.19</api-commons-version>
         <keycloak.version>20.0.5</keycloak.version>
@@ -38,32 +37,10 @@
         <commons-validator.version>1.8.0</commons-validator.version>
         <!-- tmp set specific non-vulnerable Spring security version, until Spring-Boot is up-to-date -->
         <spring-security.version>5.7.12</spring-security.version>
-
         <junit.version>5.7.1</junit.version>
         <junit-platform-runner.version>1.8.0-M1</junit-platform-runner.version>
-<!--        <junit-platform-runner.version>1.11.0-M1</junit-platform-runner.version>-->
-
-<!--        this version is badly outdated (currently at 5.11.0) but that version won't work with this code.-->
         <mockito.version>3.8.0</mockito.version>
-<!--        <spring-security-test.version>6.2.4</spring-security-test.version>-->
         <spring-security-test.version>5.7.8</spring-security-test.version>
-
-
-<!--        <spring-boot.version>2.7.18</spring-boot.version>-->
-<!--        <api-commons-version>0.3.19</api-commons-version>-->
-<!--        <keycloak.version>19.0.3</keycloak.version>-->
-<!--        <jodatime.version>2.10.6</jodatime.version>-->
-<!--        <commonsIO.version>2.8.0</commonsIO.version>-->
-<!--        <commonsLang3.version>3.11</commonsLang3.version>-->
-<!--        <springdoc.version>1.6.13</springdoc.version>-->
-<!--        <postgresql.version>42.5.5</postgresql.version>-->
-<!--        <json.version>20230227</json.version>-->
-<!--        <commons-validator.version>1.7</commons-validator.version>-->
-
-
-
-
-
     </properties>
 
     <dependencyManagement>
