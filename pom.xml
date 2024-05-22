@@ -24,7 +24,8 @@
 
     <properties>
         <dependency-check-maven.version>8.4.3</dependency-check-maven.version>
-        <java.version>17</java.version>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
         <spring-boot.version>2.7.18</spring-boot.version>
         <api-commons-version>0.3.19</api-commons-version>
         <keycloak.version>20.0.5</keycloak.version>
