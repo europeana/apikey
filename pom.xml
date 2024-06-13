@@ -23,7 +23,7 @@
     </scm>
 
     <properties>
-        <dependency-check-maven.version>8.4.3</dependency-check-maven.version>
+        <dependency-check-maven.version>9.2.0</dependency-check-maven.version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
         <spring-boot.version>2.7.18</spring-boot.version>
@@ -266,7 +266,9 @@
                 <artifactId>dependency-check-maven</artifactId>
                 <version>${dependency-check-maven.version}</version>
                 <configuration>
-                    <knownExploitedUrl>http://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>
+                    <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>
+                    <!-- see EA-3505 why we host the known exploited vulnerabilties file ourselves -->
+                    <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>
                     <failBuildOnCVSS>8</failBuildOnCVSS>
                     <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
                     <suppressionFiles>
