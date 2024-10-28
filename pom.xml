@@ -37,7 +37,7 @@
         <json.version>20240303</json.version>
         <commons-validator.version>1.8.0</commons-validator.version>
         <!-- tmp set specific non-vulnerable Spring security version, until Spring-Boot is up-to-date -->
-        <spring-security.version>5.7.12</spring-security.version>
+        <spring-security.version>5.7.13</spring-security.version>
         <junit.version>5.7.1</junit.version>
         <junit-platform-runner.version>1.8.0-M1</junit-platform-runner.version>
         <mockito.version>3.8.0</mockito.version>
