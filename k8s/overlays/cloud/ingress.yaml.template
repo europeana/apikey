@@ -17,7 +17,7 @@ spec:
     - host: ${K8S_HOSTNAME}
       http:
         paths:
-          - path: /validate
+          - path: /apikey/validate
             pathType: Prefix
             backend:
               service:
