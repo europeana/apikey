@@ -21,7 +21,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: dummy-apikey-service
+                name: apikey-to-keycloak-redirection-service
                 port:
                   number: 80
 ---
