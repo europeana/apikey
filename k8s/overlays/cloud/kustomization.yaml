@@ -3,6 +3,7 @@ resources:
   - service.yaml
   - ingress.yaml
   - hpa.yaml
+  - configmap.yaml
 
 patches:
   - path: deployment_patch.yaml
