@@ -15,14 +15,14 @@ spec:
             httpGet:
               port: 8080
               path: /actuator/info
-            initialDelaySeconds: 100
-            periodSeconds: 20
+            initialDelaySeconds: 60
+            periodSeconds: 30
           readinessProbe:
             httpGet:
               port: 8080
               path: /actuator/info
-            initialDelaySeconds: 100
-            periodSeconds: 20
+            initialDelaySeconds: 60
+            periodSeconds: 30
           volumeMounts:
             - name: secret
               mountPath: "/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/apikey.user.properties"
