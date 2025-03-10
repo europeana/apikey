@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configuration
+  namespace: ${K8S_NAMESPACE}
+data:
+  use-forwarded-headers: "true"
+  compute-full-forwarded-for: "true"
+  forwarded-for-header: "X-Forwarded-For"
+  forwarded-host-header: "X-Forwarded-Host"
+  forwarded-proto-header: "X-Forwarded-Proto"
+  real-ip-header: "X-Real-IP"
