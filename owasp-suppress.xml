@@ -35,7 +35,35 @@
         <packageUrl regex="true">^pkg:maven/org.springframework/spring-web@.*$</packageUrl>
         <cve>CVE-2024-22262</cve>
         <cve>CVE-2024-22243</cve>
+        <cve>CVE-2024-38809</cve>
     </suppress>
-
-
+    <suppress>
+        <notes><![CDATA[
+   file name: spring-security-web-5.7.12.jar
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.springframework.security/spring-security-web@.*$</packageUrl>
+        <cve>CVE-2024-38821</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: spring-webmvc-5.3.31.jar
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.springframework/spring-webmvc@.*$</packageUrl>
+        <cve>CVE-2024-38816</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: swagger-ui-5.11.8.jar
+   ]]></notes>
+        <packageUrl regex="true">^pkg:javascript/DOMPurify@.*$</packageUrl>
+        <cve>CVE-2024-45801</cve>
+        <cve>CVE-2024-47875</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: tomcat-embed-core-9.0.83.jar
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@.*$</packageUrl>
+        <cve>CVE-2025-24813</cve>
+    </suppress>
 </suppressions>
