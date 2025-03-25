@@ -21,7 +21,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: keycloak-service-${K8S_NAMESPACE}
+                name: keycloak-service-${DEPLOYMENT_SUFFIX}
                 port:
                   number: 80
 ---
